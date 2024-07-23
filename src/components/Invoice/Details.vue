@@ -48,8 +48,8 @@
   </q-page>
 </template>
 <script>
-import DefaultDetail from "@controleonline/quasar-default-ui/src/components/Default/Common/DefaultDetail.vue";
-import Orders from "@controleonline/quasar-orders-ui/src/components/Orders.vue";
+import DefaultDetail from "@controleonline/ui-default/src/components/Default/Common/DefaultDetail.vue";
+import Orders from "@controleonline/ui-orders/src/components/Orders.vue";
 
 import { mapActions, mapGetters } from "vuex";
 import getConfigs from "./Configs";
