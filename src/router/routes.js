@@ -24,16 +24,7 @@ export const routes = [
         path: "receive/id/:id",
         component: () => import("../pages/Receive/Details.vue"),
       },
-      {
-        name: "FinanceExpenseCategories",
-        path: "categories/expense",
-        component: () => import("../pages/Expense/Categories.vue"),
-      },
-      {
-        name: "FinanceReceiveCategories",
-        path: "categories/receive",
-        component: () => import("../pages/Receive/Categories.vue"),
-      },
+
 
       {
         name: "IncomeStatement",

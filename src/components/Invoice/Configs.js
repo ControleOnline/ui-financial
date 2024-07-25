@@ -1,5 +1,3 @@
-import Button from "@controleonline/ui-common/src/components/Categories/Button";
-
 export default function getConfigs(context, myCompany) {
   return {
     companyParam: context == "expense" ? "payer" : "receiver",
@@ -7,6 +5,7 @@ export default function getConfigs(context, myCompany) {
     store: "invoice",
     add: true,
     delete: false,
+    categories: [context],
     selection: true,
     search: true,
     columns: {
@@ -39,14 +38,6 @@ export default function getConfigs(context, myCompany) {
           )
             return true;
           return false;
-        },
-      },
-    },
-    components: {
-      headerActions: {
-        component: Button,
-        props: {
-          context: context,
         },
       },
     },
