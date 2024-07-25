@@ -5,7 +5,8 @@ export default function getConfigs(context, myCompany) {
     store: "invoice",
     add: true,
     delete: false,
-    categories: [context],
+    categories: [context],    
+    status: ["invoice"],
     selection: true,
     search: true,
     columns: {
