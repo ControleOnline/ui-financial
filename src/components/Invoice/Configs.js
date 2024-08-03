@@ -1,3 +1,5 @@
+import FormPayment from "@controleonline/ui-financial/src/components/Cielo/FormPayment.vue";
+
 export default function getConfigs(context, myCompany) {
   return {
     companyParam: context == "expense" ? "payer" : "receiver",
@@ -9,6 +11,14 @@ export default function getConfigs(context, myCompany) {
     status: ["invoice"],
     selection: true,
     search: true,
+    components: {
+      tableActions: {
+        component: FormPayment,
+        props: {
+          context: context,
+        },
+      },
+    },
     columns: {
       category: {
         filters: {
@@ -41,6 +51,7 @@ export default function getConfigs(context, myCompany) {
           return false;
         },
       },
+
     },
   };
 }
