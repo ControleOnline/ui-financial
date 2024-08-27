@@ -65,9 +65,11 @@ export default {
       }
       //ID People - filtro
       if (this.peopleId) {
-        let filters = {
-          people: this.peopleId,
-        }
+        let param = this.context === "expense" ? "receiver" : "payer";
+        //let cParam = this.context === "expense" ? "payer" : "receiver";
+        let filters = {};
+        filters[param] = this.peopleId;
+        //filters[cParam] = this.myCompany.id;
         this.$store.commit(this.configs.store + "/SET_FILTERS", filters);
       }
       this.loaded = true;
