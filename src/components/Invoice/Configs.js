@@ -1,4 +1,5 @@
 import FormPayment from "@controleonline/ui-financial/src/components/Cielo/FormPayment.vue";
+import DefaultTable from "@controleonline/ui-default/src/components/Default/DefaultTable";
 
 export default function getConfigs(context, myCompany) {
   return {
@@ -7,13 +8,13 @@ export default function getConfigs(context, myCompany) {
     store: "invoice",
     add: true,
     delete: false,
-    categories: [context],    
+    categories: [context],
     status: ["invoice"],
-    selection: true,
+    selection: false,
     search: true,
     components: {
       tableActions: {
-        component: FormPayment,
+        //component: FormPayment,
         props: {
           context: context,
         },
@@ -27,11 +28,21 @@ export default function getConfigs(context, myCompany) {
         },
       },
       paymentType: {
+        selection: false,
+        externalFilters: false,
+        icon: "person",
+        component: DefaultTable,
+        store: "paymentType",
         filters: {
           people: "/people/" + myCompany.id,
         },
       },
       wallet: {
+        selection: false,
+        externalFilters: false,
+        icon: "person",
+        component: DefaultTable,
+        store: "wallet",
         filters: {
           people: "/people/" + myCompany.id,
         },
@@ -51,7 +62,6 @@ export default function getConfigs(context, myCompany) {
           return false;
         },
       },
-
     },
   };
 }
