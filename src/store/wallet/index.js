@@ -12,7 +12,31 @@ export default {
     violations: null,
     totalItems: 0,
     filters: {},
-    columns: [],
+    columns: [
+      {
+        editable: false,
+        isIdentity: true,
+        sortable: true,
+        name: "id",
+        align: "left",
+        label: "id",
+        externalFilter: true,
+        format: function (value) {
+          return "#" + value;
+        },
+      },
+      {
+        editable: false,
+        sortable: true,
+        name: "wallet",
+        align: "left",
+        label: "wallet",
+        externalFilter: true,
+        format: function (value) {
+          return value;
+        },
+      },
+    ],
   },
   actions: actions,
   getters,
