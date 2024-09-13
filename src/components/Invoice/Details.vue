@@ -70,7 +70,7 @@ export default {
       columns: "invoice/columns",
     }),
     configs() {
-      let config = getConfigs(this.context, this.myCompany);
+      let config = getConfigs(this.$components, this.context, this.myCompany);
       config.externalFilters = false;
       return config;
     },
