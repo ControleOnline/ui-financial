@@ -34,7 +34,7 @@ export default {
       let config = getConfigs(this.$components, this.context, this.myCompany);
 
       if (this.orderId) {
-        config.companyParam = false;
+        //config.companyParam = false;
         config.externalFilters = false;
         config["full-height"] = false;
       }
