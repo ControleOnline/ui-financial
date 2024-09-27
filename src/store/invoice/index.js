@@ -17,6 +17,7 @@ export default {
       {
         editable: false,
         isIdentity: true,
+
         sortable: true,
         name: "id",
         align: "left",
@@ -28,6 +29,12 @@ export default {
       },
       {
         sortable: true,
+        filterClass:"col-1",
+        formClass:'col-6',
+        icon:'person',
+        prefix:'teste: ',
+        sufix:'eita',
+        color:'red',
         name: "receiver",
         align: "left",
         label: "receiver",
