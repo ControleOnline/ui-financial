@@ -17,7 +17,7 @@ export default {
       {
         editable: false,
         isIdentity: true,
-
+        filterClass:"col-1 q-pa-xs",
         sortable: true,
         name: "id",
         align: "left",
@@ -29,8 +29,8 @@ export default {
       },
       {
         sortable: true,
-        filterClass:"col-1",
-        formClass:'col-6',
+        filterClass:"col-1 q-pa-xs",
+        // formClass:'col-6',
         // icon:'person',
         // prefix:'teste: ',
         // sufix:'eita',
@@ -57,6 +57,7 @@ export default {
 
       {
         sortable: true,
+        filterClass:"col-2 q-pa-xs",        
         name: "category",
         align: "left",
         label: "category",
@@ -87,6 +88,7 @@ export default {
       },
       {
         sortable: true,
+        filterClass:"col-2 q-pa-xs",        
         name: "status",
         align: "left",
         label: "status",
@@ -114,6 +116,7 @@ export default {
       },
       {
         inputType: "date-range",
+        filterClass:"col-2 q-pa-xs",          
         sortable: true,
         name: "dueDate",
         align: "left",
@@ -128,6 +131,7 @@ export default {
       },
       {
         sortable: true,
+        filterClass:"col-2 q-pa-xs",          
         name: "wallet",
         align: "left",
         label: "wallet",
@@ -150,6 +154,7 @@ export default {
       },
       {
         sortable: true,
+        filterClass:"col-2 q-pa-xs",          
         name: "paymentType",
         align: "left",
         label: "paymentType",
@@ -174,6 +179,7 @@ export default {
       },
       {
         sortable: true,
+        filterClass:"col-2 q-pa-xs",          
         name: "installments",
         align: "center",
         label: "installments",
@@ -198,6 +204,7 @@ export default {
       },
       {
         inputType: "float",
+        filterClass:"col-2 q-pa-xs",          
         prefix: "R$ ",
         filters: false,
         sortable: true,
