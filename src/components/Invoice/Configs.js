@@ -27,6 +27,7 @@ export default function getConfigs($components, context, myCompany) {
         },
       },
       paymentType: {
+        companyParam: "people",       
         selection: false,
         externalFilters: false,
         icon: "payments",
@@ -37,6 +38,7 @@ export default function getConfigs($components, context, myCompany) {
         },
       },
       wallet: {
+        companyParam: "people",        
         selection: false,
         externalFilters: false,
         icon: "wallet",
