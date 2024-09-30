@@ -29,7 +29,7 @@ export default function getConfigs($components, context, myCompany) {
       paymentType: {
         selection: false,
         externalFilters: false,
-        icon: "person",
+        icon: "payments",
         component: $components.DefaultTable,
         store: "paymentType",
         filters: {
@@ -39,7 +39,7 @@ export default function getConfigs($components, context, myCompany) {
       wallet: {
         selection: false,
         externalFilters: false,
-        icon: "person",
+        icon: "wallet",
         component: $components.DefaultTable,
         store: "wallet",
         filters: {

@@ -12,7 +12,53 @@ export default {
     violations: null,
     totalItems: 0,
     filters: {},
-    columns: [],
+    columns: [
+      {
+        editable: false,
+        isIdentity: true,
+        sortable: true,
+        name: "id",
+        align: "left",
+        label: "id",
+        externalFilter: true,
+        format: function (value) {
+          return "#" + value;
+        },
+      },
+      {
+        editable: false,
+        sortable: true,
+        name: "frequency",
+        align: "left",
+        label: "frequency",
+        externalFilter: true,
+        format: function (value) {
+          return value;
+        },
+      },   
+      {
+        editable: false,
+        sortable: true,
+        name: "installments",
+        align: "left",
+        label: "installments",
+        externalFilter: true,
+        format: function (value) {
+          return value;
+        },
+      }, 
+      {
+        editable: false,
+        sortable: true,
+        name: "paymentType",
+        align: "left",
+        label: "paymentType",
+        externalFilter: true,
+        format: function (value) {
+          return value;
+        },
+      },                
+    ],
   },
   actions: actions,
   getters,
