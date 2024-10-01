@@ -2,14 +2,11 @@
   <DefaultTable :configs="configs" v-if="loaded" />
 </template>
 <script>
-
 import { mapActions, mapGetters } from "vuex";
 import getConfigs from "./Configs";
 
 export default {
-  components: {
-    
-  },
+  components: {},
   props: {
     context: {
       required: true,
@@ -100,9 +97,8 @@ export default {
             },
           };
         };
+        this.$store.commit(this.configs.store + "/SET_COLUMNS", columns);
       }
-
-      this.$store.commit(this.configs.store + "/SET_COLUMNS", columns);
     },
   },
 };
