@@ -33,7 +33,9 @@ export default {
         label: "frequency",
         list:[
           {label:'Única',value:'single'},
-          {label:'Mensal',value:'monthly'},
+          {label:'Diário',value:'daily'},
+          {label:'Semanal',value:'weeakly'},
+          {label:'Mensal',value:'monthly'},          
         ],
         externalFilter: true,
         format: function (value) {

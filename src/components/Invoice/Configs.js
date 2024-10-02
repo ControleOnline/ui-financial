@@ -53,6 +53,11 @@ export default function getConfigs($components, context, myCompany) {
           context: "invoice",
         },
       },
+      category: {
+        filters: {
+          context: "invoice",
+        },
+      },      
       installments: {
         visibleForm(item) {
           if (
