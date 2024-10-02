@@ -31,6 +31,10 @@ export default {
         name: "frequency",
         align: "left",
         label: "frequency",
+        list:[
+          {label:'Única',value:'single'},
+          {label:'Mensal',value:'monthly'},
+        ],
         externalFilter: true,
         format: function (value) {
           return value;
