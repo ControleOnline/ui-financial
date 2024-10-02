@@ -20,14 +20,8 @@ export default function getConfigs($components, context, myCompany) {
       },
     },
     columns: {
-      category: {
-        filters: {
-          context: context,
-          company: "/people/" + myCompany.id,
-        },
-      },
       paymentType: {
-        companyParam: "people",       
+        companyParam: "people",
         selection: false,
         externalFilters: false,
         icon: "payments",
@@ -38,7 +32,7 @@ export default function getConfigs($components, context, myCompany) {
         },
       },
       wallet: {
-        companyParam: "people",        
+        companyParam: "people",
         selection: false,
         externalFilters: false,
         icon: "wallet",
@@ -55,9 +49,9 @@ export default function getConfigs($components, context, myCompany) {
       },
       category: {
         filters: {
-          context: "invoice",
+          context: context,
         },
-      },      
+      },
       installments: {
         visibleForm(item) {
           if (
