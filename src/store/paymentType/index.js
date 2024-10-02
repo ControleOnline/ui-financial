@@ -46,6 +46,10 @@ export default {
         name: "installments",
         align: "left",
         label: "installments",
+        list:[
+          {label:'Única',value:'single'},
+          {label:'Parcelas',value:'split'},
+        ],        
         externalFilter: true,
         format: function (value) {
           return value;
