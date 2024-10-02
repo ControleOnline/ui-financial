@@ -45,11 +45,13 @@ export default function getConfigs($components, context, myCompany) {
       status: {
         filters: {
           context: "invoice",
+          company: "/people/" + myCompany.id,
         },
       },
       category: {
         filters: {
           context: context,
+          company: "/people/" + myCompany.id,
         },
       },
       installments: {
