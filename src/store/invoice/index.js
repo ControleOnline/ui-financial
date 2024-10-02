@@ -17,7 +17,7 @@ export default {
       {
         editable: false,
         isIdentity: true,
-        filterClass:"col-1 q-pa-xs",
+        filterClass: "col-1 q-pa-xs",
         sortable: true,
         name: "id",
         align: "left",
@@ -29,8 +29,8 @@ export default {
       },
       {
         sortable: true,
-        filterClass:"col-1 q-pa-xs",
-        formClass:'col-12',
+        filterClass: "col-1 q-pa-xs",
+        formClass: "col-12",
         // formClass:'col-6',
         // icon:'person',
         // prefix:'teste: ',
@@ -42,7 +42,7 @@ export default {
         list: "people/getItems",
         externalFilter: true,
         format: function (value) {
-          return value?.name + " - " + value?.alias;
+          return value?.name ? value?.name + " - " + value?.alias : "---------------";
         },
         formatList: function (value) {
           if (value)
@@ -58,8 +58,8 @@ export default {
 
       {
         sortable: true,
-        filterClass:"col-2 q-pa-xs",     
-        formClass:'col-6',   
+        filterClass: "col-2 q-pa-xs",
+        formClass: "col-6",
         name: "category",
         align: "left",
         label: "category",
@@ -90,8 +90,8 @@ export default {
       },
       {
         sortable: true,
-        filterClass:"col-2 q-pa-xs",   
-        formClass:'col-6',     
+        filterClass: "col-2 q-pa-xs",
+        formClass: "col-6",
         name: "status",
         align: "left",
         label: "status",
@@ -119,8 +119,8 @@ export default {
       },
       {
         inputType: "date-range",
-        filterClass:"col-2 q-pa-xs",  
-        formClass:'col-6',         
+        filterClass: "col-2 q-pa-xs",
+        formClass: "col-6",
         sortable: true,
         name: "dueDate",
         align: "left",
@@ -135,8 +135,8 @@ export default {
       },
       {
         sortable: true,
-        filterClass:"col-2 q-pa-xs",   
-        formClass:'col-6',        
+        filterClass: "col-2 q-pa-xs",
+        formClass: "col-6",
         name: "wallet",
         align: "left",
         label: "wallet",
@@ -159,8 +159,8 @@ export default {
       },
       {
         sortable: true,
-        filterClass:"col-2 q-pa-xs",  
-        formClass:'col-6',         
+        filterClass: "col-2 q-pa-xs",
+        formClass: "col-6",
         name: "paymentType",
         align: "left",
         label: "paymentType",
@@ -185,8 +185,8 @@ export default {
       },
       {
         sortable: true,
-        filterClass:"col-2 q-pa-xs",  
-        formClass:'col-6',         
+        filterClass: "col-2 q-pa-xs",
+        formClass: "col-6",
         name: "installments",
         align: "center",
         label: "installments",
@@ -206,13 +206,15 @@ export default {
           if (row?.installments == 0) {
             return "Recorrente";
           }
-          return (row?.portion > 0 ? row?.portion : 1) + "X/" + row?.installments;
+          return (
+            (row?.portion > 0 ? row?.portion : 1) + "X/" + row?.installments
+          );
         },
       },
       {
         inputType: "float",
-        filterClass:"col-2 q-pa-xs",  
-        formClass:'col-6',         
+        filterClass: "col-2 q-pa-xs",
+        formClass: "col-6",
         prefix: "R$ ",
         filters: false,
         sortable: true,
