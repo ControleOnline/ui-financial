@@ -20,7 +20,7 @@ export default {
         name: "id",
         align: "left",
         label: "id",
-        externalFilter: true,
+        externalFilter: false,
         format: function (value) {
           return "#" + value;
         },
@@ -31,7 +31,7 @@ export default {
         name: "wallet",
         align: "left",
         label: "wallet",
-        externalFilter: true,
+        externalFilter: false,
         format: function (value) {
           return value;
         },

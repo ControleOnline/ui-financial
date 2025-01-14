@@ -20,7 +20,7 @@ export default {
         name: "id",
         align: "left",
         label: "id",
-        externalFilter: true,
+        externalFilter: false,
         format: function (value) {
           return "#" + value;
         },
@@ -37,7 +37,7 @@ export default {
           {label:'Semanal',value:'weeakly'},
           {label:'Mensal',value:'monthly'},          
         ],
-        externalFilter: true,
+        externalFilter: false,
         format: function (value) {
           return value;
         },
@@ -52,7 +52,7 @@ export default {
           {label:'Única',value:'single'},
           {label:'Parcelas',value:'split'},
         ],        
-        externalFilter: true,
+        externalFilter: false,
         format: function (value) {
           return value;
         },
@@ -63,7 +63,7 @@ export default {
         name: "paymentType",
         align: "left",
         label: "paymentType",
-        externalFilter: true,
+        externalFilter: false,
         format: function (value) {
           return value;
         },

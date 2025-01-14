@@ -22,7 +22,7 @@ export default {
         name: "id",
         align: "left",
         label: "id",
-        externalFilter: true,
+        externalFilter: false,
         format: function (value) {
           return "#" + value;
         },
@@ -40,7 +40,7 @@ export default {
         align: "left",
         label: "receiver",
         list: "people/getItems",
-        externalFilter: true,
+        externalFilter: false,
         format: function (value) {
           return value?.name ? value?.name + " - " + value?.alias : "---------------";
         },
@@ -65,7 +65,7 @@ export default {
         label: "category",
         list: "categories/getItems",
         searchParam: "name",
-        externalFilter: true,
+        externalFilter: false,
         format: function (value) {
           return value?.name;
         },
@@ -97,7 +97,7 @@ export default {
         label: "status",
         list: "status/getItems",
         searchParam: "status",
-        externalFilter: true,
+        externalFilter: false,
         format: function (value) {
           return value?.status;
         },
@@ -125,7 +125,7 @@ export default {
         name: "dueDate",
         align: "left",
         label: "dueDate",
-        externalFilter: true,
+        externalFilter: false,
         saveFormat: function (value) {
           return Formatter.buildAmericanDate(value);
         },
@@ -142,7 +142,7 @@ export default {
         label: "wallet",
         list: "wallet/getItems",
         searchParam: "wallet",
-        externalFilter: true,
+        externalFilter: false,
         format: function (value) {
           return value?.wallet;
         },
@@ -166,7 +166,7 @@ export default {
         label: "paymentType",
         list: "paymentType/getItems",
         searchParam: "paymentType",
-        externalFilter: true,
+        externalFilter: false,
         editable: false,
         format: function (value) {
           return value?.paymentType;
