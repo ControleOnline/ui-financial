@@ -21,9 +21,8 @@
         <q-icon name="warning" /> Aguardando Pagamento
         <q-btn flat label="Reportar problema" class="float-right" />
       </q-card-section>
-    </q-card>
+      <q-separator />
 
-    <q-card class="q-mb-md">
       <q-card-section>
         <div class="text-h6">Dados da Fatura - 501792090</div>
       </q-card-section>
@@ -46,9 +45,8 @@
         <div class="q-mt-md">Descrição:</div>
         <div>Manutenção e Suporte de Sistema. Será enviado para protesto em 30 dias após o vencimento.</div>
       </q-card-section>
-    </q-card>
+      <q-separator />
 
-    <q-card class="q-mb-md">
       <q-card-section>
         <div class="text-h6">Dados do Comprador</div>
       </q-card-section>
@@ -65,9 +63,8 @@
           </div>
         </div>
       </q-card-section>
-    </q-card>
+      <q-separator />
 
-    <q-card class="q-mb-md">
       <q-card-section>
         <div class="text-h6">Resumo da Assinatura</div>
         <div class="text-warning">
