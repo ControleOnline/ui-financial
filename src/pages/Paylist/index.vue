@@ -70,6 +70,9 @@
     <q-card class="q-mb-md">
       <q-card-section>
         <div class="text-h6">Resumo da Assinatura</div>
+        <div class="text-warning">
+          <q-icon name="error" /> Cobrança anterior aguardando pagamento
+        </div>
       </q-card-section>
       <q-separator />
       <q-card-section>
@@ -81,23 +84,7 @@
       </q-card-section>
     </q-card>
 
-    <q-card>
-      <q-card-section>
-        <div class="text-h6">Selecione a Forma de Pagamento</div>
-      </q-card-section>
-      <q-separator />
-      <q-card-section>
-        <div class="text-warning">
-          <q-icon name="error" /> Cobrança anterior aguardando pagamento
-        </div>
-        <div>Identificamos que você possui outra cobrança que ainda não foi paga...</div>
-      </q-card-section>
-      <q-separator />
-      <q-card-actions align="right">
-        <q-btn flat color="primary" label="Pagar a Fatura Atual" />
-        <q-btn flat color="secondary" label="Visualizar Fatura Anterior" />
-      </q-card-actions>
-    </q-card>
+ 
   </q-page>
 </template>
 
