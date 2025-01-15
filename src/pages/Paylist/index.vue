@@ -102,6 +102,25 @@
           após o vencimento.
         </div>
       </q-card-section>
+
+      <q-card-section>
+        <div class="row justify-center">
+          <a
+            :href="'https://www.controleonline.com'"
+            target="_blank"
+            class="primary"
+          >
+            <img
+              :alt="defaultCompany.alias"
+              :title="defaultCompany.alias"
+              style="width: 100px"
+              v-if="defaultCompany.logo"
+              :src="'//' + defaultCompany.logo.domain + defaultCompany.logo.url"
+              class="q-pa-sm main-logo"
+            />
+          </a>
+        </div>
+      </q-card-section>
       <q-separator />
     </q-card>
   </q-page>
@@ -116,6 +135,11 @@ export default {
       company: null,
       document: null,
     };
+  },
+  computed: {
+    ...mapGetters({
+      defaultCompany: "people/defaultCompany",
+    }),
   },
   created() {
     this.init();
