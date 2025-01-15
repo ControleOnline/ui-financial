@@ -1,5 +1,17 @@
 export const routes = [
   {
+    path: "/paylist",
+    component: () =>
+      import("@controleonline/ui-layout/src/layouts/MainLayout.vue"),
+    children: [
+      {
+        name: "PaylistIndex",
+        path: ":company/document/:document?",
+        component: () => import("../pages/Paylist"),
+      },
+    ],
+  },
+  {
     path: "/finance",
     component: () =>
       import("@controleonline/ui-layout/src/layouts/AdminLayout.vue"),
@@ -24,7 +36,6 @@ export const routes = [
         path: "receive/id/:id",
         component: () => import("../pages/Receive/Details.vue"),
       },
-
 
       {
         name: "IncomeStatement",

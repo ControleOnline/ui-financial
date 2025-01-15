@@ -50,3 +50,26 @@ export function getIncomeStatements({ commit }, data) {
       throw e;
     });
 }
+export function getPaylist({ commit }, data) {
+  commit(types.SET_ISLOADING);
+
+  const options = {
+    method: "GET",
+    params: data || {},
+  };
+
+  return api
+    .fetch('invoice/paylist', options)
+
+    .then((data) => {
+      commit(types.SET_ISLOADING, false);
+
+      return data["hydra:member"] || null;
+    })
+    .catch((e) => {
+      commit(types.SET_ISLOADING, false);
+
+      commit(types.SET_ERROR, e.message);
+      throw e;
+    });
+}
