@@ -21,7 +21,7 @@
     </q-card>
   </q-dialog>
 
-  <q-btn label="Ver Pix" color="primary" @click="openModal = true" />
+  <q-btn label="Ver Pix" color="primary" @click="generate" />
 </template>
 
 <script>
@@ -50,13 +50,14 @@ export default {
     },
   },
   created() {
-    this.init();
+
   },
   methods: {
     ...mapActions({
       getPix: "invoice/getPix",
     }),
-    init() {
+    generate() {
+      this.openModal = true;
       this.getPix(this.row.id);
     },
   },

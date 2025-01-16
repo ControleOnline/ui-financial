@@ -54,12 +54,12 @@ export function getPix({ commit }, invoiceId) {
   commit(types.SET_ISLOADING);
 
   const options = {
-    method: "GET",
-    body: {},
+    method: "POST",
+    body: { invoice: invoiceId },
   };
 
   return api
-    .fetch("/invoice/" + invoiceId + "/pix", options)
+    .fetch("/pix", options)
 
     .then((data) => {
       commit(types.SET_ISLOADING, false);
