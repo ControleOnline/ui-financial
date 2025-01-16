@@ -16,7 +16,6 @@ export function split({ commit }, invoiceId) {
 
     .then((data) => {
       commit(types.SET_ISLOADING, false);
-      console.log(data);
       return data["hydra:member"] || null;
     })
     .catch((e) => {
@@ -50,6 +49,30 @@ export function getIncomeStatements({ commit }, data) {
       throw e;
     });
 }
+
+export function getPix({ commit }, invoiceId) {
+  commit(types.SET_ISLOADING);
+
+  const options = {
+    method: "GET",
+    body: {},
+  };
+
+  return api
+    .fetch("/invoice/" + invoiceId + "/pix", options)
+
+    .then((data) => {
+      commit(types.SET_ISLOADING, false);
+      return data || null;
+    })
+    .catch((e) => {
+      commit(types.SET_ISLOADING, false);
+
+      commit(types.SET_ERROR, e.message);
+      throw e;
+    });
+}
+
 export function getPaylist({ commit }, data) {
   commit(types.SET_ISLOADING);
 
@@ -59,7 +82,7 @@ export function getPaylist({ commit }, data) {
   };
 
   return api
-    .fetch('paylist', options)
+    .fetch("paylist", options)
 
     .then((data) => {
       commit(types.SET_ISLOADING, false);

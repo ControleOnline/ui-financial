@@ -115,7 +115,7 @@
 
 <script>
 import { mapActions, mapGetters } from "vuex";
-import Payment from "../../components/Gateways/Payment.vue";
+import Payment from "../../components/Payment.vue";
 
 export default {
   components: {
