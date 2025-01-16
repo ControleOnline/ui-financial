@@ -59,7 +59,7 @@ export function getPaylist({ commit }, data) {
   };
 
   return api
-    .fetch('invoice-paylist', options)
+    .fetch('paylist', options)
 
     .then((data) => {
       commit(types.SET_ISLOADING, false);
