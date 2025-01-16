@@ -1,24 +1,33 @@
 <template>
   <q-page class="q-pa-md">
     <q-card class="q-mb-md">
-      <q-card-section>
+      <q-card-section v-if="company">
         <div class="row items-center">
-          <img
-            src="/path/to/logo.png"
-            alt="Logo"
-            class="col-auto"
-            style="width: 100px"
-          />
+          <div class="col" v-if="company.image">
+            <img
+              :src="
+                '//' +
+                defaultCompany.logo.domain +
+                '/files/' +
+                company.image.id +
+                '/download'
+              "
+              alt="Logo"
+              class="col-auto"
+              style="width: 200px"
+            />
+          </div>
           <div class="col">
             <div class="text-h5">
-              CONTROLE ONLINE TECNOLOGIA DA INFORMAÇÃO LTDA
+              {{ company.name }}
             </div>
             <div class="text-subtitle2">
-              20.114.048/0001-38<br />
-              financeiro@controleonline.com<br />
-              (11) 3168-6294<br />
-              Alameda Yaday, 424, Jardim Aida<br />
-              Guarulhos - SP
+              <span v-if="company.document.length > 0">
+                {{ $formatter.formatDocument(company.document[0].document) }}
+              </span>
+              <span v-if="company.email.length > 0">
+                {{ company.email[0].email }}
+              </span>
             </div>
           </div>
         </div>
@@ -27,11 +36,11 @@
       <q-card-section>
         <div class="row">
           <div class="col">
-            <div>Cliente:</div>
-            <div class="text-bold">Focus Transporte de Veículos</div>
+            <div>{{ $tt("paylist", "label", "Client") }}:</div>
+            <div class="text-bold">{{ client?.name }}</div>
           </div>
           <div class="col">
-            <div>CNPJ:</div>
+            <div>{{ $tt("paylist", "label", "Document") }}:</div>
             <div class="text-bold">
               {{ $formatter.formatDocument(document) }}
             </div>
@@ -40,10 +49,8 @@
       </q-card-section>
       <q-separator />
 
-      <q-card-section>
-        <div class="text-h6">Faturas em Aberto</div>
-      </q-card-section>
-      <q-card-section>
+      <q-card-section v-if="rows.length > 0">
+        <div class="text-h6">{{ $tt("paylist", "title", "OpenPayments") }}</div>
         <q-table
           flat
           dense
@@ -55,29 +62,32 @@
         >
           <template v-slot:body="props">
             <q-tr :props="props.row">
-              <q-td>{{ props.row.date }}</q-td>
-              <q-td>{{ props.row.amount }}</q-td>
+              <q-td>{{
+                $formatter.formatDateYmdTodmY(props.row.dueDate)
+              }}</q-td>
+              <q-td>R$ {{ $formatter.formatMoney(props.row.price) }}</q-td>
               <q-td>
                 <q-icon name="error" class="text-warning" />
-                {{ props.row.status }}
+                {{ props.row.status.status }}
               </q-td>
               <q-td>
-                <q-btn
-                  flat
-                  color="primary"
-                  label="Pagar"
-                  @click="handlePayment(props.row)"
-                />
+                <Payment :row="props.row" />
               </q-td>
             </q-tr>
           </template>
         </q-table>
       </q-card-section>
+      <q-card-section v-else>
+        <div class="text-green">
+          <q-icon name="error" />
+          {{ $tt("paylist", "message", "NoOpenPayments") }}
+        </div>
+      </q-card-section>
 
       <q-separator />
 
       <q-card-section>
-        <div>Será enviado para protesto em 30 dias após o vencimento.</div>
+        <div>{{ $tt("paylist", "message", "Message") }}</div>
       </q-card-section>
 
       <q-card-section>
@@ -105,34 +115,43 @@
 
 <script>
 import { mapActions, mapGetters } from "vuex";
+import Payment from "../../components/Gateways/Payment.vue";
 
 export default {
+  components: {
+    Payment,
+  },
   data() {
     return {
+      companyId: null,
       company: null,
       document: null,
-      rows: [
-        {
-          date: "20/10/2024",
-          amount: "R$ 400,00",
-          status: "Aguardando pagamento",
-        },
-        {
-          date: "20/11/2024",
-          amount: "R$ 400,00",
-          status: "Aguardando pagamento",
-        },
-        {
-          date: "20/12/2024",
-          amount: "R$ 400,00",
-          status: "Aguardando pagamento",
-        },
-      ],
+      client: null,
+      rows: [],
       columns: [
-        { name: "date", label: "Data", align: "left", field: "date" },
-        { name: "amount", label: "Valor", align: "left", field: "amount" },
-        { name: "status", label: "Status", align: "left", field: "status" },
-        { name: "actions", label: "Ação", align: "center" },
+        {
+          name: "date",
+          label: this.$tt("paylist", "title", "Date"),
+          align: "left",
+          field: "date",
+        },
+        {
+          name: "amount",
+          label: this.$tt("paylist", "title", "Amount"),
+          align: "left",
+          field: "amount",
+        },
+        {
+          name: "status",
+          label: this.$tt("paylist", "title", "Status"),
+          align: "left",
+          field: "status",
+        },
+        {
+          name: "actions",
+          label: this.$tt("paylist", "title", "Actions"),
+          align: "center",
+        },
       ],
     };
   },
@@ -147,20 +166,25 @@ export default {
   methods: {
     ...mapActions({
       getPaylist: "invoice/getPaylist",
+      getPeople: "people/getPeople",
     }),
     init() {
-      this.company = this.$route.params.company;
+      this.companyId = this.$route.params.company;
       this.document = this.$route.params.document;
       this.getItems();
+      this.getPeople(this.companyId).then((result) => {
+        this.company = result;
+      });
     },
     getItems() {
       let params = {
-        company: this.company,
+        company: this.companyId,
         document: this.document,
       };
       const endpoint = `invoice/paylist`;
       return this.getPaylist(params).then((result) => {
-        console.log(result);
+        this.client = result[0].payer;
+        this.rows = result;
       });
     },
   },
