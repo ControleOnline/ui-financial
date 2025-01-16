@@ -25,17 +25,16 @@
       </q-card-section>
       <q-separator />
       <q-card-section>
-        <div class="text-h6">Dados do Comprador</div>
-      </q-card-section>
-      <q-card-section>
         <div class="row">
           <div class="col">
-            <div>Nome:</div>
+            <div>Cliente:</div>
             <div class="text-bold">Focus Transporte de Veículos</div>
           </div>
           <div class="col">
             <div>CNPJ:</div>
-            <div class="text-bold">{{ document }}</div>
+            <div class="text-bold">
+              {{ $formatter.formatDocument(document) }}
+            </div>
           </div>
         </div>
       </q-card-section>
@@ -45,62 +44,40 @@
         <div class="text-h6">Faturas em Aberto</div>
       </q-card-section>
       <q-card-section>
-        <div class="row">
-          <div class="col">
-            20/10/2024 <br />
-            20/11/2024 <br />
-            20/12/2024
-          </div>
-          <div class="col">
-            R$ 400,00<br />
-            R$ 400,00<br />
-            R$ 400,00
-          </div>
-          <div class="col text-warning">
-            <q-icon name="error" /> Aguardando pagamento<br />
-            <q-icon name="error" /> Aguardando pagamento<br />
-            <q-icon name="error" /> Aguardando pagamento
-          </div>
-          <div class="col text-primary">
-            <q-btn>Pagar</q-btn><br />
-            <q-btn>Pagar</q-btn><br />
-            <q-btn>Pagar</q-btn>
-          </div>
-        </div>
+        <q-table
+          flat
+          dense
+          :rows="rows"
+          :rows-per-page-options="[]"
+          :columns="columns"
+          row-key="date"
+          hide-bottom
+        >
+          <template v-slot:body="props">
+            <q-tr :props="props.row">
+              <q-td>{{ props.row.date }}</q-td>
+              <q-td>{{ props.row.amount }}</q-td>
+              <q-td>
+                <q-icon name="error" class="text-warning" />
+                {{ props.row.status }}
+              </q-td>
+              <q-td>
+                <q-btn
+                  flat
+                  color="primary"
+                  label="Pagar"
+                  @click="handlePayment(props.row)"
+                />
+              </q-td>
+            </q-tr>
+          </template>
+        </q-table>
       </q-card-section>
+
       <q-separator />
 
       <q-card-section>
-        <div class="row">
-          <div class="col">
-            <div>Data de Vencimento</div>
-            <div class="text-bold text-h6">20/02/2025</div>
-          </div>
-          <div class="col">
-            <div>Valor Total</div>
-            <div class="text-bold text-h6">R$ 400,00</div>
-          </div>
-          <div class="col">
-            <div>Após o Vencimento</div>
-            <div class="text-bold text-h6">R$ 20,00 de multa</div>
-          </div>
-          <div class="col">
-            <div>Pagamento Seguro</div>
-            <div class="text-bold text-h6">
-              <img
-                src="/path/to/logo.png"
-                alt="Logo"
-                class="col-auto"
-                style="width: 100px"
-              />
-            </div>
-          </div>
-        </div>
-        <div class="q-mt-md">Descrição:</div>
-        <div>
-          Manutenção e Suporte de Sistema. Será enviado para protesto em 30 dias
-          após o vencimento.
-        </div>
+        <div>Será enviado para protesto em 30 dias após o vencimento.</div>
       </q-card-section>
 
       <q-card-section>
@@ -134,6 +111,29 @@ export default {
     return {
       company: null,
       document: null,
+      rows: [
+        {
+          date: "20/10/2024",
+          amount: "R$ 400,00",
+          status: "Aguardando pagamento",
+        },
+        {
+          date: "20/11/2024",
+          amount: "R$ 400,00",
+          status: "Aguardando pagamento",
+        },
+        {
+          date: "20/12/2024",
+          amount: "R$ 400,00",
+          status: "Aguardando pagamento",
+        },
+      ],
+      columns: [
+        { name: "date", label: "Data", align: "left", field: "date" },
+        { name: "amount", label: "Valor", align: "left", field: "amount" },
+        { name: "status", label: "Status", align: "left", field: "status" },
+        { name: "actions", label: "Ação", align: "center" },
+      ],
     };
   },
   computed: {
