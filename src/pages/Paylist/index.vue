@@ -63,7 +63,7 @@
               <q-card-section class="q-pa-md">
                 <div class="row items-center">
                   <div class="col-4 text-bold">
-                    {{ $tt("paylist", "label", "date") }}:
+                    {{ $tt("paylist", "label", "Date") }}:
                   </div>
                   <div class="col-8 text-subtitle1">
                     {{ $formatter.formatDateYmdTodmY(row.dueDate) }}
@@ -71,7 +71,7 @@
                 </div>
                 <div class="row items-center">
                   <div class="col-4 text-bold">
-                    {{ $tt("paylist", "label", "amount") }}:
+                    {{ $tt("paylist", "label", "Amount") }}:
                   </div>
                   <div class="col-8 text-h6 text-primary">
                     R$ {{ $formatter.formatMoney(row.price) }}
@@ -79,7 +79,7 @@
                 </div>
                 <div class="row items-center q-mt-sm">
                   <div class="col-4 text-bold">
-                    {{ $tt("paylist", "label", "status") }}:
+                    {{ $tt("paylist", "label", "Status") }}:
                   </div>
                   <div class="col-8">
                     <q-icon name="error" class="text-warning q-mr-xs" />
@@ -176,25 +176,25 @@ export default {
       columns: [
         {
           name: "date",
-          label: this.$tt("paylist", "title", "Date"),
+          label: this.$tt("paylist", "label", "Date"),
           align: "left",
           field: "date",
         },
         {
           name: "amount",
-          label: this.$tt("paylist", "title", "Amount"),
+          label: this.$tt("paylist", "label", "Amount"),
           align: "left",
           field: "amount",
         },
         {
           name: "status",
-          label: this.$tt("paylist", "title", "Status"),
+          label: this.$tt("paylist", "label", "Status"),
           align: "left",
           field: "status",
         },
         {
           name: "actions",
-          label: this.$tt("paylist", "title", "Actions"),
+          label: this.$tt("paylist", "label", "Actions"),
           align: "center",
         },
       ],
