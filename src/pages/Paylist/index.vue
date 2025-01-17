@@ -50,8 +50,52 @@
       <q-separator />
 
       <q-card-section v-if="rows.length > 0">
-        <div class="text-h6">{{ $tt("paylist", "title", "OpenPayments") }}</div>
+        <div class="text-h6 text-center q-mb-md">
+          {{ $tt("paylist", "title", "OpenPayments") }}
+        </div>
+        <template v-if="$q.screen.lt.sm">
+          <div>
+            <q-card
+              v-for="row in rows"
+              :key="row.date"
+              class="q-mb-md q-pa-sm shadow-2"
+            >
+              <q-card-section class="q-pa-md">
+                <div class="row items-center">
+                  <div class="col-4 text-bold">
+                    {{ $tt("paylist", "label", "date") }}:
+                  </div>
+                  <div class="col-8 text-subtitle1">
+                    {{ $formatter.formatDateYmdTodmY(row.dueDate) }}
+                  </div>
+                </div>
+                <div class="row items-center">
+                  <div class="col-4 text-bold">
+                    {{ $tt("paylist", "label", "amount") }}:
+                  </div>
+                  <div class="col-8 text-h6 text-primary">
+                    R$ {{ $formatter.formatMoney(row.price) }}
+                  </div>
+                </div>
+                <div class="row items-center q-mt-sm">
+                  <div class="col-4 text-bold">
+                    {{ $tt("paylist", "label", "status") }}:
+                  </div>
+                  <div class="col-8">
+                    <q-icon name="error" class="text-warning q-mr-xs" />
+                    <span class="text-body1">{{ row.status.status }}</span>
+                  </div>
+                </div>
+              </q-card-section>
+              <q-separator />
+              <q-card-actions class="justify-end q-pa-md">
+                <Payment :row="row" />
+              </q-card-actions>
+            </q-card>
+          </div>
+        </template>
         <q-table
+          v-else
           flat
           dense
           :rows="rows"
@@ -77,6 +121,7 @@
           </template>
         </q-table>
       </q-card-section>
+
       <q-card-section v-else>
         <div class="text-green">
           <q-icon name="error" />

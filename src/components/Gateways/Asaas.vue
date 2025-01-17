@@ -12,7 +12,11 @@
           style="width: 100%; height: auto"
           class="q-mb-md"
         />
-        <q-input v-model="pix.payload" readonly dense label="Copia e Cola" />
+        <q-input v-model="pix.payload" readonly dense label="Copia e Cola">
+          <template v-slot:append>
+            <q-btn flat dense icon="content_copy" @click="copyToClipboard" />
+          </template>
+        </q-input>
       </q-card-section>
 
       <q-card-actions align="right">
@@ -40,7 +44,6 @@ export default {
       required: true,
     },
   },
-  created() {},
   methods: {
     ...mapActions({
       getPix: "invoice/getPix",
@@ -49,6 +52,11 @@ export default {
       this.openModal = true;
       this.getPix(this.row.id).then((response) => {
         this.pix = response;
+      });
+    },
+    copyToClipboard() {
+      navigator.clipboard.writeText(this.pix.payload).then(() => {
+        this.$q.notify({ type: "positive", message: "Código copiado!" });
       });
     },
   },
