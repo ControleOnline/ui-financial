@@ -63,7 +63,7 @@ export function getPix({ commit }, invoiceId) {
 
     .then((data) => {
       commit(types.SET_ISLOADING, false);
-      return data || null;
+      return data["hydra:member"] || null;
     })
     .catch((e) => {
       commit(types.SET_ISLOADING, false);
