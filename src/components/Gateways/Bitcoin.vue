@@ -3,16 +3,16 @@
     <q-card style="width: 400px">
       <q-card-section class="row items-center">
         <q-avatar icon="qr_code" color="primary" text-color="white" />
-        <div class="q-ml-sm text-h6">Pagamento via Pix</div>
+        <div class="q-ml-sm text-h6">Pagamento via Bitcoin</div>
       </q-card-section>
 
       <q-card-section>
         <q-img
-          :src="'data:image/png;base64,' + pix.encodedImage"
+          :src="'data:image/png;base64,' + bitcoin.encodedImage"
           style="width: 100%; height: auto"
           class="q-mb-md"
         />
-        <q-input v-model="pix.payload" readonly dense label="Copia e Cola">
+        <q-input v-model="bitcoin.payload" readonly dense label="Copia e Cola">
           <template v-slot:append>
             <q-btn flat dense icon="content_copy" @click="copyToClipboard" />
           </template>
@@ -25,7 +25,7 @@
     </q-card>
   </q-dialog>
 
-  <q-btn label="Ver Pix" color="primary" @click="generate" />
+  <q-btn label="Ver Bitcoin" color="primary" @click="generate" />
 </template>
 
 <script>
@@ -35,7 +35,7 @@ export default {
   data() {
     return {
       openModal: false,
-      pix: {},
+      bitcoin: {},
     };
   },
   props: {
@@ -46,19 +46,18 @@ export default {
   },
   methods: {
     ...mapActions({
-      getPix: "invoice/getPix",
+      getBitcoin: "invoice/getBitcoin",
     }),
     generate() {
       this.openModal = true;
-      this.getPix({
+      this.getBitcoin({
         invoiceId: this.row.id,
-        bank: "asaas",
       }).then((response) => {
-        this.pix = response;
+        this.bitcoin = response;
       });
     },
     copyToClipboard() {
-      navigator.clipboard.writeText(this.pix.payload).then(() => {
+      navigator.clipboard.writeText(this.bitcoin.payload).then(() => {
         this.$q.notify({ type: "positive", message: "Código copiado!" });
       });
     },

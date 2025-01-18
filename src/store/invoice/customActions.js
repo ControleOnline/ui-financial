@@ -50,12 +50,34 @@ export function getIncomeStatements({ commit }, data) {
     });
 }
 
-export function getPix({ commit }, invoiceId) {
+export function getBitcoin({ commit }, data) {
   commit(types.SET_ISLOADING);
 
   const options = {
     method: "POST",
-    body: { invoice: invoiceId },
+    body: { invoice: data.invoiceId, bank: data.bank },
+  };
+
+  return api
+    .fetch("/bitcoin", options)
+
+    .then((data) => {
+      commit(types.SET_ISLOADING, false);
+      return data["hydra:member"] || null;
+    })
+    .catch((e) => {
+      commit(types.SET_ISLOADING, false);
+
+      commit(types.SET_ERROR, e.message);
+      throw e;
+    });
+}
+export function getPix({ commit }, data) {
+  commit(types.SET_ISLOADING);
+
+  const options = {
+    method: "POST",
+    body: { invoice: data.invoiceId, bank: data.bank },
   };
 
   return api
