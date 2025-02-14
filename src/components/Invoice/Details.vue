@@ -56,9 +56,9 @@
       <div class="col-12">
         <q-card class="q-mt-md">
           <Orders
-            :invoiceId="invoiceId"
+            :invoice="invoice"
             :context="context == 'receive' ? 'sales' : 'purchasing'"
-            v-if="invoiceId"
+            v-if="invoice"
           />
           <!-- <Invoice :orderId="orderId" :context="context" v-if="orderId" />-->
         </q-card>
@@ -100,11 +100,9 @@ export default {
   data() {
     return {
       invoice: null,
-      invoiceId: null,
     };
   },
   created() {
-    this.invoiceId = decodeURIComponent(this.$route.params.id);
     this.init();
   },
   methods: {
@@ -112,7 +110,8 @@ export default {
       getInvoice: "invoice/get",
     }),
     init() {
-      this.getInvoice(this.invoiceId).then((result) => {
+      let invoiceId = decodeURIComponent(this.$route.params.id);
+      this.getInvoice(invoiceId).then((result) => {
         this.invoice = result;
       });
     },
