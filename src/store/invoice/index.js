@@ -31,11 +31,6 @@ export default {
         sortable: true,
         filterClass: "col-1 q-pa-xs",
         formClass: "col-12",
-        // formClass:'col-6',
-        // icon:'person',
-        // prefix:'teste: ',
-        // sufix:'eita',
-        // color:'red',
         name: "receiver",
         align: "left",
         label: "receiver",
@@ -55,7 +50,29 @@ export default {
           return value ? "/people/" + (value.value || value) : null;
         },
       },
-
+      {
+        sortable: true,
+        filterClass: "col-1 q-pa-xs",
+        formClass: "col-12",
+        name: "payer",
+        align: "left",
+        label: "payer",
+        list: "people/getItems",
+        externalFilter: false,
+        format: function (value) {
+          return value?.name ? value?.name + " - " + value?.alias : "---------------";
+        },
+        formatList: function (value) {
+          if (value)
+            return {
+              value: value["@id"].split("/").pop(),
+              label: value.name + " - " + value.alias,
+            };
+        },
+        saveFormat: function (value) {
+          return value ? "/people/" + (value.value || value) : null;
+        },
+      },
       {
         sortable: true,
         filterClass: "col-2 q-pa-xs",

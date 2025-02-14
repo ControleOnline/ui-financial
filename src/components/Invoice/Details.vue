@@ -1,62 +1,84 @@
 <template>
-  <q-page>
-    <!-- Inicio das Abas -->
-    <div class="q-pt-lg">
-      <q-card>
-        <q-card-section>
-          <div
-            class="q-card q-pa-sm"
-            style="max-width: calc(var(--zoom-width) - 30px)"
-          >
-            <DefaultDetail
+  <q-page class="q-pa-md">
+    <div class="row q-col-gutter-md">
+      <div class="col-12 col-md-8">
+        <q-card class="full-height">
+          <q-card-section class="text-primary">
+            <div class="text-h6">
+              {{ $tt("order", "header", "Invoice Details") }}
+            </div>
+          </q-card-section>
+          <q-card-section v-if="invoice">
+            <DefaultInput
+              columnName="dueDate"
+              :row="invoice"
               :configs="configs"
-              :id="invoiceId"
-              v-if="invoiceId"
+              @saved="init"
             />
-            <q-tabs
-              inline-label
-              no-caps
-              outside-arrows
-              mobile-arrows
-              align="left"
-              class="text-grey"
-              active-color="primary"
-              indicator-color="primary"
-              v-model="tab"
-            >
-              <q-tab name="orders" icon="tab" :label="$t('Orders')" />
-            </q-tabs>
-            <q-tab-panels
-              v-model="tab"
-              animated
-              swipeable
-              transition-prev="jump-up"
-              transition-next="jump-up"
-            >
-              <q-tab-panel class="items-center" name="orders">
-                <Orders
-                  :invoiceId="invoiceId"
-                  :context="context == 'receive' ? 'sales' : 'purchasing'"
-                  v-if="invoiceId"
-                />
-              </q-tab-panel>
-            </q-tab-panels>
-          </div>
-        </q-card-section>
-      </q-card>
+
+            <DefaultInput
+              columnName="paymentType"
+              :row="invoice"
+              :configs="configs"
+              @saved="init"
+            />
+            <DefaultInput
+              columnName="price"
+              :row="invoice"
+              :configs="configs"
+              @saved="init"
+            />
+          </q-card-section>
+        </q-card>
+      </div>
+
+      <!-- Cards Menores -->
+      <div class="col-12 col-md-4">
+        <ClientWidget
+          v-if="invoice"
+          :columnName="context == 'receive' ? 'payer' : 'receiver'"
+          :people="context == 'receive' ? invoice.payer : invoice.receiver"
+          :context="context == 'receive' ? 'client' : 'provider'"
+          :row="invoice"
+          :configs="configs"
+          @saved="init"
+        />
+        <InvoiceWidget
+          v-if="invoice"
+          :row="invoice"
+          :configs="configs"
+          @saved="init"
+        />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12">
+        <q-card class="q-mt-md">
+          <Orders
+            :invoiceId="invoiceId"
+            :context="context == 'receive' ? 'sales' : 'purchasing'"
+            v-if="invoiceId"
+          />
+          <!-- <Invoice :orderId="orderId" :context="context" v-if="orderId" />-->
+        </q-card>
+      </div>
     </div>
   </q-page>
 </template>
 <script>
 import DefaultDetail from "@controleonline/ui-default/src/components/Default/Common/DefaultDetail.vue";
 import Orders from "@controleonline/ui-orders/src/components/Orders.vue";
-
+import ClientWidget from "@controleonline/ui-people/src/components/People/Widget.vue";
+import InvoiceWidget from "./Widget.vue";
 import { mapActions, mapGetters } from "vuex";
 import getConfigs from "./Configs";
 
 export default {
   components: {
     DefaultDetail,
+    ClientWidget,
+    InvoiceWidget,
     Orders,
   },
   props: {
@@ -77,16 +99,23 @@ export default {
   },
   data() {
     return {
-      tab: "orders",
-      invoiceData: null,
+      invoice: null,
       invoiceId: null,
     };
   },
   created() {
     this.invoiceId = decodeURIComponent(this.$route.params.id);
+    this.init();
   },
   methods: {
-
+    ...mapActions({
+      getInvoice: "invoice/get",
+    }),
+    init() {
+      this.getInvoice(this.invoiceId).then((result) => {
+        this.invoice = result;
+      });
+    },
   },
 };
 </script>
