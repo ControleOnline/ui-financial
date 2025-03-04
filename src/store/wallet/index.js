@@ -8,6 +8,7 @@ export default {
   state: {
  item:{},
 items:[],
+filters:{},
     resourceEndpoint: "wallets",
     isLoading: false,
     error: "",
