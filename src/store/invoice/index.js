@@ -7,6 +7,8 @@ import * as customActions from "./customActions";
 export default {
   namespaced: true,
   state: {
+ item:{},
+items:[],
     resourceEndpoint: "invoices",
     isLoading: false,
     error: "",
