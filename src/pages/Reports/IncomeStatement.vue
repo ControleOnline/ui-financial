@@ -79,12 +79,7 @@
                   </q-item-section>
 
                   <q-item-section class="q-item-section-side" side>
-                    {{
-                      "R$ " +
-                      $formatter.formatMoney(
-                        parentCategory.total_parent_category_price
-                      )
-                    }}
+                    {{"R$ " + $formatter.formatMoney(parentCategory.total_parent_category_price)}}
                   </q-item-section>
                 </template>
               </q-item>
@@ -121,12 +116,7 @@
                   </q-item-section>
 
                   <q-item-section class="q-item-section-side" side>
-                    {{
-                      "R$ " +
-                      $formatter.formatMoney(
-                        parentCategory.total_parent_category_price
-                      )
-                    }}
+                    {{"R$ " + $formatter.formatMoney(parentCategory.total_parent_category_price)}}
                   </q-item-section>
                 </template>
               </q-item>
@@ -141,10 +131,7 @@
                 >Total de Receitas</q-item-section
               >
               <q-item-section class="q-item-section-side text-green" side>
-                {{
-                  "R$ " +
-                  $formatter.formatMoney(month.receive.total_month_price)
-                }}
+                {{"R$ " + $formatter.formatMoney(month.receive.total_month_price)}}
               </q-item-section>
             </q-item>
             <q-item
@@ -155,9 +142,7 @@
                 >Total de Despesas</q-item-section
               >
               <q-item-section class="q-item-section-side text-red" side>
-                {{
-                  "R$ " + $formatter.formatMoney(month.pay.total_month_price)
-                }}
+                {{"R$ " + $formatter.formatMoney(month.pay.total_month_price)}}
               </q-item-section>
             </q-item>
             <q-item
@@ -168,18 +153,13 @@
                 >Saldo</q-item-section
               >
               <q-item-section
-                :class="
-                  getBalanceColor(month) + ' q-item-section-side q-py-none'
-                "
+                :class="getBalanceColor(month) + ' q-item-section-side q-py-none'"
                 side
               >
-                {{
-                  "R$ " +
-                  $formatter.formatMoney(
-                    (month.receive.total_month_price || 0) -
-                      (month.pay.total_month_price || 0)
-                  )
-                }}
+                {{"R$ " + $formatter.formatMoney(
+                  (month.receive.total_month_price || 0) -
+                    (month.pay.total_month_price || 0)
+                )}}
               </q-item-section>
             </q-item>
           </q-card-section>
@@ -219,7 +199,6 @@ export default {
         year: new Date().getFullYear(),
         people: null,
       },
-      //years: Array.from({ length: 21 }, (v, k) => new Date().getFullYear() - 10 + k),
       modalVisible: false,
       parent_categories: null,
       income_statements: {},
@@ -231,10 +210,8 @@ export default {
   computed: {
     ...mapGetters({
       myCompany: "people/currentCompany",
+      isLoading: "invoice/isLoading",
     }),
-    isLoading() {
-      return this.$store.getters["invoice/isLoading"];
-    },
   },
   watch: {
     myCompany() {
@@ -318,7 +295,6 @@ export default {
   flex-wrap: wrap;
 }
 
-/* Opcional: para evitar que os cards se estiquem horizontalmente */
 .q-card {
   flex-grow: 1;
 }
