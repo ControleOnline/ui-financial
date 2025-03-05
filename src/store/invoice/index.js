@@ -7,8 +7,8 @@ import * as customActions from "./customActions";
 export default {
   namespaced: true,
   state: {
- item:{},
-items:[],
+    item: {},
+    items: [],
     resourceEndpoint: "invoices",
     isLoading: false,
     error: "",
@@ -39,7 +39,9 @@ items:[],
         list: "people/getItems",
         externalFilter: false,
         format: function (value) {
-          return value?.name ? value?.name + " - " + value?.alias : "---------------";
+          return value?.name
+            ? value?.name + " - " + value?.alias
+            : "---------------";
         },
 
         saveFormat: function (value) {
@@ -56,7 +58,9 @@ items:[],
         list: "people/getItems",
         externalFilter: false,
         format: function (value) {
-          return value?.name ? value?.name + " - " + value?.alias : "---------------";
+          return value?.name
+            ? value?.name + " - " + value?.alias
+            : "---------------";
         },
 
         saveFormat: function (value) {
@@ -86,7 +90,6 @@ items:[],
           return "/categories/" + parseInt(value.value || value);
           //else return parseInt(value.value || value);
         },
-
       },
       {
         sortable: true,
@@ -160,12 +163,13 @@ items:[],
           return value?.paymentType;
         },
         formatList: function (value) {
-          if (value)
+          if (value && value["@id"])
             return {
               value: value["@id"].split("/").pop(),
               label: value?.paymentType,
               object: value,
             };
+          return value;
         },
         saveFormat: function (value) {
           return value ? "/payment_types/" + (value?.value || value) : null;
