@@ -7,6 +7,7 @@ export const routes = [
       {
         name: "PaylistIndex",
         path: ":company/document/:document?",
+        meta: { isPublic: true },
         component: () => import("../pages/Paylist"),
       },
     ],
