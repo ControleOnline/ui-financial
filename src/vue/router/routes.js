@@ -2,7 +2,7 @@ export const routes = [
   {
     path: "/paylist",
     component: () =>
-      import("@controleonline/ui-layout/src/layouts/MainLayout.vue"),
+      import("@controleonline/ui-layout/src/vue/layouts/MainLayout.vue"),
     children: [
       {
         name: "PaylistIndex",
@@ -15,7 +15,7 @@ export const routes = [
   {
     path: "/finance",
     component: () =>
-      import("@controleonline/ui-layout/src/layouts/AdminLayout.vue"),
+      import("@controleonline/ui-layout/src/vue/layouts/AdminLayout.vue"),
     children: [
       {
         name: "FinanceExpenseIndex",

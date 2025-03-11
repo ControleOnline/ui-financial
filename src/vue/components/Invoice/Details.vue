@@ -67,9 +67,9 @@
   </q-page>
 </template>
 <script>
-import DefaultDetail from "@controleonline/ui-default/src/components/Default/Common/DefaultDetail.vue";
-import Orders from "@controleonline/ui-orders/src/components/Orders.vue";
-import ClientWidget from "@controleonline/ui-people/src/components/People/Widget.vue";
+import DefaultDetail from "@controleonline/ui-default/src/vue/components/Default/Common/DefaultDetail.vue";
+import Orders from "@controleonline/ui-orders/src/vue/components/Orders.vue";
+import ClientWidget from "@controleonline/ui-people/src/vue/components/People/Widget.vue";
 import InvoiceWidget from "./Widget.vue";
 import { mapActions, mapGetters } from "vuex";
 import getConfigs from "./Configs";
