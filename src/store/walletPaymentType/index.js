@@ -8,38 +8,14 @@ export default {
   state: {
     item: {},
     items: [],
-    resourceEndpoint: 'wallets',
+    resourceEndpoint: 'wallet_payment_types',
     isLoading: false,
     isSaving: false,
     error: '',
     violations: null,
     totalItems: 0,
     filters: {},
-    columns: [
-      {
-        editable: false,
-        isIdentity: true,
-        sortable: true,
-        name: 'id',
-        align: 'left',
-        label: 'id',
-        externalFilter: false,
-        format: function (value) {
-          return '#' + value;
-        },
-      },
-      {
-        editable: false,
-        sortable: true,
-        name: 'wallet',
-        align: 'left',
-        label: 'wallet',
-        externalFilter: false,
-        format: function (value) {
-          return value;
-        },
-      },
-    ],
+    columns: [],
   },
   actions: actions,
   getters,
