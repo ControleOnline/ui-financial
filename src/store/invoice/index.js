@@ -13,7 +13,7 @@ export default {
     isLoading: false,
     isSaving: false,
     error: '',
-    violations: null,
+    
     totalItems: 0,
     filters: {},
     columns: [
@@ -135,14 +135,32 @@ export default {
         sortable: true,
         filterClass: 'col-2 q-pa-xs',
         formClass: 'col-6',
-        name: 'wallet',
+        name: 'source_wallet',
         align: 'left',
-        label: 'wallet',
+        label: 'source wallet',
         list: 'wallet/getItems',
-        searchParam: 'wallet',
+        searchParam: 'source_wallet',
         externalFilter: false,
         format: function (value) {
-          return value?.wallet;
+          return value?.source_wallet;
+        },
+
+        saveFormat: function (value) {
+          return value ? '/wallets/' + (value?.value || value) : null;
+        },
+      },
+      {
+        sortable: true,
+        filterClass: 'col-2 q-pa-xs',
+        formClass: 'col-6',
+        name: 'destination_wallet',
+        align: 'left',
+        label: 'destination wallet',
+        list: 'wallet/getItems',
+        searchParam: 'destination_wallet',
+        externalFilter: false,
+        format: function (value) {
+          return value?.destination_wallet;
         },
 
         saveFormat: function (value) {
