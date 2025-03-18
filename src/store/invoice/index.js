@@ -135,14 +135,14 @@ export default {
         sortable: true,
         filterClass: 'col-2 q-pa-xs',
         formClass: 'col-6',
-        name: 'source_wallet',
+        name: 'sourceWallet',
         align: 'left',
         label: 'source wallet',
         list: 'wallet/getItems',
-        searchParam: 'source_wallet',
+        searchParam: 'sourceWallet',
         externalFilter: false,
         format: function (value) {
-          return value?.source_wallet;
+          return value?.sourceWallet;
         },
 
         saveFormat: function (value) {
@@ -153,14 +153,14 @@ export default {
         sortable: true,
         filterClass: 'col-2 q-pa-xs',
         formClass: 'col-6',
-        name: 'destination_wallet',
+        name: 'destinationWallet',
         align: 'left',
         label: 'destination wallet',
         list: 'wallet/getItems',
-        searchParam: 'destination_wallet',
+        searchParam: 'destinationWallet',
         externalFilter: false,
         format: function (value) {
-          return value?.destination_wallet;
+          return value?.destinationWallet;
         },
 
         saveFormat: function (value) {
