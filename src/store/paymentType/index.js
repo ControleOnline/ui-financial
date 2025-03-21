@@ -6,13 +6,13 @@ import Formatter from '@controleonline/ui-common/src/utils/formatter.js';
 export default {
   namespaced: true,
   state: {
-    item: {},
-    items: [],
+    item: null, //Don´t touch plz....
+    items: null, //Don´t touch plz....
     resourceEndpoint: 'payment_types',
     isLoading: false,
     isSaving: false,
     error: '',
-    
+
     totalItems: 0,
     filters: {},
     columns: [
