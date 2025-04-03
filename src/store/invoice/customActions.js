@@ -26,6 +26,54 @@ export function split({commit}, invoiceId) {
     });
 }
 
+
+export function getCashRegister({commit}, params = {}) {
+  
+  commit(types.SET_ISLOADING);
+
+  const options = {
+    method: 'GET',
+    params: params,
+  };
+
+  return api
+    .fetch('/cash-register', options)
+    .then(data => {
+      commit(types.SET_ISLOADING, false);
+      return data;
+    })
+    .catch(e => {
+      commit(types.SET_ISLOADING, false);
+      commit(types.SET_ERROR, e.message);
+      throw e;
+    });
+
+}
+
+export function getCashRegisterPrint({commit}, params = {}) {
+  commit(types.SET_ISLOADING);
+
+  const options = {
+    method: 'POST',
+    body: params,
+  };
+
+  return api
+    .fetch('/cash-register/print', options)
+
+    .then(data => {
+      commit(types.SET_ISLOADING, false);
+
+      return data;
+    })
+    .catch(e => {
+      commit(types.SET_ISLOADING, false);
+
+      commit(types.SET_ERROR, e.message);
+      throw e;
+    });
+}
+
 export function getInflow({commit}, data) {
   commit(types.SET_ISLOADING);
 
