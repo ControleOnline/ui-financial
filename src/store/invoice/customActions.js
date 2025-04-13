@@ -14,9 +14,9 @@ export function split({commit}, invoiceId) {
 
     .then(data => {
       commit(types.SET_ISLOADING, false);
-      commit(types.SET_ITEMS, data['hydra:member']);
+      commit(types.SET_ITEMS, data['member']);
 
-      return data['hydra:member'];
+      return data['member'];
     })
     .catch(e => {
       commit(types.SET_ISLOADING, false);
@@ -87,9 +87,9 @@ export function getInflow({commit}, data) {
 
     .then(data => {
       commit(types.SET_ISLOADING, false);
-      commit(types.SET_ITEMS, data['hydra:member']);
+      commit(types.SET_ITEMS, data['member']);
 
-      return data['hydra:member'];
+      return data['member'];
     })
     .catch(e => {
       commit(types.SET_ISLOADING, false);
@@ -112,9 +112,9 @@ export function getIncomeStatements({commit}, data) {
 
     .then(data => {
       commit(types.SET_ISLOADING, false);
-      commit(types.SET_ITEMS, data['hydra:member']);
+      commit(types.SET_ITEMS, data['member']);
 
-      return data['hydra:member'];
+      return data['member'];
     })
     .catch(e => {
       commit(types.SET_ISLOADING, false);
@@ -137,9 +137,9 @@ export function getBitcoin({commit}, data) {
 
     .then(data => {
       commit(types.SET_ISLOADING, false);
-      commit(types.SET_ITEMS, data['hydra:member']);
+      commit(types.SET_ITEMS, data['member']);
 
-      return data['hydra:member'];
+      return data['member'];
     })
     .catch(e => {
       commit(types.SET_ISLOADING, false);
@@ -161,9 +161,9 @@ export function getPix({commit}, data) {
 
     .then(data => {
       commit(types.SET_ISLOADING, false);
-      commit(types.SET_ITEMS, data['hydra:member']);
+      commit(types.SET_ITEMS, data['member']);
 
-      return data['hydra:member'];
+      return data['member'];
     })
     .catch(e => {
       commit(types.SET_ISLOADING, false);
@@ -186,9 +186,9 @@ export function getPaylist({commit}, data) {
 
     .then(data => {
       commit(types.SET_ISLOADING, false);
-      commit(types.SET_ITEMS, data['hydra:member']);
+      commit(types.SET_ITEMS, data['member']);
 
-      return data['hydra:member'];
+      return data['member'];
     })
     .catch(e => {
       commit(types.SET_ISLOADING, false);
