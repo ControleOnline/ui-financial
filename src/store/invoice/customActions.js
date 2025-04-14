@@ -26,9 +26,7 @@ export function split({commit}, invoiceId) {
     });
 }
 
-
 export function getCashRegister({commit}, params = {}) {
-  
   commit(types.SET_ISLOADING);
 
   const options = {
@@ -47,7 +45,6 @@ export function getCashRegister({commit}, params = {}) {
       commit(types.SET_ERROR, e.message);
       throw e;
     });
-
 }
 
 export function getCashRegisterPrint({commit}, params = {}) {
@@ -113,7 +110,6 @@ export function getIncomeStatements({commit}, data) {
     .then(data => {
       commit(types.SET_ISLOADING, false);
       commit(types.SET_ITEMS, data['member']);
-
       return data['member'];
     })
     .catch(e => {
