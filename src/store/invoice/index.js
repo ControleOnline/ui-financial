@@ -8,12 +8,11 @@ export default {
   namespaced: true,
   state: {
     item: {},
-    items: [],
+    items: null,
     resourceEndpoint: 'invoices',
     isLoading: false,
     isSaving: false,
     error: '',
-    
     totalItems: 0,
     filters: {},
     columns: [
