@@ -14,6 +14,8 @@ export default {
     isSaving: false,
     error: '',
     totalItems: 0,
+    messages: [],
+    message: {},
     filters: {},
     columns: [
       {
