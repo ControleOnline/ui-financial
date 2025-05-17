@@ -9,7 +9,7 @@ import {
   SafeAreaView,
   FlatList,
 } from 'react-native';
-import {getStore} from '@store'; // Ajuste conforme seu caminho
+import {useGetStore} from '@store'; // Ajuste conforme seu caminho
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 
 // Estilos (simplificados, você pode ajustar conforme seu CSS original)
@@ -55,8 +55,8 @@ const styles = {
 
 const FinancePage = () => {
   const {getters: invoiceGetters, actions: invoiceActions} =
-    getStore('invoice');
-  const {getters: peopleGetters} = getStore('people');
+    useGetStore('invoice');
+  const {getters: peopleGetters} = useGetStore('people');
   const {currentCompany, isLoading} = peopleGetters;
   const {data: items} = invoiceGetters;
 
