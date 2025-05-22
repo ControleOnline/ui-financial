@@ -54,11 +54,9 @@ const styles = {
 };
 
 const FinancePage = () => {
-  const {getters: invoiceGetters, actions: invoiceActions} =
-    getStore('invoice');
+  const {actions: invoiceActions} = getStore('invoice');
   const {getters: peopleGetters} = getStore('people');
   const {currentCompany, isLoading} = peopleGetters;
-  const {data: items} = invoiceGetters;
 
   const [filters, setFilters] = useState({
     year: new Date().getFullYear().toString(),
