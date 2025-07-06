@@ -73,6 +73,31 @@ export function getInflow({commit}, data) {
     });
 }
 
+export function getMonthlyStatements({commit}, data) {
+  commit(types.SET_ISLOADING);
+
+  const options = {
+    method: 'GET',
+    params: data || {},
+  };
+
+  return api
+    .fetch('/monthly_statements', options)
+
+    .then(data => {
+      commit(types.SET_ISLOADING, false);
+      commit(types.SET_ITEMS, data['member']);
+      return data['member'];
+    })
+    .catch(e => {
+      commit(types.SET_ISLOADING, false);
+
+      commit(types.SET_ERROR, e.message);
+      throw e;
+    });
+}
+
+
 export function getIncomeStatements({commit}, data) {
   commit(types.SET_ISLOADING);
 
