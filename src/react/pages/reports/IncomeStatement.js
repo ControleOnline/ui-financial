@@ -2,17 +2,15 @@ import React, {useState, useCallback} from 'react';
 import {
   Text,
   View,
-  ScrollView,
   TouchableOpacity,
   TextInput,
   Modal,
   SafeAreaView,
   FlatList,
 } from 'react-native';
-import {getStore} from '@store'; // Ajuste conforme seu caminho
-import {useNavigation, useFocusEffect} from '@react-navigation/native';
+import {useStores} from '@store';
+import {useFocusEffect} from '@react-navigation/native';
 
-// Estilos (simplificados, você pode ajustar conforme seu CSS original)
 const styles = {
   container: {flex: 1, backgroundColor: '#f5f5f5'},
   filterContainer: {padding: 10, backgroundColor: '#fff'},
@@ -54,8 +52,10 @@ const styles = {
 };
 
 const FinancePage = () => {
-  const {actions: invoiceActions} = getStore('invoice');
-  const {getters: peopleGetters} = getStore('people');
+  const invoiceStore = useStores(state => state.invoice);
+  const invoiceActions = invoiceStore.actions;
+  const peopleStore = useStores(state => state.people);
+  const peopleGetters = peopleStore.getters;
   const {currentCompany, isLoading} = peopleGetters;
 
   const [filters, setFilters] = useState({
