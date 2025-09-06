@@ -16,7 +16,7 @@ export default function getConfigs($components, context, myCompany) {
       paymentType: {
         companyParam: "people",
         selection: false,
-        externalFilters: false,
+        externalFilters: true,
         icon: "payments",
         component: $components.DefaultTable,
         store: "paymentType",
