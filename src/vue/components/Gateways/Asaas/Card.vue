@@ -2,7 +2,7 @@
   <div v-for="c in cards" :key="c.id" class="q-mb-md">
     <q-card
       class="credit-card cursor-pointer"
-      :class="{ selected: card.id === c.id }"
+      :class="{ selected: card?.id === c.id }"
       @click="card = c"
     >
       <q-card-section>
@@ -19,9 +19,8 @@
       </q-card-section>
     </q-card>
   </div>
-  <q-card-actions align="right">
-    <q-btn flat label="Pagar" color="primary" :disable="!card" @click="pay" />
-    <q-btn flat label="Fechar" color="primary" v-close-popup />
+  <q-card-actions align="right" v-if="card">
+    <q-btn flat label="Pagar" color="primary" @click="pay" />    
   </q-card-actions>
 </template>
 
@@ -31,7 +30,7 @@ import { mapActions, mapGetters } from "vuex";
 export default {
   data() {
     return {
-      card: {},
+      card: null,
     };
   },
   props: {
