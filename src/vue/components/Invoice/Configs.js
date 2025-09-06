@@ -1,4 +1,3 @@
-import FormPayment from "@controleonline/ui-financial/src/components/Cielo/FormPayment.vue";
 
 export default function getConfigs($components, context, myCompany) {
 
