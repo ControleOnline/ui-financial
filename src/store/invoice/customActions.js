@@ -55,7 +55,7 @@ export function getBitcoin({ commit }, data) {
 
   const options = {
     method: "POST",
-    body: { invoice: data.invoiceId, bank: data.bank },
+    body: { invoice: data.invoice.id },
   };
 
   return api

@@ -37,7 +37,7 @@ export default {
     }),
     generate() {
       this.getBitcoin({
-        invoiceId: this.invoice.id,
+        invoice: this.invoice,
       }).then((response) => {
         this.bitcoin = response;
       });
