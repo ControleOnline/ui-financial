@@ -1,10 +1,42 @@
 <template>
-  <template v-if="invoice">
-    <AsaasCard :invoice="invoice" />
-    <AsaasPix :invoice="invoice" />
-    <Bitcoin :invoice="invoice" />
-  </template>
-  <template v-else> lll </template>
+  <div>
+    <q-dialog v-model="openModal">
+      <q-card style="width: 100%; height: 100%;">
+        <q-card-section>
+          <template v-if="invoice">
+            <q-expansion-item
+              group="payments"
+              default-opened
+              label="Cartão de Crédito"
+              icon="credit_card"
+              v-model="expanded.creditCard"
+            >
+              <AsaasCard v-if="expanded.creditCard" :invoice="invoice" />
+            </q-expansion-item>
+            <q-expansion-item
+              group="payments"
+              label="Pix"
+              icon="pix"
+              v-model="expanded.pix"
+            >
+              <AsaasPix v-if="expanded.pix" :invoice="invoice" />
+            </q-expansion-item>
+            <q-expansion-item
+              group="payments"
+              label="Bitcoin"
+              icon="currency_bitcoin"
+              v-model="expanded.bitcoin"
+            >
+              <Bitcoin v-if="expanded.bitcoin" :invoice="invoice" />
+            </q-expansion-item>
+          </template>
+          <template v-else> lll </template>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
+    <q-btn label="Pagar" color="primary" @click="pay" />
+  </div>
 </template>
 
 <script>
@@ -14,24 +46,23 @@ import AsaasCard from "./Gateways/Asaas/Card.vue";
 import Bitcoin from "./Gateways/Bitcoin.vue";
 
 export default {
-  components: {
-    AsaasPix,
-    AsaasCard,
-    Bitcoin,
-  },
+  components: { AsaasPix, AsaasCard, Bitcoin },
+  props: { invoice: Object },
   data() {
-    return {};
+    return {
+      openModal: false,
+      expanded: {
+        creditCard: true, 
+        pix: false,
+        bitcoin: false,
+      },
+    };
   },
-  props: {
-    invoice: {
-      type: Object,
-      required: false,
-    },
-  },
-  created() {},
   methods: {
     ...mapActions({}),
-    init() {},
+    pay() {
+      this.openModal = true;
+    },
   },
 };
 </script>

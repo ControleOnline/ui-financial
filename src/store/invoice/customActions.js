@@ -16,7 +16,7 @@ export function split({ commit }, invoiceId) {
 
     .then((data) => {
       commit(types.SET_ISLOADING, false);
-      return data["hydra:member"] || null;
+      return data["member"] || null;
     })
     .catch((e) => {
       commit(types.SET_ISLOADING, false);
@@ -40,7 +40,7 @@ export function getIncomeStatements({ commit }, data) {
     .then((data) => {
       commit(types.SET_ISLOADING, false);
 
-      return data["hydra:member"] || null;
+      return data["member"] || null;
     })
     .catch((e) => {
       commit(types.SET_ISLOADING, false);
@@ -63,7 +63,7 @@ export function getBitcoin({ commit }, data) {
 
     .then((data) => {
       commit(types.SET_ISLOADING, false);
-      return data["hydra:member"] || null;
+      return data["member"] || null;
     })
     .catch((e) => {
       commit(types.SET_ISLOADING, false);
@@ -87,7 +87,7 @@ export function getPaylist({ commit }, data) {
     .then((data) => {
       commit(types.SET_ISLOADING, false);
 
-      return data["hydra:member"] || null;
+      return data["member"] || null;
     })
     .catch((e) => {
       commit(types.SET_ISLOADING, false);
