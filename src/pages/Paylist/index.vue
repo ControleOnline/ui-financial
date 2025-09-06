@@ -89,7 +89,7 @@
               </q-card-section>
               <q-separator />
               <q-card-actions class="justify-end q-pa-md">
-                <Payment :row="row" />
+                <Payment :invoice="row" />
               </q-card-actions>
             </q-card>
           </div>
@@ -115,7 +115,7 @@
                 {{ props.row.status.status }}
               </q-td>
               <q-td>
-                <Payment :row="props.row" />
+                <Payment :invoice="props.row" />
               </q-td>
             </q-tr>
           </template>

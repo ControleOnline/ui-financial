@@ -6,7 +6,7 @@
         <div class="q-ml-sm text-h6">Pagamento via Pix</div>
       </q-card-section>
 
-      <q-card-section>
+      <q-card-section v-if="pix">
         <q-img
           :src="'data:image/png;base64,' + pix.encodedImage"
           style="width: 100%; height: auto"
@@ -39,7 +39,7 @@ export default {
     };
   },
   props: {
-    row: {
+    invoice: {
       type: Object,
       required: true,
     },
@@ -51,9 +51,10 @@ export default {
     generate() {
       this.openModal = true;
       this.getPix({
-        invoiceId: this.row.id,
+        invoiceId: this.invoice.id,
         bank: "asaas",
       }).then((response) => {
+        console.log(response);
         this.pix = response;
       });
     },

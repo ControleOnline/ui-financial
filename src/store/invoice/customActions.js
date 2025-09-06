@@ -85,7 +85,7 @@ export function getPix({ commit }, data) {
 
     .then((data) => {
       commit(types.SET_ISLOADING, false);
-      return data["hydra:member"] || null;
+      return data["member"] || null;
     })
     .catch((e) => {
       commit(types.SET_ISLOADING, false);

@@ -1,25 +1,30 @@
 <template>
-  <Asaas :row="row" />
-  <Bitcoin :row="row" />
+  <template v-if="invoice">
+    <AsaasCard :invoice="invoice" />
+    <AsaasPix :invoice="invoice" />
+    <Bitcoin :invoice="invoice" />
+  </template>
+  <template v-else> lll </template>
 </template>
 
 <script>
 import { mapActions } from "vuex";
-import Asaas from "./Gateways/Asaas.vue";
+import AsaasPix from "./Gateways/Asaas/Pix.vue";
+import AsaasCard from "./Gateways/Asaas/Card.vue";
 import Bitcoin from "./Gateways/Bitcoin.vue";
 
 export default {
   components: {
-    Asaas,
+    AsaasPix,
     Bitcoin,
   },
   data() {
     return {};
   },
   props: {
-    row: {
+    invoice: {
       type: Object,
-      required: true,
+      required: false,
     },
   },
   created() {},
