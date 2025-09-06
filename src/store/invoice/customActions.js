@@ -72,28 +72,6 @@ export function getBitcoin({ commit }, data) {
       throw e;
     });
 }
-export function getPix({ commit }, data) {
-  commit(types.SET_ISLOADING);
-
-  const options = {
-    method: "POST",
-    body: { invoice: data.invoiceId, bank: data.bank },
-  };
-
-  return api
-    .fetch("/pix", options)
-
-    .then((data) => {
-      commit(types.SET_ISLOADING, false);
-      return data["member"] || null;
-    })
-    .catch((e) => {
-      commit(types.SET_ISLOADING, false);
-
-      commit(types.SET_ERROR, e.message);
-      throw e;
-    });
-}
 
 export function getPaylist({ commit }, data) {
   commit(types.SET_ISLOADING);

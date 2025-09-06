@@ -46,13 +46,12 @@ export default {
   },
   methods: {
     ...mapActions({
-      getPix: "invoice/getPix",
+      getPix: "asaas/getPix",
     }),
     generate() {
       this.openModal = true;
       this.getPix({
-        invoiceId: this.invoice.id,
-        bank: "asaas",
+        invoice: this.invoice,        
       }).then((response) => {
         console.log(response);
         this.pix = response;

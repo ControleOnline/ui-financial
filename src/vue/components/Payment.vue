@@ -16,6 +16,7 @@ import Bitcoin from "./Gateways/Bitcoin.vue";
 export default {
   components: {
     AsaasPix,
+    AsaasCard,
     Bitcoin,
   },
   data() {
