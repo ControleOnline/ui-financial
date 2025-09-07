@@ -228,8 +228,7 @@ export default {
       {
         inputType: "float",
         filterClass: "col-2 q-pa-xs",
-        formClass: "col-6",
-        prefix: "R$ ",
+        formClass: "col-6",        
         filters: false,
         sortable: true,
         name: "price",
