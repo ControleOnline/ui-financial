@@ -1,9 +1,9 @@
 <template>
-  <div>
+  <div v-if="row.status.realStatus != 'closed'">
     <q-dialog v-model="openModal">
-      <q-card style="width: 100%; height: 100%;">
+      <q-card style="width: 100%; height: 100%">
         <q-card-section>
-          <template v-if="invoice">
+          <template v-if="row">
             <q-expansion-item
               group="payments"
               default-opened
@@ -11,7 +11,7 @@
               icon="credit_card"
               v-model="expanded.creditCard"
             >
-              <AsaasCard v-if="expanded.creditCard" :invoice="invoice" />
+              <AsaasCard v-if="expanded.creditCard" :invoice="row" />
             </q-expansion-item>
             <q-expansion-item
               group="payments"
@@ -19,7 +19,7 @@
               icon="pix"
               v-model="expanded.pix"
             >
-              <AsaasPix v-if="expanded.pix" :invoice="invoice" />
+              <AsaasPix v-if="expanded.pix" :invoice="row" />
             </q-expansion-item>
             <q-expansion-item
               group="payments"
@@ -27,7 +27,7 @@
               icon="currency_bitcoin"
               v-model="expanded.bitcoin"
             >
-              <Bitcoin v-if="expanded.bitcoin" :invoice="invoice" />
+              <Bitcoin v-if="expanded.bitcoin" :invoice="row" />
             </q-expansion-item>
           </template>
           <template v-else> lll </template>
@@ -47,16 +47,19 @@ import Bitcoin from "./Gateways/Bitcoin.vue";
 
 export default {
   components: { AsaasPix, AsaasCard, Bitcoin },
-  props: { invoice: Object },
+  props: { row: Object },
   data() {
     return {
       openModal: false,
       expanded: {
-        creditCard: true, 
+        creditCard: true,
         pix: false,
         bitcoin: false,
       },
     };
+  },
+  created() {
+    console.log(this.rows);
   },
   methods: {
     ...mapActions({}),

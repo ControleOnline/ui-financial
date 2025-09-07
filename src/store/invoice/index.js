@@ -31,6 +31,30 @@ export default {
           return "#" + value;
         },
       },
+   {
+        sortable: true,
+        filterClass: "col-1 q-pa-xs",
+        formClass: "col-12",
+        name: "payer",
+        align: "left",
+        label: "payer",
+        list: "people/getItems",
+        externalFilter: false,
+        format: function (value) {
+          return value?.name
+            ? value?.name + " - " + value?.alias
+            : "---------------";
+        },
+        formatList: function (value, row, column) {
+          return {
+            id: value?.id,
+            label: value?.name,
+          };
+        },
+        saveFormat: function (value) {
+          return value ? "/people/" + (value.value || value) : null;
+        },
+      },      
       {
         sortable: true,
         filterClass: "col-1 q-pa-xs",
