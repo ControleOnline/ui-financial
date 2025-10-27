@@ -48,87 +48,9 @@
         </div>
       </q-card-section>
       <q-separator />
-
-      <q-card-section v-if="rows.length > 0">
-        <div class="text-h6 text-center q-mb-md">
-          {{ $tt("paylist", "title", "OpenPayments") }}
-        </div>
-        <template v-if="$q.screen.lt.sm">
-          <div>
-            <q-card
-              v-for="row in rows"
-              :key="row.date"
-              class="q-mb-md q-pa-sm shadow-2"
-            >
-              <q-card-section class="q-pa-md">
-                <div class="row items-center">
-                  <div class="col-4 text-bold">
-                    {{ $tt("paylist", "label", "Date") }}:
-                  </div>
-                  <div class="col-8 text-subtitle1">
-                    {{ $formatter.formatDateYmdTodmY(row.dueDate) }}
-                  </div>
-                </div>
-                <div class="row items-center">
-                  <div class="col-4 text-bold">
-                    {{ $tt("paylist", "label", "Amount") }}:
-                  </div>
-                  <div class="col-8 text-h6 text-primary">
-                    R$ {{ $formatter.formatMoney(row.price) }}
-                  </div>
-                </div>
-                <div class="row items-center q-mt-sm">
-                  <div class="col-4 text-bold">
-                    {{ $tt("paylist", "label", "Status") }}:
-                  </div>
-                  <div class="col-8">
-                    <q-icon name="error" class="text-warning q-mr-xs" />
-                    <span class="text-body1">{{ row.status.status }}</span>
-                  </div>
-                </div>
-              </q-card-section>
-              <q-separator />
-              <q-card-actions class="justify-end q-pa-md">
-                <Payment :row="row" />
-              </q-card-actions>
-            </q-card>
-          </div>
-        </template>
-        <q-table
-          v-else
-          flat
-          dense
-          :rows="rows"
-          :rows-per-page-options="[]"
-          :columns="columns"
-          row-key="date"
-          hide-bottom
-        >
-          <template v-slot:body="props">
-            <q-tr :props="props.row">
-              <q-td>{{
-                $formatter.formatDateYmdTodmY(props.row.dueDate)
-              }}</q-td>
-              <q-td>R$ {{ $formatter.formatMoney(props.row.price) }}</q-td>
-              <q-td>
-                <q-icon name="error" class="text-warning" />
-                {{ props.row.status.status }}
-              </q-td>
-              <q-td>
-                <Payment :row="props.row" />
-              </q-td>
-            </q-tr>
-          </template>
-        </q-table>
+      <q-card-section>
+        <PaymentList :rows="rows" />
       </q-card-section>
-
-      <q-card-section v-else>
-        <div class="text-green">
-          <q-icon name="error" />
-          {{ $tt("paylist", "message", "NoOpenPayments") }}
-        </div>
-      </q-card-section>
-
       <q-separator />
 
       <q-card-section>
@@ -160,11 +82,12 @@
 
 <script>
 import { mapActions, mapGetters } from "vuex";
-import Payment from "../../components/Payment.vue";
+
+import PaymentList from "../../components/PaymentList.vue";
 
 export default {
   components: {
-    Payment,
+    PaymentList,
   },
   data() {
     return {
@@ -172,32 +95,7 @@ export default {
       company: null,
       document: null,
       client: null,
-      rows: [],
-      columns: [
-        {
-          name: "date",
-          label: this.$tt("paylist", "label", "Date"),
-          align: "left",
-          field: "date",
-        },
-        {
-          name: "amount",
-          label: this.$tt("paylist", "label", "Amount"),
-          align: "left",
-          field: "amount",
-        },
-        {
-          name: "status",
-          label: this.$tt("paylist", "label", "Status"),
-          align: "left",
-          field: "status",
-        },
-        {
-          name: "actions",
-          label: this.$tt("paylist", "label", "Actions"),
-          align: "center",
-        },
-      ],
+      rows: [],      
     };
   },
   computed: {

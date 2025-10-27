@@ -79,7 +79,7 @@
                   </q-item-section>
 
                   <q-item-section class="q-item-section-side" side>
-                    {{"R$ " + $formatter.formatMoney(parentCategory.total_parent_category_price)}}
+                    {{ $formatter.formatMoney(parentCategory.total_parent_category_price)}}
                   </q-item-section>
                 </template>
               </q-item>
@@ -116,7 +116,7 @@
                   </q-item-section>
 
                   <q-item-section class="q-item-section-side" side>
-                    {{"R$ " + $formatter.formatMoney(parentCategory.total_parent_category_price)}}
+                    {{ $formatter.formatMoney(parentCategory.total_parent_category_price)}}
                   </q-item-section>
                 </template>
               </q-item>
@@ -131,7 +131,7 @@
                 >Total de Receitas</q-item-section
               >
               <q-item-section class="q-item-section-side text-green" side>
-                {{"R$ " + $formatter.formatMoney(month.receive.total_month_price)}}
+                {{ $formatter.formatMoney(month.receive.total_month_price)}}
               </q-item-section>
             </q-item>
             <q-item
@@ -142,7 +142,7 @@
                 >Total de Despesas</q-item-section
               >
               <q-item-section class="q-item-section-side text-red" side>
-                {{"R$ " + $formatter.formatMoney(month.pay.total_month_price)}}
+                {{ $formatter.formatMoney(month.pay.total_month_price)}}
               </q-item-section>
             </q-item>
             <q-item
@@ -156,7 +156,7 @@
                 :class="getBalanceColor(month) + ' q-item-section-side q-py-none'"
                 side
               >
-                {{"R$ " + $formatter.formatMoney(
+                {{ $formatter.formatMoney(
                   (month.receive.total_month_price || 0) -
                     (month.pay.total_month_price || 0)
                 )}}

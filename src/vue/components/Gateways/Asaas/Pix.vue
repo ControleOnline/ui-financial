@@ -1,11 +1,11 @@
 <template>
-  <q-card-section v-if="bitcoin">
+  <q-card-section v-if="pix">
     <q-img
-      :src="'data:image/png;base64,' + bitcoin.encodedImage"
+      :src="'data:image/png;base64,' + pix.encodedImage"
       style="width: 100%; height: auto"
       class="q-mb-md"
     />
-    <q-input v-model="bitcoin.payload" readonly dense label="Copia e Cola">
+    <q-input v-model="pix.payload" readonly dense label="Copia e Cola">
       <template v-slot:append>
         <q-btn flat dense icon="content_copy" @click="copyToClipboard" />
       </template>
@@ -19,7 +19,7 @@ import { mapActions } from "vuex";
 export default {
   data() {
     return {
-      bitcoin: {},
+      pix: {},
     };
   },
   props: {
@@ -33,17 +33,18 @@ export default {
   },
   methods: {
     ...mapActions({
-      getBitcoin: "invoice/getBitcoin",
+      getPix: "asaas/getPix",
     }),
     generate() {
-      this.getBitcoin({
+      this.getPix({
         invoice: this.invoice,
       }).then((response) => {
-        this.bitcoin = response;
+        console.log(response);
+        this.pix = response;
       });
     },
     copyToClipboard() {
-      navigator.clipboard.writeText(this.bitcoin.payload).then(() => {
+      navigator.clipboard.writeText(this.pix.payload).then(() => {
         this.$q.notify({ type: "positive", message: "Código copiado!" });
       });
     },
