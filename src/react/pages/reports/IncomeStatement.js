@@ -175,7 +175,7 @@ const styles = {
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.12,
     shadowRadius: 6,
-    minHeight: 280,
+    minHeight: 320,
   },
   cardTitle: {
     fontSize: 20,
@@ -352,6 +352,9 @@ const FinancePage = () => {
     year: new Date().getFullYear().toString(),
     people: null,
   });
+  const [loadedYear, setLoadedYear] = useState(
+    new Date().getFullYear().toString(),
+  );
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState('');
@@ -363,6 +366,8 @@ const FinancePage = () => {
     if (!data || Object.keys(data).length === 0) {
       return {
         totalReceitas: 0,
+        totalRecebido: 0,
+        totalAReceber: 0,
         totalDespesas: 0,
         saldoTotal: 0,
         melhorMes: '',
@@ -371,6 +376,7 @@ const FinancePage = () => {
     }
 
     let totalReceitas = 0;
+    let totalRecebido = 0;
     let totalDespesas = 0;
     let melhorSaldo = -Infinity;
     let piorSaldo = Infinity;
@@ -379,10 +385,15 @@ const FinancePage = () => {
 
     Object.values(data).forEach((month, index) => {
       const receitas = month.receive?.total_month_price || 0;
+      const recebido =
+        month.receive?.received_month_price ||
+        month.receive?.paid_month_price ||
+        0;
       const despesas = month.pay?.total_month_price || 0;
       const saldo = receitas - despesas;
 
       totalReceitas += receitas;
+      totalRecebido += recebido;
       totalDespesas += despesas;
 
       if (saldo > melhorSaldo) {
@@ -398,6 +409,8 @@ const FinancePage = () => {
 
     return {
       totalReceitas,
+      totalRecebido,
+      totalAReceber: totalReceitas - totalRecebido,
       totalDespesas,
       saldoTotal: totalReceitas - totalDespesas,
       melhorMes,
@@ -408,21 +421,22 @@ const FinancePage = () => {
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [currentCompany]),
+    }, [loadData]),
   );
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setError(null);
       if (currentCompany) {
         const updatedFilters = {...filters, people: currentCompany.id};
         setFilters(updatedFilters);
         await invoiceActions.getIncomeStatements(updatedFilters);
+        setLoadedYear(updatedFilters.year);
       }
     } catch (err) {
       setError('Erro ao carregar dados financeiros. Tente novamente.');
     }
-  };
+  });
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -487,9 +501,12 @@ const FinancePage = () => {
 
   const renderMonthCard = ({item, index}) => {
     const monthName = getMonthName(index + 1);
-    const receitas = item.receive?.total_month_price || 0;
+    const totalReceitas = item.receive?.total_month_price || 0;
+    const recebido =
+      item.receive?.received_month_price || item.receive?.paid_month_price || 0;
+    const aReceber = totalReceitas - recebido;
     const despesas = item.pay?.total_month_price || 0;
-    const saldo = receitas - despesas;
+    const saldo = totalReceitas - despesas;
 
     return (
       <View style={styles.card}>
@@ -524,16 +541,23 @@ const FinancePage = () => {
         {/* Footer */}
         <View style={styles.cardFooter}>
           <View style={styles.footerRow}>
-            <Text style={styles.footerLabel}>Receita</Text>
+            <Text style={styles.footerLabel}>Total</Text>
             <Text style={[styles.footerValue, styles.positiveValue]}>
-              {formatMoney(receitas)}
+              {formatMoney(totalReceitas)}
             </Text>
           </View>
 
           <View style={styles.footerRow}>
-            <Text style={styles.footerLabel}>Saldo</Text>
-            <Text style={[styles.balanceValue, {color: getBalanceColor(item)}]}>
-              {formatMoney(saldo)}
+            <Text style={styles.footerLabel}>Recebido</Text>
+            <Text style={[styles.footerValue, styles.positiveValue]}>
+              {formatMoney(recebido)}
+            </Text>
+          </View>
+
+          <View style={styles.footerRow}>
+            <Text style={styles.footerLabel}>À Receber</Text>
+            <Text style={[styles.footerValue, styles.neutralValue]}>
+              {formatMoney(aReceber)}
             </Text>
           </View>
         </View>
@@ -596,13 +620,23 @@ const FinancePage = () => {
         {/* Resumo Anual */}
         {data && Object.keys(data).length > 0 && (
           <View style={styles.summaryContainer}>
-            <Text style={styles.summaryTitle}>
-              Resumo do Ano {filters.year}
-            </Text>
+            <Text style={styles.summaryTitle}>Resumo do Ano {loadedYear}</Text>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Total de Receitas</Text>
               <Text style={[styles.summaryValue, styles.positiveValue]}>
                 {formatMoney(yearSummary.totalReceitas)}
+              </Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Total Recebido</Text>
+              <Text style={[styles.summaryValue, styles.positiveValue]}>
+                {formatMoney(yearSummary.totalRecebido)}
+              </Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Total À Receber</Text>
+              <Text style={[styles.summaryValue, styles.neutralValue]}>
+                {formatMoney(yearSummary.totalAReceber)}
               </Text>
             </View>
             <View style={styles.summaryRow}>
@@ -647,7 +681,7 @@ const FinancePage = () => {
           !isLoading && (
             <View style={styles.emptyState}>
               <Text style={styles.emptyStateText}>
-                Nenhum dado financeiro encontrado para o ano {filters.year}.
+                Nenhum dado financeiro encontrado para o ano {loadedYear}.
               </Text>
             </View>
           )
