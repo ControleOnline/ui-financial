@@ -21,7 +21,7 @@ export default function getConfigs($components, context, myCompany) {
         component: $components.DefaultTable,
         store: "paymentType",
         filters: {
-          people: "/people/" + myCompany.id,
+          //people: "/people/" + myCompany.id,
         },
       },
       wallet: {
