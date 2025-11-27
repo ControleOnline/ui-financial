@@ -96,3 +96,24 @@ export function getPaylist({ commit }, data) {
       throw e;
     });
 }
+
+export function getCashRegister({commit}, params = {}) {
+  commit(types.SET_ISLOADING);
+
+  const options = {
+    method: 'GET',
+    params: params,
+  };
+
+  return api
+    .fetch('/cash-register', options)
+    .then(data => {
+      commit(types.SET_ISLOADING, false);
+      return data;
+    })
+    .catch(e => {
+      commit(types.SET_ISLOADING, false);
+      commit(types.SET_ERROR, e.message);
+      throw e;
+    });
+}
