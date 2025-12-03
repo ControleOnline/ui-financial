@@ -54,7 +54,7 @@ export default {
         saveFormat: function (value) {
           return value ? "/people/" + (value.value || value) : null;
         },
-      },      
+      },
       {
         sortable: true,
         filterClass: "col-1 q-pa-xs",
@@ -110,6 +110,7 @@ export default {
         },
       },
       {
+        translate: true,
         sortable: true,
         filterClass: "col-2 q-pa-xs",
         formClass: "col-6",
@@ -252,7 +253,7 @@ export default {
       {
         inputType: "float",
         filterClass: "col-2 q-pa-xs",
-        formClass: "col-6",        
+        formClass: "col-6",
         filters: false,
         sortable: true,
         name: "price",
