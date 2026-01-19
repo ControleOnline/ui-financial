@@ -343,7 +343,7 @@ const styles = {
 };
 
 const FinancePage = () => {
-  const invoiceStore = useStore('invoice')';
+  const invoiceStore = useStore('invoice');
   const invoiceActions = invoiceStore.actions;
   const getters = invoiceStore.getters;
   const peopleStore = useStore('people');
