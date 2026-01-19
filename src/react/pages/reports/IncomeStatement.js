@@ -13,7 +13,7 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
-import {useStores} from '@store';
+import {useStore} from '@store';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 
 const {width} = Dimensions.get('window');
@@ -343,10 +343,10 @@ const styles = {
 };
 
 const FinancePage = () => {
-  const invoiceStore = useStores(state => state.invoice);
+  const invoiceStore = useStore('invoice')';
   const invoiceActions = invoiceStore.actions;
   const getters = invoiceStore.getters;
-  const peopleStore = useStores(state => state.people);
+  const peopleStore = useStore('people');
   const peopleGetters = peopleStore.getters;
   const {currentCompany, isLoading} = peopleGetters;
   const {items: data} = getters;
