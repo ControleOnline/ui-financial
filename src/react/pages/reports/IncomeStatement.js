@@ -6,13 +6,14 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
-  SafeAreaView,
   FlatList,
   Alert,
   RefreshControl,
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 import {useStore} from '@store';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 
