@@ -9,7 +9,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useStore } from '@store';
 import css from '@controleonline/ui-orders/src/react/css/orders';
 import Formatter from '@controleonline/ui-common/src/utils/formatter.js';
-import CategoryList from '@controleonline/ui-common/src/react/components/lists/CategoryList';
+import CategoriesList from '@controleonline/ui-common/src/react/components/lists/CategoriesList';
 import StatusList from '@controleonline/ui-common/src/react/components/lists/StatusList';
 import WalletList from '@controleonline/ui-common/src/react/components/lists/WalletList';
 
@@ -18,18 +18,18 @@ function Payables() {
   const invoiceStore = useStore("invoice");
   const peopleStore = useStore('people');
   const statusStore = useStore('status');
-  const categoryStore = useStore('category');
+  const categoriesStore = useStore('categories');
   const walletStore = useStore('wallet');
 
   const { getters: peopleGetters } = peopleStore;
-  const { getters: categoryGetters } = categoryStore;
+  const { getters: categoriesGetters } = categoriesStore;
   const { getters: statusGetters } = statusStore;
   const { getters: walletGetters } = walletStore;
   const { getters: invoiceGetters, actions: invoiceActions } = invoiceStore;
 
   const { items: invoices } = invoiceGetters;
   const { item: status } = statusGetters;
-  const { item: category } = categoryGetters;
+  const { item: categories } = categoriesGetters;
   const { item: wallet } = walletGetters;
 
   const { currentCompany } = peopleGetters;
@@ -57,7 +57,7 @@ function Payables() {
   useFocusEffect(
     useCallback(() => {
         fetchInvoices();
-    }, [category]),
+    }, [categories]),
   );
 
   useFocusEffect(
@@ -115,10 +115,12 @@ function Payables() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <StatusList context={'invoice'} />
-      <CategoryList company_id={currentCompany?.id} context={'payer'} />
-      <WalletList people_id={currentCompany?.id} />
+    <View style={{ flex: 1}}>
+      <View style={{ flexDirection: 'row' }}>
+        <StatusList/>
+        <CategoriesList company_id={currentCompany?.id} context={'payer'} />
+        <WalletList people_id={currentCompany?.id} />
+      </View>
 
       <FlatList
         data={invoices}
