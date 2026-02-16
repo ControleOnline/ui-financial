@@ -45,25 +45,7 @@ function Payables() {
     useCallback(() => {
       if (currentCompany)
         fetchInvoices();
-    }, [currentCompany]),
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-        fetchInvoices();
-    }, [status]),
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-        fetchInvoices();
-    }, [categories]),
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-        fetchInvoices();
-    }, [wallet]),
+    }, [currentCompany, status, categories, wallet]),
   );
 
   const renderItem = ({ item }) => {
@@ -118,7 +100,7 @@ function Payables() {
     <View style={{ flex: 1}}>
       <View style={{ flexDirection: 'row' }}>
         <StatusList context={'invoice'} />
-        <CategoriesList company_id={currentCompany?.id} context={'payer'} />
+        <CategoriesList context={'payer'} />
         <WalletList people_id={currentCompany?.id} />
       </View>
 
