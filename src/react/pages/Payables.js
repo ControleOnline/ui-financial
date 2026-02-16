@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 
-function App() {
+function Payables() {
   return (
     <View>
       <Text>Contas a pagar</Text>
@@ -9,4 +9,4 @@ function App() {
   );
 }
 
-export default App;
+export default Payables;
