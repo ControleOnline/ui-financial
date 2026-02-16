@@ -117,7 +117,7 @@ function Payables() {
   return (
     <View style={{ flex: 1}}>
       <View style={{ flexDirection: 'row' }}>
-        <StatusList/>
+        <StatusList context={'invoice'} />
         <CategoriesList company_id={currentCompany?.id} context={'payer'} />
         <WalletList people_id={currentCompany?.id} />
       </View>
