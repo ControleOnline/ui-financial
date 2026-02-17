@@ -15,6 +15,8 @@ import CategoriesList from '@controleonline/ui-common/src/react/components/lists
 import StatusList from '@controleonline/ui-common/src/react/components/lists/StatusList';
 import WalletList from '@controleonline/ui-common/src/react/components/lists/WalletList';
 import PaymentTypeList from '@controleonline/ui-common/src/react/components/lists/PaymentTypeList';
+import IdInput from '@controleonline/ui-common/src/react/components/inputs/IdInput';
+import DateInput from '@controleonline/ui-common/src/react/components/inputs/DateInput';
 
 function Payables() {
 
@@ -37,6 +39,7 @@ function Payables() {
   const { item: categories } = categoriesGetters;
   const { item: wallet } = walletGetters;
   const { item: paymentType } = paymentTypeGetters;
+  const { filterId, filterDueDate } = invoiceGetters;
 
   const { currentCompany } = peopleGetters;
 
@@ -47,6 +50,8 @@ function Payables() {
       categories: categories?.id,
       wallet: wallet?.id,
       paymentType: paymentType?.id,
+      id: filterId,
+      dueDate: filterDueDate,
     });
   }
 
@@ -54,7 +59,7 @@ function Payables() {
     useCallback(() => {
       if (currentCompany)
         fetchInvoices();
-    }, [currentCompany, status, categories, wallet, paymentType]),
+    }, [currentCompany, status, categories, wallet, paymentType, filterId, filterDueDate]),
   );
 
   const renderHeader = () => (
@@ -114,10 +119,10 @@ function Payables() {
           #{item.id}
         </Text>
         <Text style={{ flex: 1.2, fontSize: 12, color: '#666' }}>
-          {item?.originWallet?.wallet || 'xxxx'}
+          {item?.originWallet?.wallet || '-'}
         </Text>
         <Text style={{ flex: 1.2, fontSize: 12, color: '#666' }}>
-          {item?.receiver}
+          {item?.destinationWallet?.wallet || '-'}
         </Text>
         <Text style={{ flex: 1, fontSize: 12, color: '#666' }}>
           {item?.categories?.category || '-'}
@@ -154,9 +159,11 @@ function Payables() {
   return (
     <View style={{ flex: 1 }}>
       <View style={{ flexDirection: 'row', marginBottom: 12 }}>
+        <IdInput />
         <ReceiverList context={'payer'} />
         <CategoriesList context={'payer'} />
         <StatusList context={'invoice'} />
+        <DateInput />
         <WalletList people_id={currentCompany?.id} />
         <PaymentTypeList context={'invoice'} />
       </View>
