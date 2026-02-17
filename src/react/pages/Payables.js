@@ -12,6 +12,7 @@ import Formatter from '@controleonline/ui-common/src/utils/formatter.js';
 import CategoriesList from '@controleonline/ui-common/src/react/components/lists/CategoriesList';
 import StatusList from '@controleonline/ui-common/src/react/components/lists/StatusList';
 import WalletList from '@controleonline/ui-common/src/react/components/lists/WalletList';
+import PaymentTypeList from '@controleonline/ui-common/src/react/components/lists/PaymentTypeList';
 
 function Payables() {
 
@@ -20,32 +21,40 @@ function Payables() {
   const statusStore = useStore('status');
   const categoriesStore = useStore('categories');
   const walletStore = useStore('wallet');
+  const paymentTypeStore = useStore('paymentType');
 
   const { getters: peopleGetters } = peopleStore;
   const { getters: categoriesGetters } = categoriesStore;
   const { getters: statusGetters } = statusStore;
   const { getters: walletGetters } = walletStore;
+  const { getters: paymentTypeGetters } = paymentTypeStore;
   const { getters: invoiceGetters, actions: invoiceActions } = invoiceStore;
 
   const { items: invoices } = invoiceGetters;
   const { item: status } = statusGetters;
   const { item: categories } = categoriesGetters;
   const { item: wallet } = walletGetters;
+  const { item: paymentType } = paymentTypeGetters;
 
   const { currentCompany } = peopleGetters;
 
   const fetchInvoices = function () {
+
     invoiceActions.getItems({
       payer: currentCompany?.id,
-      status: status?.id
+      status: status?.id,
+      categories: categories?.id,
+      wallet: wallet?.id,
+      paymentType: paymentType?.id,
     });
+    
   }
 
   useFocusEffect(
     useCallback(() => {
       if (currentCompany)
         fetchInvoices();
-    }, [currentCompany, status, categories, wallet]),
+    }, [currentCompany, status, categories, wallet, paymentType]),
   );
 
   const renderItem = ({ item }) => {
@@ -99,9 +108,10 @@ function Payables() {
   return (
     <View style={{ flex: 1}}>
       <View style={{ flexDirection: 'row' }}>
-        <StatusList context={'invoice'} />
         <CategoriesList context={'payer'} />
+        <StatusList context={'invoice'} />
         <WalletList people_id={currentCompany?.id} />
+        <PaymentTypeList context={'invoice'} />
       </View>
 
       <FlatList
