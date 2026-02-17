@@ -4,11 +4,13 @@ import {
   View,
   TouchableOpacity,
   FlatList,
+  ScrollView,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useStore } from '@store';
 import css from '@controleonline/ui-orders/src/react/css/orders';
 import Formatter from '@controleonline/ui-common/src/utils/formatter.js';
+import ReceiverList from '@controleonline/ui-common/src/react/components/lists/ReceiverList';
 import CategoriesList from '@controleonline/ui-common/src/react/components/lists/CategoriesList';
 import StatusList from '@controleonline/ui-common/src/react/components/lists/StatusList';
 import WalletList from '@controleonline/ui-common/src/react/components/lists/WalletList';
@@ -39,7 +41,6 @@ function Payables() {
   const { currentCompany } = peopleGetters;
 
   const fetchInvoices = function () {
-
     invoiceActions.getItems({
       payer: currentCompany?.id,
       status: status?.id,
@@ -47,7 +48,6 @@ function Payables() {
       wallet: wallet?.id,
       paymentType: paymentType?.id,
     });
-    
   }
 
   useFocusEffect(
@@ -57,57 +57,104 @@ function Payables() {
     }, [currentCompany, status, categories, wallet, paymentType]),
   );
 
-  const renderItem = ({ item }) => {
+  const renderHeader = () => (
+    <View style={{
+      flexDirection: 'row',
+      backgroundColor: '#FFC700',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 2,
+      borderBottomColor: '#FFC700',
+    }}>
+      <Text style={{ flex: 0.8, fontWeight: 'bold', fontSize: 12 }}>
+        {global.t?.t("invoice", "label", "id")}
+      </Text>
+      <Text style={{ flex: 1.2, fontWeight: 'bold', fontSize: 12 }}>
+        {global.t?.t("invoice", "label", "originWallet")}
+      </Text>
+      <Text style={{ flex: 1.2, fontWeight: 'bold', fontSize: 12 }}>
+        {global.t?.t("invoice", "label", "receiver")}
+      </Text>
+      <Text style={{ flex: 1, fontWeight: 'bold', fontSize: 12 }}>
+        {global.t?.t("invoice", "label", "category")}
+      </Text>
+      <Text style={{ flex: 1.2, fontWeight: 'bold', fontSize: 12 }}>
+        {global.t?.t("invoice", "label", "dueDate")}
+      </Text>
+      <Text style={{ flex: 1.1, fontWeight: 'bold', fontSize: 12 }}>
+        {global.t?.t("invoice", "label", "paymentType")}
+      </Text>
+      <Text style={{ flex: 0.7, fontWeight: 'bold', fontSize: 12 }}>
+        {global.t?.t("invoice", "label", "installments")}
+      </Text>
+      <Text style={{ flex: 0.8, fontWeight: 'bold', fontSize: 12 }}>
+        {global.t?.t("invoice", "label", "value")}
+      </Text>
+      <Text style={{ flex: 0.9, fontWeight: 'bold', fontSize: 12 }}>
+        {global.t?.t("invoice", "label", "status")}
+      </Text>
+    </View>
+  );
 
+  const renderItem = ({ item, index }) => {
+    const backgroundColor = index % 2 === 0 ? '#fff' : '#f5f5f5';
     const statusColor = item?.status?.color || '#ccc';
 
     return (
       <View style={{
-        backgroundColor: '#fff',
-        marginHorizontal: 16,
-        marginVertical: 8,
-        borderRadius: 8,
-        padding: 16,
-        elevation: 3,
+        flexDirection: 'row',
+        backgroundColor: backgroundColor,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e0e0e0',
+        alignItems: 'center',
       }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={{ fontWeight: 'bold', fontSize: 16 }}>
-            #{item.id}
-          </Text>
-
+        <Text style={{ flex: 0.8, fontWeight: 'bold', fontSize: 12, color: '#000' }}>
+          #{item.id}
+        </Text>
+        <Text style={{ flex: 1.2, fontSize: 12, color: '#666' }}>
+          {item?.originWallet?.wallet || 'xxxx'}
+        </Text>
+        <Text style={{ flex: 1.2, fontSize: 12, color: '#666' }}>
+          {item?.receiver}
+        </Text>
+        <Text style={{ flex: 1, fontSize: 12, color: '#666' }}>
+          {item?.categories?.category || '-'}
+        </Text>
+        <Text style={{ flex: 1.2, fontSize: 12, color: '#666' }}>
+          {Formatter.formatDateYmdTodmY(item?.dueDate)}
+        </Text>
+        <Text style={{ flex: 1.1, fontSize: 12, color: '#666' }}>
+          {item?.paymentType?.paymentType || '-'}
+        </Text>
+        <Text style={{ flex: 0.7, fontSize: 12, color: '#666' }}>
+          {item?.installments || '-'}
+        </Text>
+        <Text style={{ flex: 0.8, fontSize: 12, fontWeight: '600', color: '#000' }}>
+          {Formatter.formatMoney(item?.price)}
+        </Text>
+        <View style={{ flex: 0.9, justifyContent: 'center' }}>
           <View style={{
             backgroundColor: statusColor,
             paddingHorizontal: 10,
             paddingVertical: 4,
             borderRadius: 20,
+            alignSelf: 'flex-start',
           }}>
             <Text style={{ color: '#fff', fontSize: 12 }}>
-              {item?.status?.status}
+              {global.t?.t("invoice", "label", item?.status?.status)}
             </Text>
           </View>
-        </View>
-
-        <View style={{ marginTop: 10 }}>
-          <Text>
-            Valor: {Formatter.formatMoney(item?.price)}
-          </Text>
-          <Text>
-            Vencimento: {Formatter.formatDateYmdTodmY(item?.dueDate)}
-          </Text>
-          <Text>
-            Carteira destino: {item?.destinationWallet?.wallet}
-          </Text>
-          <Text>
-            Forma de pagamento: {item?.paymentType?.paymentType}
-          </Text>
         </View>
       </View>
     );
   };
 
   return (
-    <View style={{ flex: 1}}>
-      <View style={{ flexDirection: 'row' }}>
+    <View style={{ flex: 1 }}>
+      <View style={{ flexDirection: 'row', marginBottom: 12 }}>
+        <ReceiverList context={'payer'} />
         <CategoriesList context={'payer'} />
         <StatusList context={'invoice'} />
         <WalletList people_id={currentCompany?.id} />
@@ -118,6 +165,8 @@ function Payables() {
         data={invoices}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
+        ListHeaderComponent={renderHeader}
+        scrollEnabled={true}
         contentContainerStyle={{ paddingBottom: 40 }}
       />
     </View>
