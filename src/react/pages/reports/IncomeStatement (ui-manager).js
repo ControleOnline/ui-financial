@@ -219,7 +219,7 @@ const IncomeStatement = () => {
             onPress={() => toggleMonthDetails(monthIndex, filters.year)}
           >
             <Icon
-              name={isExpanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+              name={isExpanded ? 'chevron-up' : 'chevron-down'}
               size={24}
               color="#2196f3"
             />
