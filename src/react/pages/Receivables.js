@@ -161,11 +161,11 @@ function Receivables() {
       <View style={{ flexDirection: 'row', marginBottom: 12 }}>
         <IdInput />
         <ReceiverList context={'receiver'} />
-        <CategoriesList context={'receiver'} />
-        <StatusList context={'invoice'} />
-        <DateInput />
         <WalletList people_id={currentCompany?.id} />
+        <CategoriesList context={'receiver'} />
+        <DateInput />
         <PaymentTypeList context={'invoice'} />
+        <StatusList context={'invoice'} />
       </View>
 
       <FlatList

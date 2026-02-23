@@ -160,12 +160,12 @@ function Payables() {
     <View style={{ flex: 1 }}>
       <View style={{ flexDirection: 'row', marginBottom: 12 }}>
         <IdInput />
+        <WalletList people_id={currentCompany?.id} />
         <ReceiverList context={'payer'} />
         <CategoriesList context={'payer'} />
-        <StatusList context={'invoice'} />
         <DateInput />
-        <WalletList people_id={currentCompany?.id} />
         <PaymentTypeList context={'invoice'} />
+        <StatusList context={'invoice'} />
       </View>
 
       <FlatList
