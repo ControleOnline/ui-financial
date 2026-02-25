@@ -20,6 +20,23 @@ import DateInput from '@controleonline/ui-common/src/react/components/inputs/Dat
 
 function Payables() {
 
+  const getEntityId = entity => {
+    if (!entity) return null;
+    if (typeof entity === 'number' || typeof entity === 'string') {
+      const value = String(entity);
+      const match = value.match(/\d+/g);
+      return match ? Number(match[match.length - 1]) : null;
+    }
+    if (typeof entity === 'object') {
+      if (entity.id) return Number(entity.id);
+      if (entity['@id']) {
+        const match = String(entity['@id']).match(/\d+/g);
+        return match ? Number(match[match.length - 1]) : null;
+      }
+    }
+    return null;
+  };
+
   const invoiceStore = useStore("invoice");
   const peopleStore = useStore('people');
   const statusStore = useStore('status');
@@ -39,13 +56,22 @@ function Payables() {
   const { item: categories } = categoriesGetters;
   const { item: wallet } = walletGetters;
   const { item: paymentType } = paymentTypeGetters;
-  const { filterId, filterDueDate } = invoiceGetters;
+  const filterId = invoiceGetters?.filters?.id || null;
+  const filterDueDate = invoiceGetters?.filters?.dueDate || null;
+  const { reload } = invoiceGetters;
 
   const { currentCompany } = peopleGetters;
+
+  const filteredInvoices = (invoices || []).filter(invoice => {
+    const payerId = getEntityId(invoice?.payer);
+    const receiverId = getEntityId(invoice?.receiver);
+    return !(payerId && receiverId && payerId === receiverId);
+  });
 
   const fetchInvoices = function () {
     invoiceActions.getItems({
       payer: currentCompany?.id,
+      excludeOwnTransfers: 1,
       status: status?.id,
       categories: categories?.id,
       wallet: wallet?.id,
@@ -59,7 +85,7 @@ function Payables() {
     useCallback(() => {
       if (currentCompany)
         fetchInvoices();
-    }, [currentCompany, status, categories, wallet, paymentType, filterId, filterDueDate]),
+    }, [currentCompany, status, categories, wallet, paymentType, filterId, filterDueDate, reload]),
   );
 
   const renderHeader = () => (
@@ -169,7 +195,7 @@ function Payables() {
       </View>
 
       <FlatList
-        data={invoices}
+        data={filteredInvoices}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
         ListHeaderComponent={renderHeader}
