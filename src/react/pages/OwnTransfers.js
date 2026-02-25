@@ -6,7 +6,7 @@ import {useStore} from '@store';
 import Formatter from '@controleonline/ui-common/src/utils/formatter.js';
 import StatusList from '@controleonline/ui-common/src/react/components/lists/StatusList';
 import IdInput from '@controleonline/ui-common/src/react/components/inputs/IdInput';
-import DateInput from '@controleonline/ui-common/src/react/components/inputs/DateInput';
+import DateInput from '@controleonline/ui-common/src/react/components/inputs/DateInput2';
 
 function OwnTransfers() {
 	const invoiceStore = useStore('invoice');
@@ -35,7 +35,7 @@ function OwnTransfers() {
 	}, [currentCompany?.id]);
 
 	const fetchInvoices = function () {
-		invoiceActions.getItems({
+		const params = {
 			payer: currentCompany?.id,
 			receiver: currentCompany?.id,
 			ownTransfers: 1,
@@ -43,8 +43,12 @@ function OwnTransfers() {
 			sourceWallet: sourceWalletId,
 			destinationWallet: destinationWalletId,
 			id: filterId,
-			dueDate: filterDueDate,
-		});
+		};
+
+		if (filterDueDate?.start) params['dueDate[after]'] = filterDueDate.start;
+		if (filterDueDate?.end) params['dueDate[before]'] = filterDueDate.end;
+
+		invoiceActions.getItems(params);
 	};
 
 	useFocusEffect(

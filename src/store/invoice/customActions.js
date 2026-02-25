@@ -181,8 +181,16 @@ export function setFilterId({ commit, getters }, value) {
 export function setFilterDueDate({ commit, getters }, value) {
   const currentFilters = {...(getters.filters || {})};
 
-  if (value) currentFilters.dueDate = value;
-  else delete currentFilters.dueDate;
+  if (!value) {
+    delete currentFilters.dueDate;
+  } else if (typeof value === 'object') {
+    const start = value.start || null;
+    const end = value.end || null;
+    if (start || end) currentFilters.dueDate = { start, end };
+    else delete currentFilters.dueDate;
+  } else {
+    currentFilters.dueDate = { start: value, end: value };
+  }
 
   commit(types.SET_FILTERS, currentFilters);
 }
