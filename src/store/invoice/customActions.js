@@ -167,35 +167,3 @@ export function getPix({ commit }, data) {
       throw e;
     });
 }
-
-export function setFilterId({ commit, getters }, value) {
-  const cleaned = (value || '').toString().replace(/\D/g, '');
-  const currentFilters = {...(getters.filters || {})};
-
-  if (cleaned) currentFilters.id = cleaned;
-  else delete currentFilters.id;
-
-  commit(types.SET_FILTERS, currentFilters);
-}
-
-export function setFilterDueDate({ commit, getters }, value) {
-  const currentFilters = {...(getters.filters || {})};
-
-  if (!value) {
-    delete currentFilters.dueDate;
-  } else if (typeof value === 'object') {
-    const start = value.start || null;
-    const end = value.end || null;
-    if (start || end) currentFilters.dueDate = { start, end };
-    else delete currentFilters.dueDate;
-  } else {
-    currentFilters.dueDate = { start: value, end: value };
-  }
-
-  commit(types.SET_FILTERS, currentFilters);
-}
-
-export function fetchInvoices({ commit }) {
-  commit(types.SET_RELOAD, Date.now());
-  return Promise.resolve();
-}
