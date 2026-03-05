@@ -68,22 +68,22 @@ function OwnTransfers() {
 				borderBottomColor: '#FFC700',
 			}}>
 			<Text style={{flex: 0.8, fontWeight: 'bold', fontSize: 12}}>
-				{global.t?.t('ownTransfers', 'label', 'id')}
+				{global.t?.t('invoice', 'label', 'id')}
 			</Text>
 			<Text style={{flex: 1.5, fontWeight: 'bold', fontSize: 12}}>
-				{global.t?.t('ownTransfers', 'label', 'originWallet')}
+				{global.t?.t('invoice', 'label', 'originWallet')}
 			</Text>
 			<Text style={{flex: 1.5, fontWeight: 'bold', fontSize: 12}}>
-				{global.t?.t('ownTransfers', 'label', 'destinationWallet')}
+				{global.t?.t('invoice', 'label', 'destinationWallet')}
 			</Text>
 			<Text style={{flex: 1.2, fontWeight: 'bold', fontSize: 12}}>
-				{global.t?.t('ownTransfers', 'label', 'dueDate')}
+				{global.t?.t('invoice', 'label', 'dueDate')}
 			</Text>
 			<Text style={{flex: 0.9, fontWeight: 'bold', fontSize: 12}}>
-				{global.t?.t('ownTransfers', 'label', 'value')}
+				{global.t?.t('invoice', 'label', 'value')}
 			</Text>
 			<Text style={{flex: 0.9, fontWeight: 'bold', fontSize: 12}}>
-				{global.t?.t('ownTransfers', 'label', 'status')}
+				{global.t?.t('invoice', 'label', 'status')}
 			</Text>
 		</View>
 	);
@@ -128,7 +128,7 @@ function OwnTransfers() {
 							alignSelf: 'flex-start',
 						}}>
 						<Text style={{color: '#fff', fontSize: 12}}>
-							{global.t?.t('ownTransfers', 'label', item?.status?.status)}
+							{global.t?.t('invoice', 'label', item?.status?.status)}
 						</Text>
 					</View>
 				</View>
@@ -142,14 +142,14 @@ function OwnTransfers() {
 				<IdInput />
 				<View style={{marginVertical: 10, minWidth: 240, marginRight: 10}}>
 					<Text style={{fontSize: 16, marginBottom: 5}}>
-						{global.t?.t('ownTransfers', 'label', 'originWallet')}
+						{global.t?.t('invoice', 'label', 'originWallet')}
 					</Text>
 					<View style={{borderWidth: 1, borderColor: '#ccc', borderRadius: 6}}>
 						<Picker
 							selectedValue={sourceWalletId}
 							onValueChange={value => setSourceWalletId(value)}>
 							<Picker.Item
-								label={global.t?.t('ownTransfers', 'label', 'select')}
+								label={global.t?.t('invoice', 'label', 'select')}
 								value={null}
 							/>
 							{(wallets || []).map(wallet => (
@@ -164,14 +164,14 @@ function OwnTransfers() {
 				</View>
 				<View style={{marginVertical: 10, minWidth: 240, marginRight: 10}}>
 					<Text style={{fontSize: 16, marginBottom: 5}}>
-						{global.t?.t('ownTransfers', 'label', 'destinationWallet')}
+						{global.t?.t('invoice', 'label', 'destinationWallet')}
 					</Text>
 					<View style={{borderWidth: 1, borderColor: '#ccc', borderRadius: 6}}>
 						<Picker
 							selectedValue={destinationWalletId}
 							onValueChange={value => setDestinationWalletId(value)}>
 							<Picker.Item
-								label={global.t?.t('ownTransfers', 'label', 'select')}
+								label={global.t?.t('invoice', 'label', 'select')}
 								value={null}
 							/>
 							{(wallets || []).map(wallet => (
