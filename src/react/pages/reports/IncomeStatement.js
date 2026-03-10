@@ -61,14 +61,14 @@ const FinancePage = () => {
       return '--/--';
     }
 
-    return parsed.toLocaleDateString('pt-BR', {
+    return parsed.toLocaleDateString('pt-br', {
       day: '2-digit',
       month: '2-digit',
     });
   };
 
   const formatMoney = value => {
-    return parseFloat(value || 0).toLocaleString('pt-BR', {
+    return parseFloat(value || 0).toLocaleString('pt-br', {
       style: 'currency',
       currency: 'BRL',
     });
