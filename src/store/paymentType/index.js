@@ -1,4 +1,4 @@
-import * as actions from '@controleonline/ui-default/src/store/default/actions';
+﻿import * as actions from '@controleonline/ui-default/src/store/default/actions';
 import * as getters from '@controleonline/ui-default/src/store/default/getters';
 import mutations from '@controleonline/ui-default/src/store/default/mutations';
 import Formatter from '@controleonline/ui-common/src/utils/formatter.js';
@@ -6,14 +6,16 @@ import Formatter from '@controleonline/ui-common/src/utils/formatter.js';
 export default {
   namespaced: true,
   state: {
-    item: null, //Don´t touch plz....
-    items: null, //Don´t touch plz....
+    item: null, //DonÂ´t touch plz....
+    items: null, //DonÂ´t touch plz....
     resourceEndpoint: 'payment_types',
     isLoading: false,
     isSaving: false,
     error: '',
 
     totalItems: 0,messages:[], message:{},
+
+    summary: {},
     filters: {},
     columns: [
       {
@@ -35,8 +37,8 @@ export default {
         align: 'left',
         label: 'frequency',
         list: [
-          {label: 'Única', value: 'single'},
-          {label: 'Diário', value: 'daily'},
+          {label: 'Ãšnica', value: 'single'},
+          {label: 'DiÃ¡rio', value: 'daily'},
           {label: 'Semanal', value: 'weeakly'},
           {label: 'Mensal', value: 'monthly'},
         ],
@@ -52,7 +54,7 @@ export default {
         align: 'left',
         label: 'installments',
         list: [
-          {label: 'Única', value: 'single'},
+          {label: 'Ãšnica', value: 'single'},
           {label: 'Parcelas', value: 'split'},
         ],
         externalFilter: false,

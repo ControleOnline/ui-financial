@@ -1,4 +1,4 @@
-import * as actions from '@controleonline/ui-default/src/store/default/actions';
+﻿import * as actions from '@controleonline/ui-default/src/store/default/actions';
 import * as getters from '@controleonline/ui-default/src/store/default/getters';
 import mutations from '@controleonline/ui-default/src/store/default/mutations';
 import Formatter from '@controleonline/ui-common/src/utils/formatter.js';
@@ -6,13 +6,14 @@ import Formatter from '@controleonline/ui-common/src/utils/formatter.js';
 export default {
   namespaced: true,
   state: {
-    item: null, //Don´t touch plz....
-    items: null, //Don´t touch plz....
+    item: null, //DonÂ´t touch plz....
+    items: null, //DonÂ´t touch plz....
     resourceEndpoint: 'wallets',
     isLoading: false,
     isSaving: false,
     error: '',
     totalItems: 0,messages:[], message:{},
+    summary: {},
     filters: {},
     columns: [
       {
