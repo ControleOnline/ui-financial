@@ -10,6 +10,7 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -190,6 +191,8 @@ const FilterInputField = ({ label, value, onChangeText, placeholder, keyboardTyp
 
 function FinancialEntriesPage({ mode = 'receivables' }) {
   const config = MODE_CONFIG[mode] || MODE_CONFIG.receivables;
+  const { width } = useWindowDimensions();
+  const isMobile = width <= 768;
 
   const invoiceStore = useStore('invoice');
   const peopleStore = useStore('people');
@@ -223,6 +226,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   const [destinationWalletId, setDestinationWalletId] = useState('');
 
   const [activeModal, setActiveModal] = useState('');
+  const [isFiltersExpanded, setIsFiltersExpanded] = useState(!isMobile);
 
   const mountedRef = useRef(false);
 
@@ -414,6 +418,45 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     };
   }, [filteredInvoices]);
 
+  const activeFiltersCount = useMemo(() => {
+    const fields = [
+      idFilter,
+      dueDateStart,
+      dueDateEnd,
+      selectedStatusId,
+      selectedCategoryId,
+      selectedWalletId,
+      selectedPaymentTypeId,
+      selectedReceiverId,
+      sourceWalletId,
+      destinationWalletId,
+    ];
+
+    return fields.filter(value => String(value || '').trim() !== '').length;
+  }, [
+    idFilter,
+    dueDateStart,
+    dueDateEnd,
+    selectedStatusId,
+    selectedCategoryId,
+    selectedWalletId,
+    selectedPaymentTypeId,
+    selectedReceiverId,
+    sourceWalletId,
+    destinationWalletId,
+  ]);
+
+  useEffect(() => {
+    if (!isMobile) {
+      setIsFiltersExpanded(true);
+      return;
+    }
+
+    if (activeFiltersCount > 0) {
+      setIsFiltersExpanded(false);
+    }
+  }, [activeFiltersCount, isMobile]);
+
   const renderInvoiceCard = ({ item }) => {
     const statusColor = item?.status?.color || '#94A3B8';
 
@@ -496,79 +539,98 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
       </View>
 
       <View style={styles.filterCard}>
-        <View style={styles.filterGrid}>
-          <FilterInputField
-            label={global.t?.t('invoice', 'label', 'id') || 'Id'}
-            value={idFilter}
-            onChangeText={setIdFilter}
-            placeholder={global.t?.t('idInput', 'label', 'Insert id') || 'Inserir id'}
-            keyboardType="number-pad"
-          />
+        {isMobile && (
+          <TouchableOpacity
+            style={styles.filterHeaderButton}
+            activeOpacity={0.8}
+            onPress={() => setIsFiltersExpanded(prev => !prev)}>
+            <View style={styles.filterHeaderLeft}>
+              <Text style={styles.filterHeaderTitle}>Filtros</Text>
+              {activeFiltersCount > 0 && (
+                <View style={styles.filterCountBadge}>
+                  <Text style={styles.filterCountBadgeText}>{activeFiltersCount}</Text>
+                </View>
+              )}
+            </View>
+            <Icon name={isFiltersExpanded ? 'chevron-up' : 'chevron-down'} size={16} color="#64748B" />
+          </TouchableOpacity>
+        )}
 
-          <FilterSelectField
-            label={global.t?.t('invoice', 'label', 'status') || 'Status'}
-            value={labelById(statusOptions, selectedStatusId, 'status')}
-            onPress={() => setActiveModal('status')}
-          />
+        {(!isMobile || isFiltersExpanded) && (
+          <View style={styles.filterGrid}>
+            <FilterInputField
+              label={global.t?.t('invoice', 'label', 'id') || 'Id'}
+              value={idFilter}
+              onChangeText={setIdFilter}
+              placeholder={global.t?.t('idInput', 'label', 'Insert id') || 'Inserir id'}
+              keyboardType="number-pad"
+            />
 
-          <FilterInputField
-            label={`${global.t?.t('invoice', 'label', 'dueDate') || 'Vencimento'} (inicio)`}
-            value={dueDateStart}
-            onChangeText={setDueDateStart}
-            placeholder="DD/MM/AAAA"
-          />
+            <FilterSelectField
+              label={global.t?.t('invoice', 'label', 'status') || 'Status'}
+              value={labelById(statusOptions, selectedStatusId, 'status')}
+              onPress={() => setActiveModal('status')}
+            />
 
-          <FilterInputField
-            label={`${global.t?.t('invoice', 'label', 'dueDate') || 'Vencimento'} (fim)`}
-            value={dueDateEnd}
-            onChangeText={setDueDateEnd}
-            placeholder="DD/MM/AAAA"
-          />
+            <FilterInputField
+              label={`${global.t?.t('invoice', 'label', 'dueDate') || 'Vencimento'} (inicio)`}
+              value={dueDateStart}
+              onChangeText={setDueDateStart}
+              placeholder="DD/MM/AAAA"
+            />
 
-          {mode !== 'ownTransfers' && (
-            <>
-              <FilterSelectField
-                label={mode === 'payables' ? 'Recebedor' : 'Pagador'}
-                value={labelById(receiverOptions, selectedReceiverId, 'name')}
-                onPress={() => setActiveModal('receiver')}
-              />
+            <FilterInputField
+              label={`${global.t?.t('invoice', 'label', 'dueDate') || 'Vencimento'} (fim)`}
+              value={dueDateEnd}
+              onChangeText={setDueDateEnd}
+              placeholder="DD/MM/AAAA"
+            />
 
-              <FilterSelectField
-                label={global.t?.t('invoice', 'label', 'category') || 'Categoria'}
-                value={labelById(categoryOptions, selectedCategoryId, 'name')}
-                onPress={() => setActiveModal('category')}
-              />
+            {mode !== 'ownTransfers' && (
+              <>
+                <FilterSelectField
+                  label={mode === 'payables' ? 'Recebedor' : 'Pagador'}
+                  value={labelById(receiverOptions, selectedReceiverId, 'name')}
+                  onPress={() => setActiveModal('receiver')}
+                />
 
-              <FilterSelectField
-                label={global.t?.t('invoice', 'label', 'wallet') || 'Carteira'}
-                value={labelById(walletOptions, selectedWalletId, 'wallet')}
-                onPress={() => setActiveModal('wallet')}
-              />
+                <FilterSelectField
+                  label={global.t?.t('invoice', 'label', 'category') || 'Categoria'}
+                  value={labelById(categoryOptions, selectedCategoryId, 'name')}
+                  onPress={() => setActiveModal('category')}
+                />
 
-              <FilterSelectField
-                label={global.t?.t('invoice', 'label', 'payment method') || 'Forma de pagamento'}
-                value={labelById(paymentTypeOptions, selectedPaymentTypeId, 'paymentType')}
-                onPress={() => setActiveModal('paymentType')}
-              />
-            </>
-          )}
+                <FilterSelectField
+                  label={global.t?.t('invoice', 'label', 'wallet') || 'Carteira'}
+                  value={labelById(walletOptions, selectedWalletId, 'wallet')}
+                  onPress={() => setActiveModal('wallet')}
+                />
 
-          {mode === 'ownTransfers' && (
-            <>
-              <FilterSelectField
-                label={global.t?.t('invoice', 'label', 'originWallet') || 'Carteira origem'}
-                value={labelById(walletOptions, sourceWalletId, 'wallet')}
-                onPress={() => setActiveModal('sourceWallet')}
-              />
+                <FilterSelectField
+                  label={global.t?.t('invoice', 'label', 'payment method') || 'Forma de pagamento'}
+                  value={labelById(paymentTypeOptions, selectedPaymentTypeId, 'paymentType')}
+                  onPress={() => setActiveModal('paymentType')}
+                />
+              </>
+            )}
 
-              <FilterSelectField
-                label={global.t?.t('invoice', 'label', 'destinationWallet') || 'Carteira destino'}
-                value={labelById(walletOptions, destinationWalletId, 'wallet')}
-                onPress={() => setActiveModal('destinationWallet')}
-              />
-            </>
-          )}
-        </View>
+            {mode === 'ownTransfers' && (
+              <>
+                <FilterSelectField
+                  label={global.t?.t('invoice', 'label', 'originWallet') || 'Carteira origem'}
+                  value={labelById(walletOptions, sourceWalletId, 'wallet')}
+                  onPress={() => setActiveModal('sourceWallet')}
+                />
+
+                <FilterSelectField
+                  label={global.t?.t('invoice', 'label', 'destinationWallet') || 'Carteira destino'}
+                  value={labelById(walletOptions, destinationWalletId, 'wallet')}
+                  onPress={() => setActiveModal('destinationWallet')}
+                />
+              </>
+            )}
+          </View>
+        )}
       </View>
 
       {isLoading && (
@@ -711,6 +773,44 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
     ...cardShadow,
+  },
+  filterHeaderButton: {
+    height: 42,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    backgroundColor: '#F8FAFC',
+  },
+  filterHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  filterHeaderTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0F172A',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  filterCountBadge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#0EA5E9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  filterCountBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
   },
   filterGrid: {
     flexDirection: 'row',
