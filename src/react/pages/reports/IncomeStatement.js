@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useState} from 'react';
+﻿import React, {useCallback, useMemo, useState} from 'react';
 import {
   Text,
   View,
@@ -14,7 +14,6 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useFocusEffect} from '@react-navigation/native';
 import {useStore} from '@store';
 import {colors} from '@controleonline/../../src/styles/colors';
-import {api} from '@controleonline/ui-common/src/api';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -36,10 +35,10 @@ const MONTHS = [
 
 const FinancePage = () => {
   const insets = useSafeAreaInsets();
+  const invoiceStore = useStore('invoice');
   const peopleStore = useStore('people');
-  const {currentCompany} = peopleStore.getters;
-  const authStore = useStore('auth');
-  const {user: authUser} = authStore.getters || {};
+  const {currentCompany} = peopleStore.getters || {};
+  const getIncomeStatements = invoiceStore?.actions?.getIncomeStatements;
 
   const [period, setPeriod] = useState(7);
   const [exerciseYear, setExerciseYear] = useState(CURRENT_YEAR);
@@ -47,43 +46,15 @@ const FinancePage = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [transactions, setTransactions] = useState([]);
+  const [incomeRows, setIncomeRows] = useState([]);
 
   const isCurrentExerciseYear = exerciseYear === CURRENT_YEAR;
-
-  const formatDate = date => {
-    if (!date) {
-      return '--/--';
-    }
-
-    const parsed = new Date(date);
-    if (Number.isNaN(parsed.getTime())) {
-      return '--/--';
-    }
-
-    return parsed.toLocaleDateString('pt-br', {
-      day: '2-digit',
-      month: '2-digit',
-    });
-  };
 
   const formatMoney = value => {
     return parseFloat(value || 0).toLocaleString('pt-br', {
       style: 'currency',
       currency: 'BRL',
     });
-  };
-
-  const formatDateForApi = date => {
-    if (!date || Number.isNaN(date.getTime())) {
-      return null;
-    }
-
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
   };
 
   const calculateDateRange = ({days, year, month}) => {
@@ -104,75 +75,68 @@ const FinancePage = () => {
     return {start, end};
   };
 
-  const changeExerciseYear = direction => {
-    setExerciseYear(prev => {
-      const next = prev + direction;
-      return Math.max(2000, Math.min(CURRENT_YEAR, next));
-    });
-  };
-
-  const getInvoiceDate = invoice => {
-    const rawDate = invoice?.dueDate || invoice?.createdAt || invoice?.updatedAt;
-    if (!rawDate) {
-      return null;
+  const normalizeIncomeMap = incomeMap => {
+    if (!incomeMap || typeof incomeMap !== 'object' || Array.isArray(incomeMap)) {
+      return {};
     }
 
-    const parsedDate = new Date(rawDate);
-    return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+    return incomeMap;
   };
 
-  const getLoggedPersonId = () => {
-    const candidates = [
-      authUser?.id,
-      authUser?.people?.id,
-      authUser?.person?.id,
-      authUser?.profile?.id,
-    ];
+  const toRows = useCallback(incomeMap => {
+    const normalized = normalizeIncomeMap(incomeMap);
 
-    for (const candidate of candidates) {
-      const parsed = Number(candidate);
-      if (!Number.isNaN(parsed) && parsed > 0) {
-        return parsed;
+    return Object.keys(normalized)
+      .map(key => Number(key))
+      .filter(month => month >= 1 && month <= 12)
+      .map(month => {
+        const monthData = normalized?.[month] || normalized?.[String(month)] || {};
+        const income = Number(monthData?.receive?.total_month_price || 0);
+        const expense = Number(monthData?.pay?.total_month_price || 0);
+
+        return {
+          month,
+          income,
+          expense,
+          balance: income - expense,
+        };
+      })
+      .sort((a, b) => b.month - a.month);
+  }, []);
+
+  const applyPeriodFilter = useCallback(
+    rows => {
+      if (!Array.isArray(rows) || rows.length === 0) {
+        return [];
       }
-    }
 
-    return null;
-  };
+      if (!isCurrentExerciseYear) {
+        return rows.filter(row => row.month === selectedMonth);
+      }
 
-  const isClosedCommissionStatus = status => {
-    const statusId = Number(status?.id);
-    if (statusId === 6 || statusId === 7) {
-      return true;
-    }
+      const {start, end} = calculateDateRange({
+        days: period,
+        year: exerciseYear,
+        month: selectedMonth,
+      });
 
-    const label = String(status?.status || '')
-      .trim()
-      .toLowerCase();
-
-    if (!label) {
-      return false;
-    }
-
-    return (
-      label.includes('pago') ||
-      label.includes('paid') ||
-      label.includes('quitado') ||
-      label.includes('conclu') ||
-      label.includes('finaliz') ||
-      label.includes('closed') ||
-      label.includes('fechado')
-    );
-  };
+      return rows.filter(row => {
+        const monthStart = new Date(exerciseYear, row.month - 1, 1, 0, 0, 0, 0);
+        const monthEnd = new Date(exerciseYear, row.month, 0, 23, 59, 59, 999);
+        return monthEnd >= start && monthStart <= end;
+      });
+    },
+    [exerciseYear, isCurrentExerciseYear, period, selectedMonth],
+  );
 
   const loadTransactions = useCallback(async () => {
     if (!currentCompany?.id) {
       return;
     }
 
-    const loggedPersonId = getLoggedPersonId();
-    if (!loggedPersonId) {
-      setTransactions([]);
-      setError('Usuário logado não identificado para filtrar comissões.');
+    if (typeof getIncomeStatements !== 'function') {
+      setError('Acao getIncomeStatements indisponivel.');
+      setIncomeRows([]);
       return;
     }
 
@@ -180,73 +144,42 @@ const FinancePage = () => {
     setError('');
 
     try {
-      const companyRef = `/people/${currentCompany.id}`;
-      const userRef = `/people/${loggedPersonId}`;
-      const {start, end} = calculateDateRange({
-        days: period,
+      const params = {
+        people: currentCompany.id,
         year: exerciseYear,
-        month: selectedMonth,
-      });
-      const baseParams = {
-        page: 1,
-        itemsPerPage: 300,
-        'order[dueDate]': 'desc',
-        payer: companyRef,
-        receiver: userRef,
-        'dueDate[after]': formatDateForApi(start),
-        'dueDate[before]': formatDateForApi(end),
       };
 
-      const response = await api.fetch('invoices', {
-        params: baseParams,
-      });
+      if (!isCurrentExerciseYear) {
+        params.month = selectedMonth;
+      }
 
-      const allTransactions = Array.isArray(response?.member)
-        ? response.member
-        : [];
-
-      const filteredTransactions = allTransactions.filter(invoice => {
-        if (!isClosedCommissionStatus(invoice?.status)) {
-          return false;
-        }
-
-        const invoiceDate = getInvoiceDate(invoice);
-
-        if (!invoiceDate) {
-          return true;
-        }
-
-        return invoiceDate >= start && invoiceDate <= end;
-      });
-
-      filteredTransactions.sort((a, b) => {
-        const dateA = getInvoiceDate(a);
-        const dateB = getInvoiceDate(b);
-
-        if (!dateA && !dateB) {
-          return 0;
-        }
-
-        if (!dateA) {
-          return 1;
-        }
-
-        if (!dateB) {
-          return -1;
-        }
-
-        return dateB.getTime() - dateA.getTime();
-      });
-
-      setTransactions(filteredTransactions);
+      const response = await getIncomeStatements(params);
+      const rows = toRows(response);
+      const filteredRows = applyPeriodFilter(rows);
+      setIncomeRows(filteredRows);
     } catch (e) {
-      console.error('Erro ao carregar financeiro:', e);
+      console.error('Erro ao carregar income statements:', e);
       setError('Nao foi possivel carregar os dados de comissoes.');
-      setTransactions([]);
+      setIncomeRows([]);
     } finally {
       setIsLoading(false);
     }
-  }, [currentCompany?.id, authUser?.id, period, exerciseYear, selectedMonth]);
+  }, [
+    applyPeriodFilter,
+    currentCompany?.id,
+    exerciseYear,
+    getIncomeStatements,
+    isCurrentExerciseYear,
+    selectedMonth,
+    toRows,
+  ]);
+
+  const changeExerciseYear = direction => {
+    setExerciseYear(prev => {
+      const next = prev + direction;
+      return Math.max(2000, Math.min(CURRENT_YEAR, next));
+    });
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -261,20 +194,21 @@ const FinancePage = () => {
   };
 
   const summary = useMemo(() => {
-    return transactions.reduce(
-      (acc, invoice) => {
-        const amount = parseFloat(invoice?.price || 0) || 0;
-        acc.income += amount;
+    return incomeRows.reduce(
+      (acc, row) => {
+        acc.income += Number(row?.income || 0);
+        acc.expense += Number(row?.expense || 0);
         return acc;
       },
-      {income: 0},
+      {income: 0, expense: 0},
     );
-  }, [transactions]);
+  }, [incomeRows]);
 
   const computedSummary = {
     ...summary,
-    balance: summary.income,
+    balance: summary.income - summary.expense,
   };
+
   const selectedMonthLabel =
     MONTHS.find(month => month.id === selectedMonth)?.label || '';
 
@@ -311,34 +245,31 @@ const FinancePage = () => {
   );
 
   const renderInvoice = ({item}) => {
-    const iconName = 'arrow-down';
-    const iconColor = '#4CAF50';
-    const amountColor = '#4CAF50';
-
-    const counterpart = item?.payer?.name || item?.payer?.alias || 'Origem nao identificada';
+    const amountColor = item?.balance >= 0 ? '#4CAF50' : '#F44336';
+    const monthLabel = MONTHS.find(month => month.id === item?.month)?.label || '--';
 
     return (
       <TouchableOpacity style={styles.card}>
         <View style={styles.cardIconContainer}>
           <View style={[styles.iconCircle, {backgroundColor: '#DCFCE7'}]}>
-            <Icon name={iconName} size={16} color={iconColor} />
+            <Icon name="line-chart" size={16} color={amountColor} />
           </View>
         </View>
 
         <View style={styles.cardContent}>
           <Text style={styles.cardTitle} numberOfLines={1}>
-            {counterpart}
+            {`Comissao ${monthLabel}/${exerciseYear}`}
           </Text>
           <Text style={styles.cardSubtitle}>
-            {item?.category?.name || 'Sem categoria'} • {formatDate(item?.dueDate || item?.createdAt)}
+            Receitas {formatMoney(item?.income)} - Despesas {formatMoney(item?.expense)}
           </Text>
         </View>
 
         <View style={styles.cardAmount}>
           <Text style={[styles.amountText, {color: amountColor}]}>
-            + {formatMoney(item?.price)}
+            {formatMoney(item?.balance)}
           </Text>
-          <Text style={styles.statusText}>{item?.status?.status || 'Pendente'}</Text>
+          <Text style={styles.statusText}>{item?.balance >= 0 ? 'Positivo' : 'Negativo'}</Text>
         </View>
       </TouchableOpacity>
     );
@@ -348,12 +279,12 @@ const FinancePage = () => {
     <View style={styles.container}>
       <View style={[styles.header, {paddingTop: Math.max(insets.top, 16) + 16}]}>
         <View style={styles.headerTop}>
-          <Text style={styles.headerTitle}>Comissões</Text>
+          <Text style={styles.headerTitle}>Comissoes</Text>
         </View>
 
         <View style={styles.summaryRow}>
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Comissões</Text>
+            <Text style={styles.summaryLabel}>Comissoes</Text>
             <Text style={[styles.summaryValue, {color: '#4CAF50'}]}>
               {formatMoney(computedSummary.income)}
             </Text>
@@ -373,7 +304,7 @@ const FinancePage = () => {
 
         <View style={styles.filtersPanel}>
           <View style={styles.yearSelector}>
-            <Text style={styles.yearTitle}>Exercício</Text>
+            <Text style={styles.yearTitle}>Exercicio</Text>
             <View style={styles.yearSelectorControl}>
               <TouchableOpacity
                 onPress={() => changeExerciseYear(-1)}
@@ -398,7 +329,7 @@ const FinancePage = () => {
             </View>
           ) : (
             <View style={styles.monthSection}>
-              <Text style={styles.monthSectionLabel}>Mês</Text>
+              <Text style={styles.monthSectionLabel}>Mes</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -413,7 +344,7 @@ const FinancePage = () => {
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Carregando comissões...</Text>
+          <Text style={styles.loadingText}>Carregando comissoes...</Text>
         </View>
       ) : error ? (
         <View style={styles.errorContainer}>
@@ -425,8 +356,8 @@ const FinancePage = () => {
         </View>
       ) : (
         <FlatList
-          data={transactions}
-          keyExtractor={item => String(item?.id || item?.['@id'])}
+          data={incomeRows}
+          keyExtractor={item => String(item?.month)}
           renderItem={renderInvoice}
           contentContainerStyle={styles.listContent}
           refreshControl={
@@ -437,8 +368,8 @@ const FinancePage = () => {
               <Icon name="exchange" size={48} color="#CBD5E1" />
               <Text style={styles.emptyText}>
                 {isCurrentExerciseYear
-                  ? 'Nenhuma comissão no período'
-                  : `Nenhuma comissão em ${selectedMonthLabel}/${exerciseYear}`}
+                  ? 'Nenhuma comissao no periodo'
+                  : `Nenhuma comissao em ${selectedMonthLabel}/${exerciseYear}`}
               </Text>
             </View>
           )}
@@ -705,3 +636,4 @@ const styles = StyleSheet.create({
 });
 
 export default FinancePage;
+
