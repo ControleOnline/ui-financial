@@ -64,15 +64,22 @@ const getEntityId = entity => {
 
 const getStatusLabel = status => global.t?.t('invoice', 'label', status) || status || '-';
 
+const getPersonName = entity => {
+  if (!entity) return '-';
+  if (typeof entity === 'string') return entity;
+  if (typeof entity === 'object') return entity?.name || entity?.alias || String(entity?.id || '-');
+  return '-';
+};
+
 const getPartyLabel = (invoice, mode) => {
-  if (mode === 'receivables') return invoice?.receiver || '-';
-  if (mode === 'payables') return invoice?.destinationWallet?.wallet || '-';
+  if (mode === 'receivables') return getPersonName(invoice?.payer);
+  if (mode === 'payables') return invoice?.sourceWallet?.wallet || invoice?.originWallet?.wallet || '-';
   return invoice?.sourceWallet?.wallet || invoice?.originWallet?.wallet || '-';
 };
 
 const getSecondaryPartyLabel = (invoice, mode) => {
   if (mode === 'receivables') return invoice?.destinationWallet?.wallet || '-';
-  if (mode === 'payables') return invoice?.originWallet?.wallet || '-';
+  if (mode === 'payables') return getPersonName(invoice?.receiver);
   return invoice?.destinationWallet?.wallet || '-';
 };
 
@@ -210,6 +217,18 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   const { getters: paymentTypeGetters, actions: paymentTypeActions } = paymentTypeStore;
   const { colors: themeColors } = themeStore.getters;
 
+  // Referências estáveis para as actions — evita que mudanças de referência
+  // nas actions do store disparem efeitos em cascata desnecessários
+  const actionsRef = useRef({});
+  actionsRef.current = {
+    invoiceActions,
+    statusActions,
+    walletActions,
+    paymentTypeActions,
+    categoriesActions,
+    peopleActions,
+  };
+
   const { items: invoices, isLoading } = invoiceGetters;
   const { currentCompany } = peopleGetters;
 
@@ -240,32 +259,28 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   useEffect(() => {
     if (!currentCompany?.id) return;
 
-    statusActions.getItems({ context: 'invoice' });
+    const { statusActions: sa, walletActions: wa, paymentTypeActions: pta, categoriesActions: ca, peopleActions: pa } = actionsRef.current;
+
+    sa.getItems({ context: 'invoice' });
 
     if (mode === 'ownTransfers') {
-      walletActions.getItems({ people: currentCompany.id });
+      wa.getItems({ people: currentCompany.id });
       return;
     }
 
-    walletActions.getItems({ people: currentCompany.id });
-    paymentTypeActions.getItems({ context: 'invoice', people: currentCompany.id });
-    categoriesActions.getItems({
+    wa.getItems({ people: currentCompany.id });
+    pta.getItems({ context: 'invoice', people: currentCompany.id });
+    ca.getItems({
       context: mode === 'payables' ? 'payer' : 'receiver',
       people: currentCompany.id,
     });
-    peopleActions.getItems({
+    pa.getItems({
       context: mode === 'payables' ? 'payer' : 'receiver',
       people: currentCompany.id,
     });
-  }, [
-    currentCompany?.id,
-    mode,
-    statusActions,
-    walletActions,
-    paymentTypeActions,
-    categoriesActions,
-    peopleActions,
-  ]);
+    // Apenas currentCompany?.id e mode como deps — as actions são lidas via ref
+    // para não disparar o efeito em cascata a cada re-render do store
+  }, [currentCompany?.id, mode]);
 
   const brandColors = useMemo(
     () =>
@@ -349,7 +364,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
       if (destinationWalletId) params.destinationWallet = destinationWalletId;
     }
 
-    invoiceActions.getItems(params);
+    actionsRef.current.invoiceActions.getItems(params);
   }, [
     currentCompany?.id,
     idFilter,
@@ -364,8 +379,17 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     sourceWalletId,
     destinationWalletId,
     normalizeDate,
-    invoiceActions,
+    // invoiceActions removido — lido via ref para referência estável
   ]);
+
+  // Ref que sempre aponta para a versão mais recente de fetchInvoices.
+  // Permite que o efeito com debounce chame a versão atualizada sem precisar
+  // incluir fetchInvoices nas suas deps (o que causaria disparo duplo junto
+  // com o useFocusEffect).
+  const fetchInvoicesRef = useRef(fetchInvoices);
+  useEffect(() => {
+    fetchInvoicesRef.current = fetchInvoices;
+  }, [fetchInvoices]);
 
   useFocusEffect(
     useCallback(() => {
@@ -380,7 +404,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     }
 
     const timeout = setTimeout(() => {
-      fetchInvoices();
+      fetchInvoicesRef.current();
     }, 180);
 
     return () => clearTimeout(timeout);
@@ -395,7 +419,8 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     selectedPaymentTypeId,
     sourceWalletId,
     destinationWalletId,
-    fetchInvoices,
+    // fetchInvoices removido — lido via ref para evitar disparo duplo
+    // quando useFocusEffect já chamou fetchInvoices no mesmo ciclo
   ]);
 
   const filteredInvoices = useMemo(() => {

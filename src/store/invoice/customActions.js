@@ -118,6 +118,7 @@ export function getCashRegister({ commit }, params = {}) {
     });
 }
 
+
 export function getInflow({ commit }, data) {
   commit(types.SET_ISLOADING);
 
