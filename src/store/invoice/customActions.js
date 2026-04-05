@@ -97,6 +97,22 @@ export function getPaylist({ commit }, data) {
     });
 }
 
+export function openCashRegister({ commit }, params = {}) {
+  commit(types.SET_ISLOADING);
+  return api
+    .fetch('/cash-register/open', { method: 'POST', params })
+    .then(data => { commit(types.SET_ISLOADING, false); return data; })
+    .catch(e => { commit(types.SET_ISLOADING, false); commit(types.SET_ERROR, e.message); throw e; });
+}
+
+export function closeCashRegister({ commit }, params = {}) {
+  commit(types.SET_ISLOADING);
+  return api
+    .fetch('/cash-register/close', { method: 'POST', params })
+    .then(data => { commit(types.SET_ISLOADING, false); return data; })
+    .catch(e => { commit(types.SET_ISLOADING, false); commit(types.SET_ERROR, e.message); throw e; });
+}
+
 export function getCashRegister({ commit }, params = {}) {
   commit(types.SET_ISLOADING);
 
