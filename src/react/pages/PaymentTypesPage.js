@@ -1,22 +1,20 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useStore } from '@store';
 import { resolveThemePalette, withOpacity } from '@controleonline/../../src/styles/branding';
 import { colors } from '@controleonline/../../src/styles/colors';
+import cs from './PaymentTypesPage.styles';
+
+import {
+  inlineStyle_35_8,
+  inlineStyle_174_22,
+  inlineStyle_214_64,
+  inlineStyle_215_24,
+  inlineStyle_269_39,
+} from './PaymentTypesPage.styles';
 
 /* ─── sombra padrão ─────────────────────────────────────────────────── */
 const cardShadow = Platform.select({
@@ -32,6 +30,7 @@ const FREQUENCY_OPTIONS = [
   { value: 'weekly',  label: 'Semanal' },
   { value: 'monthly', label: 'Mensal' },
 ];
+
 const INSTALLMENT_OPTIONS = [
   { value: 'single', label: 'Única' },
   { value: 'split',  label: 'Parcelado' },
@@ -42,7 +41,7 @@ const instLabel  = v => INSTALLMENT_OPTIONS.find(o => o.value === v)?.label || v
 
 /* ─── chips de seleção inline ────────────────────────────────────────── */
 const ChipSelect = ({ options, value, onChange, palette }) => (
-  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+  <View style={inlineStyle_35_8}>
     {options.map(opt => {
       const sel = opt.value === value;
       return (
@@ -138,7 +137,6 @@ export default function PaymentTypesPage() {
 
   return (
     <SafeAreaView style={[cs.root, { backgroundColor: palette.background || '#F8FAFC' }]}>
-
       {/* cabeçalho */}
       <View style={[cs.header, { borderBottomColor: '#E2E8F0' }]}>
         <Text style={cs.headerTitle}>Formas de pagamento</Text>
@@ -147,7 +145,6 @@ export default function PaymentTypesPage() {
           <Text style={cs.addBtnText}>Nova forma</Text>
         </TouchableOpacity>
       </View>
-
       {/* busca */}
       <View style={cs.searchBar}>
         <Icon name="search" size={14} color="#94A3B8" />
@@ -164,7 +161,6 @@ export default function PaymentTypesPage() {
           </TouchableOpacity>
         )}
       </View>
-
       {isLoading ? (
         <View style={cs.centered}><ActivityIndicator size="large" color={palette.primary} /></View>
       ) : (
@@ -181,7 +177,7 @@ export default function PaymentTypesPage() {
           {filtered.map(pt => (
             <View key={pt.id} style={[cs.card, cardShadow]}>
               <View style={cs.cardTop}>
-                <View style={{ flex: 1 }}>
+                <View style={inlineStyle_174_22}>
                   <Text style={cs.cardName}>{pt.paymentType}</Text>
                   <View style={cs.metaRow}>
                     <View style={[cs.metaChip, { backgroundColor: withOpacity(palette.primary, 0.09) }]}>
@@ -208,7 +204,6 @@ export default function PaymentTypesPage() {
           ))}
         </ScrollView>
       )}
-
       {/* ── modal de formulário ── */}
       <Modal transparent visible={formModal} animationType="fade" onRequestClose={() => setFormModal(false)}>
         <TouchableWithoutFeedback onPress={() => setFormModal(false)}>
@@ -221,8 +216,8 @@ export default function PaymentTypesPage() {
                     <Icon name="x" size={18} color="#64748B" />
                   </TouchableOpacity>
                 </View>
-                <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 460 }}>
-                  <View style={{ paddingVertical: 4 }}>
+                <ScrollView keyboardShouldPersistTaps="handled" style={inlineStyle_214_64}>
+                  <View style={inlineStyle_215_24}>
 
                     <View style={cs.formField}>
                       <Text style={cs.formLabel}>Nome *</Text>
@@ -267,7 +262,6 @@ export default function PaymentTypesPage() {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-
       {/* ── confirmação de exclusão ── */}
       <Modal transparent visible={!!deleteConfirm} animationType="fade" onRequestClose={() => setDeleteConfirm(null)}>
         <TouchableWithoutFeedback onPress={() => setDeleteConfirm(null)}>
@@ -276,7 +270,7 @@ export default function PaymentTypesPage() {
               <View style={cs.sheet}>
                 <Text style={[cs.sheetTitle, { marginBottom: 8 }]}>Confirmar exclusão</Text>
                 <Text style={cs.deleteMsg}>
-                  Deseja excluir <Text style={{ fontWeight: '800' }}>{deleteConfirm?.label}</Text>?
+                  Deseja excluir <Text style={inlineStyle_269_39}>{deleteConfirm?.label}</Text>?
                 </Text>
                 <View style={cs.formActions}>
                   <TouchableOpacity style={cs.btnCancel} onPress={() => setDeleteConfirm(null)}>
@@ -294,67 +288,6 @@ export default function PaymentTypesPage() {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-
     </SafeAreaView>
   );
 }
-
-const cs = StyleSheet.create({
-  root: { flex: 1 },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, backgroundColor: '#fff',
-  },
-  headerTitle: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
-  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10 },
-  addBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  searchBar: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    margin: 12, paddingHorizontal: 12, height: 42,
-    borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 10, backgroundColor: '#fff',
-    ...Platform.select({ web: { boxShadow: '0 2px 6px rgba(0,0,0,0.04)' } }),
-  },
-  searchInput: { flex: 1, color: '#0F172A', fontWeight: '600', fontSize: 14 },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  list: { paddingHorizontal: 12, paddingBottom: 40, gap: 10 },
-  card: { backgroundColor: '#fff', borderRadius: 16, padding: 14 },
-  cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  cardName: { fontSize: 16, fontWeight: '800', color: '#0F172A', marginBottom: 6 },
-  metaRow: { flexDirection: 'row', gap: 6 },
-  metaChip: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  metaChipText: { fontSize: 11, fontWeight: '700' },
-  cardActions: { flexDirection: 'row', gap: 6 },
-  iconBtn: {
-    width: 34, height: 34, borderRadius: 8, borderWidth: 1,
-    borderColor: '#E2E8F0', justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8FAFC',
-  },
-  emptyBox: { backgroundColor: '#fff', borderRadius: 16, padding: 32, alignItems: 'center', gap: 8 },
-  emptyTitle: { fontSize: 15, fontWeight: '700', color: '#334155', textAlign: 'center' },
-  emptySubtitle: { fontSize: 12, color: '#94A3B8', textAlign: 'center' },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 9, borderWidth: 1.5 },
-  chipText: { fontSize: 13, fontWeight: '700' },
-  /* modal */
-  backdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,0.45)', justifyContent: 'flex-end' },
-  sheet: {
-    backgroundColor: '#fff', borderTopLeftRadius: 18, borderTopRightRadius: 18,
-    width: '100%', maxHeight: '86%', minHeight: 260, padding: 14, ...cardShadow,
-  },
-  sheetHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  sheetTitle: { flex: 1, fontSize: 18, fontWeight: '800', color: '#0F172A' },
-  closeBtn: {
-    width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: '#CBD5E1', backgroundColor: '#F8FAFC',
-  },
-  formField: { marginBottom: 16 },
-  formLabel: { fontSize: 12, color: '#64748B', fontWeight: '700', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 },
-  textInput: {
-    borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 10,
-    paddingHorizontal: 12, height: 44, color: '#0F172A', fontSize: 14, fontWeight: '600',
-  },
-  formActions: { flexDirection: 'row', gap: 10, paddingTop: 14 },
-  btnCancel: { flex: 1, borderRadius: 10, paddingVertical: 13, alignItems: 'center', borderWidth: 1.5, borderColor: '#E2E8F0' },
-  btnCancelText: { fontWeight: '700', fontSize: 14, color: '#64748B' },
-  btnSave: { flex: 1, borderRadius: 10, paddingVertical: 13, alignItems: 'center', backgroundColor: '#0EA5E9' },
-  btnSaveText: { color: '#fff', fontWeight: '800', fontSize: 14 },
-  deleteMsg: { fontSize: 14, color: '#334155', marginBottom: 4, lineHeight: 20 },
-});
