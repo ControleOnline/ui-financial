@@ -13,11 +13,28 @@ const ps = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1,
   },
   headerTitle: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
+  headerActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
   addBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
   },
   addBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  secondaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    backgroundColor: '#FFFFFF',
+  },
+  secondaryBtnText: { fontWeight: '700', fontSize: 13 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   list: { padding: 12, gap: 10, paddingBottom: 40 },
   card: {
@@ -137,5 +154,4 @@ export const inlineStyle_400_39 = {
 export const inlineStyle_69_47 = {
   paddingBottom: 8,
 };
-
 

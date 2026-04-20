@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -90,7 +90,7 @@ const ChipSelect = ({ options, value, onChange, palette }) => (
 );
 
 /* ─── componente principal ───────────────────────────────────────────── */
-export default function InvoiceCategoriesPage() {
+export default function InvoiceCategoriesPage({ route }) {
   const categoriesStore = useStore('categories');
   const peopleStore     = useStore('people');
   const themeStore      = useStore('theme');
@@ -104,27 +104,45 @@ export default function InvoiceCategoriesPage() {
     [themeColors, currentCompany?.id],
   );
 
-  const [tab, setTab]               = useState('receiver'); // 'receiver' | 'payer'
+  const routeContext = useMemo(
+    () => CONTEXT_OPTIONS.find(option => option.value === route?.params?.context)?.value || null,
+    [route?.params?.context],
+  );
+  const isContextLocked = Boolean(routeContext && route?.params?.lockContext !== false);
+  const activeContext = isContextLocked ? routeContext : null;
+  const lockedContextLabel = route?.params?.contextLabel
+    || CONTEXT_OPTIONS.find(option => option.value === routeContext)?.label
+    || '';
+  const pageTitle = route?.params?.title
+    || (isContextLocked ? `Categorias de ${CONTEXT_OPTIONS.find(option => option.value === routeContext)?.label.toLowerCase()}` : 'Categorias financeiras');
+
+  const [tab, setTab]               = useState(activeContext || 'receiver'); // 'receiver' | 'payer'
   const [formModal, setFormModal]   = useState(false);
   const [editing, setEditing]       = useState(null);
   const [name, setName]             = useState('');
   const [color, setColor]           = useState('');
   const [icon, setIcon]             = useState('');
-  const [context, setContext]       = useState('receiver');
+  const [context, setContext]       = useState(activeContext || 'receiver');
   const [filterText, setFilterText] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   /* contexto mapeado para o backend */
   const backendContext = (ctx) => ctx; // 'receiver' | 'payer' direto
 
+  useEffect(() => {
+    if (!activeContext) return;
+    setTab(activeContext);
+    setContext(activeContext);
+  }, [activeContext]);
+
   useFocusEffect(useCallback(() => {
     if (!currentCompany?.id) return;
-    // carrega ambos os contextos
-    categoriesStore.actions.getItems({ context: 'receiver', people: currentCompany.id });
-  }, [currentCompany?.id]));
+    categoriesStore.actions.getItems({ context: backendContext(activeContext || tab), people: currentCompany.id });
+  }, [activeContext, currentCompany?.id, tab]));
 
   // recarrega ao mudar de tab
   const switchTab = (t) => {
+    if (isContextLocked) return;
     setTab(t);
     setFilterText('');
     if (currentCompany?.id) {
@@ -137,7 +155,7 @@ export default function InvoiceCategoriesPage() {
     setName('');
     setColor('');
     setIcon('');
-    setContext(tab);
+    setContext(activeContext || tab);
     setFormModal(true);
   };
 
@@ -146,15 +164,16 @@ export default function InvoiceCategoriesPage() {
     setName(cat.name || '');
     setColor(cat.color || '');
     setIcon(cat.icon || '');
-    setContext(cat.context || tab);
+    setContext(activeContext || cat.context || tab);
     setFormModal(true);
   };
 
   const save = async () => {
     if (!name.trim()) return;
+    const nextContext = activeContext || context;
     const payload = {
       name: name.trim(),
-      context: backendContext(context),
+      context: backendContext(nextContext),
       color: color || null,
       icon: icon.trim() || null,
     };
@@ -167,12 +186,12 @@ export default function InvoiceCategoriesPage() {
       });
     }
     setFormModal(false);
-    categoriesStore.actions.getItems({ context: backendContext(tab), people: currentCompany.id });
+    categoriesStore.actions.getItems({ context: backendContext(activeContext || tab), people: currentCompany.id });
   };
 
   const remove = async (id) => {
     await categoriesStore.actions.remove(id);
-    categoriesStore.actions.getItems({ context: backendContext(tab), people: currentCompany.id });
+    categoriesStore.actions.getItems({ context: backendContext(activeContext || tab), people: currentCompany.id });
     setDeleteConfirm(null);
   };
 
@@ -189,26 +208,37 @@ export default function InvoiceCategoriesPage() {
     <SafeAreaView style={[ic.root, { backgroundColor: palette.background || '#F8FAFC' }]}>
       {/* cabeçalho */}
       <View style={[ic.header, { borderBottomColor: '#E2E8F0' }]}>
-        <Text style={ic.headerTitle}>Categorias financeiras</Text>
+        <Text style={ic.headerTitle}>{pageTitle}</Text>
         <TouchableOpacity style={[ic.addBtn, { backgroundColor: palette.primary || '#0EA5E9' }]} onPress={openNew}>
           <Icon name="plus" size={16} color="#fff" />
           <Text style={ic.addBtnText}>Nova categoria</Text>
         </TouchableOpacity>
       </View>
       {/* tabs de contexto */}
-      <View style={ic.tabRow}>
-        {CONTEXT_OPTIONS.map(opt => (
-          <TouchableOpacity
-            key={opt.value}
-            style={[ic.tab, tab === opt.value && [ic.tabActive, { borderBottomColor: palette.primary }]]}
-            onPress={() => switchTab(opt.value)}
-          >
-            <Text style={[ic.tabText, tab === opt.value && [ic.tabTextActive, { color: palette.primary }]]}>
-              {opt.label}
+      {!isContextLocked ? (
+        <View style={ic.tabRow}>
+          {CONTEXT_OPTIONS.map(opt => (
+            <TouchableOpacity
+              key={opt.value}
+              style={[ic.tab, tab === opt.value && [ic.tabActive, { borderBottomColor: palette.primary }]]}
+              onPress={() => switchTab(opt.value)}
+            >
+              <Text style={[ic.tabText, tab === opt.value && [ic.tabTextActive, { color: palette.primary }]]}>
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      ) : (
+        <View style={ic.lockedContextRow}>
+          <View style={[ic.lockedContextBadge, { backgroundColor: withOpacity(palette.primary || '#0EA5E9', 0.12) }]}>
+            <Icon name="lock" size={13} color={palette.primary || '#0EA5E9'} />
+            <Text style={[ic.lockedContextText, { color: palette.primary || '#0EA5E9' }]}>
+              {lockedContextLabel}
             </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+          </View>
+        </View>
+      )}
       {/* busca */}
       <View style={ic.searchBar}>
         <Icon name="search" size={14} color="#94A3B8" />
@@ -233,7 +263,9 @@ export default function InvoiceCategoriesPage() {
             <View style={[ic.emptyBox, cardShadow]}>
               <Icon name="tag" size={36} color="#CBD5E1" />
               <Text style={ic.emptyTitle}>
-                {filterText ? 'Nenhuma categoria encontrada' : `Nenhuma categoria de ${contextLabel(tab).toLowerCase()} cadastrada`}
+                {filterText
+                  ? 'Nenhuma categoria encontrada'
+                  : `Nenhuma categoria de ${(isContextLocked ? lockedContextLabel : contextLabel(tab)).toLowerCase()} cadastrada`}
               </Text>
               <Text style={ic.emptySubtitle}>Clique em "Nova categoria" para começar.</Text>
             </View>
@@ -293,15 +325,26 @@ export default function InvoiceCategoriesPage() {
                       />
                     </View>
 
-                    <View style={ic.formField}>
-                      <Text style={ic.formLabel}>Tipo *</Text>
-                      <ChipSelect
-                        options={CONTEXT_OPTIONS}
-                        value={context}
-                        onChange={setContext}
-                        palette={palette}
-                      />
-                    </View>
+                    {!isContextLocked ? (
+                      <View style={ic.formField}>
+                        <Text style={ic.formLabel}>Tipo *</Text>
+                        <ChipSelect
+                          options={CONTEXT_OPTIONS}
+                          value={context}
+                          onChange={setContext}
+                          palette={palette}
+                        />
+                      </View>
+                    ) : (
+                      <View style={ic.formField}>
+                        <Text style={ic.formLabel}>Tipo *</Text>
+                        <View style={ic.lockedField}>
+                          <Text style={ic.lockedFieldText}>
+                            {lockedContextLabel}
+                          </Text>
+                        </View>
+                      </View>
+                    )}
 
                     <View style={ic.formField}>
                       <Text style={ic.formLabel}>Cor</Text>

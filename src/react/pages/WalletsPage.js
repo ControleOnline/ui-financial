@@ -132,7 +132,7 @@ const FormField = ({ label, children }) => (
 );
 
 /* ─── componente principal ───────────────────────────────────────────── */
-export default function WalletsPage() {
+export default function WalletsPage({ navigation }) {
   const walletStore        = useStore('wallet');
   const walletPtStore      = useStore('walletPaymentType');
   const paymentTypeStore   = useStore('paymentType');
@@ -243,10 +243,18 @@ export default function WalletsPage() {
       {/* cabeçalho */}
       <View style={[ps.header, { backgroundColor: '#fff', borderBottomColor: '#E2E8F0' }]}>
         <Text style={ps.headerTitle}>Carteiras</Text>
-        <TouchableOpacity style={[ps.addBtn, { backgroundColor: palette.primary || '#0EA5E9' }]} onPress={openNewWallet}>
-          <Icon name="plus" size={16} color="#fff" />
-          <Text style={ps.addBtnText}>Nova carteira</Text>
-        </TouchableOpacity>
+        <View style={ps.headerActions}>
+          <TouchableOpacity
+            style={[ps.secondaryBtn, { borderColor: palette.primary || '#0EA5E9' }]}
+            onPress={() => navigation.navigate('PaymentTypesPage')}>
+            <Icon name="credit-card" size={15} color={palette.primary || '#0EA5E9'} />
+            <Text style={[ps.secondaryBtnText, { color: palette.primary || '#0EA5E9' }]}>Formas de pagamento</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[ps.addBtn, { backgroundColor: palette.primary || '#0EA5E9' }]} onPress={openNewWallet}>
+            <Icon name="plus" size={16} color="#fff" />
+            <Text style={ps.addBtnText}>Nova carteira</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       {isLoading ? (
         <View style={ps.centered}><ActivityIndicator size="large" color={palette.primary} /></View>
