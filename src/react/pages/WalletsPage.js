@@ -131,8 +131,39 @@ const FormField = ({ label, children }) => (
   </View>
 );
 
+const ChipSelect = ({ options, value, onChange, palette }) => (
+  <View style={s.chipGroup}>
+    {options.map(option => {
+      const isSelected = option.value === value;
+
+      return (
+        <TouchableOpacity
+          key={option.value}
+          style={[
+            s.choiceChip,
+            isSelected
+              ? {
+                  backgroundColor: palette.primary || '#0EA5E9',
+                  borderColor: palette.primary || '#0EA5E9',
+                }
+              : null,
+          ]}
+          onPress={() => onChange(option.value)}>
+          <Text
+            style={[
+              s.choiceChipText,
+              isSelected ? {color: '#FFFFFF'} : null,
+            ]}>
+            {option.label}
+          </Text>
+        </TouchableOpacity>
+      );
+    })}
+  </View>
+);
+
 /* ─── componente principal ───────────────────────────────────────────── */
-export default function WalletsPage({ navigation }) {
+export default function WalletsPage() {
   const walletStore        = useStore('wallet');
   const walletPtStore      = useStore('walletPaymentType');
   const paymentTypeStore   = useStore('paymentType');
@@ -157,6 +188,10 @@ export default function WalletsPage({ navigation }) {
   const [ptModalWallet, setPtModalWallet] = useState(null);
   const [newPtId, setNewPtId] = useState('');
   const [newPtModal, setNewPtModal] = useState(false); // seletor de pt
+  const [paymentTypeModal, setPaymentTypeModal] = useState(false);
+  const [paymentTypeName, setPaymentTypeName] = useState('');
+  const [paymentTypeFrequency, setPaymentTypeFrequency] = useState('single');
+  const [paymentTypeInstallments, setPaymentTypeInstallments] = useState('single');
 
   /* ── confirmação de exclusão ── */
   const [deleteConfirm, setDeleteConfirm] = useState(null); // { type, id, label }
@@ -197,6 +232,31 @@ export default function WalletsPage({ navigation }) {
     await walletStore.actions.remove(id);
     walletStore.actions.getItems({ people: currentCompany.id });
     setDeleteConfirm(null);
+  };
+
+  const openNewPaymentType = () => {
+    setPaymentTypeName('');
+    setPaymentTypeFrequency('single');
+    setPaymentTypeInstallments('single');
+    setPaymentTypeModal(true);
+  };
+
+  const savePaymentType = async () => {
+    if (!paymentTypeName.trim() || !currentCompany?.id) return;
+
+    const payload = {
+      paymentType: paymentTypeName.trim(),
+      frequency: paymentTypeFrequency,
+      installments: paymentTypeInstallments,
+    };
+
+    await paymentTypeStore.actions.save({
+      people: `/people/${currentCompany.id}`,
+      ...payload,
+    });
+
+    setPaymentTypeModal(false);
+    paymentTypeStore.actions.getItems({ people: currentCompany.id });
   };
 
   /* ── formas de pagamento por carteira ── */
@@ -245,14 +305,18 @@ export default function WalletsPage({ navigation }) {
         <Text style={ps.headerTitle}>Carteiras</Text>
         <View style={ps.headerActions}>
           <TouchableOpacity
-            style={[ps.secondaryBtn, { borderColor: palette.primary || '#0EA5E9' }]}
-            onPress={() => navigation.navigate('PaymentTypesPage')}>
-            <Icon name="credit-card" size={15} color={palette.primary || '#0EA5E9'} />
-            <Text style={[ps.secondaryBtnText, { color: palette.primary || '#0EA5E9' }]}>Formas de pagamento</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[ps.addBtn, { backgroundColor: palette.primary || '#0EA5E9' }]} onPress={openNewWallet}>
-            <Icon name="plus" size={16} color="#fff" />
-            <Text style={ps.addBtnText}>Nova carteira</Text>
+            style={[
+              ps.addBtn,
+              {
+                borderColor: withOpacity(palette.primary || '#0EA5E9', 0.24),
+                backgroundColor: withOpacity(palette.primary || '#0EA5E9', 0.08),
+              },
+            ]}
+            onPress={openNewWallet}>
+            <Icon name="plus" size={14} color={palette.primary || '#0EA5E9'} />
+            <Text style={[ps.addBtnText, { color: palette.primary || '#0EA5E9' }]}>
+              Nova carteira
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -386,6 +450,21 @@ export default function WalletsPage({ navigation }) {
                     )}
                   </View>
                 )}
+
+                <TouchableOpacity
+                  style={[
+                    s.inlineActionBtn,
+                    {
+                      borderColor: withOpacity(palette.primary, 0.24),
+                      backgroundColor: withOpacity(palette.primary, 0.08),
+                    },
+                  ]}
+                  onPress={openNewPaymentType}>
+                  <Icon name="plus" size={14} color={palette.primary} />
+                  <Text style={[s.inlineActionBtnText, {color: palette.primary}]}>
+                    Nova forma de pagamento
+                  </Text>
+                </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
           </View>
@@ -403,6 +482,41 @@ export default function WalletsPage({ navigation }) {
         valueKey="value"
         searchPlaceholder="Buscar forma de pagamento"
       />
+      <FormModal
+        visible={paymentTypeModal}
+        title="Nova forma de pagamento"
+        onClose={() => setPaymentTypeModal(false)}
+        onSave={savePaymentType}
+        isSaving={paymentTypeStore.getters.isSaving}>
+        <FormField label="Nome *">
+          <TextInput
+            style={s.textInput}
+            value={paymentTypeName}
+            onChangeText={setPaymentTypeName}
+            placeholder="Ex: Dinheiro, Cartao, Pix..."
+            placeholderTextColor="#94A3B8"
+            autoFocus
+          />
+        </FormField>
+
+        <FormField label="Frequencia *">
+          <ChipSelect
+            options={FREQUENCY_OPTIONS}
+            value={paymentTypeFrequency}
+            onChange={setPaymentTypeFrequency}
+            palette={palette}
+          />
+        </FormField>
+
+        <FormField label="Parcelamento *">
+          <ChipSelect
+            options={INSTALLMENT_OPTIONS}
+            value={paymentTypeInstallments}
+            onChange={setPaymentTypeInstallments}
+            palette={palette}
+          />
+        </FormField>
+      </FormModal>
       {/* ── confirmação de exclusão ── */}
       <Modal transparent visible={!!deleteConfirm} animationType="fade" onRequestClose={() => setDeleteConfirm(null)}>
         <TouchableWithoutFeedback onPress={() => setDeleteConfirm(null)}>
@@ -430,6 +544,3 @@ export default function WalletsPage({ navigation }) {
     </SafeAreaView>
   );
 }
-
-/* ─── estilos da página ─────────────────────────────────────────────── */
-/* ─── estilos compartilhados dos modais ─────────────────────────────── */
