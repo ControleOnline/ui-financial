@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, FlatList, Modal, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useWindowDimensions, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useStore } from '@store';
@@ -22,17 +22,6 @@ const MODE_CONFIG = {
     accent: '#8B5CF6',
   },
 };
-
-const cardShadow = Platform.select({
-  ios: {
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-  },
-  android: { elevation: 2 },
-  web: { boxShadow: '0 4px 12px rgba(15,23,42,0.06)' },
-});
 
 const getEntityId = entity => {
   if (!entity) return null;
@@ -61,8 +50,8 @@ const getPersonName = entity => {
 
 const getPartyLabel = (invoice, mode) => {
   if (mode === 'receivables') return getPersonName(invoice?.payer);
-  if (mode === 'payables') return invoice?.sourceWallet?.wallet || invoice?.originWallet?.wallet || '-';
-  return invoice?.sourceWallet?.wallet || invoice?.originWallet?.wallet || '-';
+  if (mode === 'payables') return invoice?.sourceWallet?.wallet || '-';
+  return invoice?.sourceWallet?.wallet || '-';
 };
 
 const getSecondaryPartyLabel = (invoice, mode) => {
@@ -487,7 +476,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
             <Text style={styles.invoiceLabel}>
               {mode === 'receivables'
                 ? global.t?.t('invoice', 'label', 'payer')
-                : global.t?.t('invoice', 'label', 'originWallet')}
+                : global.t?.t('invoice', 'label', 'sourceWallet')}
             </Text>
             <Text style={styles.invoiceValue} numberOfLines={1}>{getPartyLabel(item, mode)}</Text>
           </View>
@@ -630,7 +619,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
             {mode === 'ownTransfers' && (
               <>
                 <FilterSelectField
-                  label={global.t?.t('invoice', 'label', 'originWallet') || 'Carteira origem'}
+                  label={global.t?.t('invoice', 'label', 'sourceWallet') || 'Carteira origem'}
                   value={labelById(walletOptions, sourceWalletId, 'wallet')}
                   onPress={() => setActiveModal('sourceWallet')}
                 />
@@ -725,7 +714,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
 
       <SelectModal
         visible={activeModal === 'sourceWallet'}
-        title={global.t?.t('invoice', 'label', 'originWallet') || 'Carteira origem'}
+        title={global.t?.t('invoice', 'label', 'sourceWallet') || 'Carteira origem'}
         options={walletOptions}
         selectedId={sourceWalletId}
         onClose={() => setActiveModal('')}
