@@ -60,6 +60,18 @@ const getSecondaryPartyLabel = (invoice, mode) => {
   return invoice?.destinationWallet?.wallet || '-';
 };
 
+const invoiceBelongsToCompany = (invoice, mode, companyId) => {
+  const currentCompanyId = Number(companyId);
+  if (!currentCompanyId) return false;
+
+  const payerId = getEntityId(invoice?.payer);
+  const receiverId = getEntityId(invoice?.receiver);
+
+  if (mode === 'receivables') return receiverId === currentCompanyId;
+  if (mode === 'payables') return payerId === currentCompanyId;
+  return payerId === currentCompanyId && receiverId === currentCompanyId;
+};
+
 const SelectModal = ({
   visible,
   title,
@@ -206,8 +218,12 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     peopleActions,
   };
 
-  const { items: invoices, isLoading } = invoiceGetters;
+  const { items: invoices, isLoading, totalItems } = invoiceGetters;
   const { currentCompany } = peopleGetters;
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(50);
+  const [loadedInvoices, setLoadedInvoices] = useState([]);
 
   const [idFilter, setIdFilter] = useState('');
   const [dueDateStart, setDueDateStart] = useState('');
@@ -306,10 +322,13 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     return null;
   }, []);
 
-  const fetchInvoices = useCallback(() => {
+  const fetchInvoices = useCallback((pageOverride) => {
     if (!currentCompany?.id) return;
 
+    const page = pageOverride || currentPage;
     const params = {};
+    params.page = page;
+    params.itemsPerPage = itemsPerPage;
 
     if (idFilter) params.id = idFilter;
     if (selectedStatusId) params.status = selectedStatusId;
@@ -344,6 +363,8 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     actionsRef.current.invoiceActions.getItems(params);
   }, [
     currentCompany?.id,
+    currentPage,
+    itemsPerPage,
     idFilter,
     selectedStatusId,
     dueDateStart,
@@ -368,6 +389,30 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     fetchInvoicesRef.current = fetchInvoices;
   }, [fetchInvoices]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+    setLoadedInvoices([]);
+  }, [currentCompany?.id, mode]);
+
+  useEffect(() => {
+    if (!Array.isArray(invoices)) return;
+
+    const scopedInvoices = invoices.filter(invoice =>
+      invoiceBelongsToCompany(invoice, mode, currentCompany?.id),
+    );
+
+    if (currentPage === 1) {
+      setLoadedInvoices(scopedInvoices);
+      return;
+    }
+
+    setLoadedInvoices(prev => {
+      const incomingIds = new Set(scopedInvoices.map(item => item.id));
+      const filteredPrev = prev.filter(item => !incomingIds.has(item.id));
+      return [...filteredPrev, ...scopedInvoices];
+    });
+  }, [invoices, currentPage, currentCompany?.id, mode]);
+
   useFocusEffect(
     useCallback(() => {
       fetchInvoices();
@@ -381,11 +426,15 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     }
 
     const timeout = setTimeout(() => {
-      fetchInvoicesRef.current();
+      setCurrentPage(1);
+      setLoadedInvoices([]);
+      fetchInvoicesRef.current(1);
     }, 180);
 
     return () => clearTimeout(timeout);
   }, [
+    currentCompany?.id,
+    mode,
     idFilter,
     dueDateStart,
     dueDateEnd,
@@ -400,15 +449,20 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     // quando useFocusEffect já chamou fetchInvoices no mesmo ciclo
   ]);
 
-  const filteredInvoices = useMemo(() => {
-    if (mode === 'ownTransfers') return invoices || [];
+  useEffect(() => {
+    if (!mountedRef.current || currentPage === 1) return;
+    fetchInvoicesRef.current(currentPage);
+  }, [currentPage]);
 
-    return (invoices || []).filter(invoice => {
+  const filteredInvoices = useMemo(() => {
+    if (mode === 'ownTransfers') return loadedInvoices || [];
+
+    return (loadedInvoices || []).filter(invoice => {
       const payerId = getEntityId(invoice?.payer);
       const receiverId = getEntityId(invoice?.receiver);
       return !(payerId && receiverId && payerId === receiverId);
     });
-  }, [invoices, mode]);
+  }, [loadedInvoices, mode]);
 
   const totals = useMemo(() => {
     const amount = filteredInvoices.reduce((sum, item) => sum + Number(item?.price || 0), 0);
@@ -647,6 +701,20 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
         keyExtractor={item => String(item.id)}
         renderItem={renderInvoiceCard}
         contentContainerStyle={styles.listContent}
+        onEndReached={() => {
+          if (!isLoading && loadedInvoices.length < Number(totalItems || 0)) {
+            setCurrentPage(page => page + 1);
+          }
+        }}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          isLoading && loadedInvoices.length > 0 ? (
+            <View style={styles.loadingBox}>
+              <ActivityIndicator size="small" color={brandColors.primary} />
+              <Text style={styles.loadingText}>Carregando mais registros...</Text>
+            </View>
+          ) : null
+        }
         ListEmptyComponent={
           !isLoading ? (
             <View style={styles.emptyBox}>
