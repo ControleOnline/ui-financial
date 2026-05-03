@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react'
+import React, {useCallback, useEffect, useMemo} from 'react'
 import {
   ActivityIndicator,
   ScrollView,
@@ -8,11 +8,9 @@ import {
 } from 'react-native'
 import {SafeAreaView} from 'react-native-safe-area-context'
 import {useStore} from '@store'
-import {api} from '@controleonline/ui-common/src/api'
 import Formatter from '@controleonline/ui-common/src/utils/formatter.js'
 import {colors} from '@controleonline/../../src/styles/colors'
 import {resolveThemePalette, withOpacity} from '@controleonline/../../src/styles/branding'
-import {extractCollectionItems} from '@controleonline/ui-common/src/react/utils/commercialDocumentOrders'
 import {
   formatInvoiceTypeLabel,
   getInvoicePartyLabel,
@@ -46,6 +44,25 @@ const getEntityId = entity => {
 const normalizeMoney = value => {
   const normalizedValue = Number(value)
   return Number.isFinite(normalizedValue) ? normalizedValue : 0
+}
+
+const hasHydratedInvoiceDetails = invoice => {
+  if (!invoice || typeof invoice !== 'object') {
+    return false
+  }
+
+  return [
+    invoice?.status,
+    invoice?.dueDate,
+    invoice?.invoice_date,
+    invoice?.paymentType,
+    invoice?.payment_type,
+    invoice?.sourceWallet,
+    invoice?.destinationWallet,
+    invoice?.payer,
+    invoice?.receiver,
+    invoice?.description,
+  ].some(Boolean)
 }
 
 const getStatusLabel = status =>
@@ -133,11 +150,17 @@ function InvoiceDetailsPage({navigation, route}) {
   )
 
   const invoiceStore = useStore('invoice')
+  const orderInvoicesStore = useStore('order_invoices')
   const peopleStore = useStore('people')
   const themeStore = useStore('theme')
   const {ppcColors} = useOrderDetailsVisuals()
 
   const {item: storeInvoice, isLoading} = invoiceStore.getters
+  const {
+    items: linkedOrderInvoiceItems,
+    isLoading: isLoadingLinkedOrders,
+    error: linkedOrdersStoreError,
+  } = orderInvoicesStore.getters
   const {currentCompany} = peopleStore.getters
   const {colors: themeColors} = themeStore.getters
 
@@ -154,10 +177,6 @@ function InvoiceDetailsPage({navigation, route}) {
     [brandColors, ppcColors],
   )
 
-  const [linkedOrderInvoices, setLinkedOrderInvoices] = useState([])
-  const [isLoadingLinkedOrders, setIsLoadingLinkedOrders] = useState(false)
-  const [linkedOrdersError, setLinkedOrdersError] = useState('')
-
   const invoice = useMemo(() => {
     if (getEntityId(storeInvoice) === invoiceId) {
       return storeInvoice
@@ -165,6 +184,17 @@ function InvoiceDetailsPage({navigation, route}) {
 
     return null
   }, [invoiceId, storeInvoice])
+  const linkedOrderInvoices = useMemo(
+    () =>
+      (Array.isArray(linkedOrderInvoiceItems) ? linkedOrderInvoiceItems : [])
+        .map(normalizeLinkedOrderInvoice)
+        .filter(Boolean),
+    [linkedOrderInvoiceItems],
+  )
+  const linkedOrdersError = useMemo(
+    () => formatApiError(linkedOrdersStoreError),
+    [linkedOrdersStoreError],
+  )
 
   const statusColor = useMemo(() => resolveStatusColor(invoice), [invoice])
 
@@ -178,46 +208,29 @@ function InvoiceDetailsPage({navigation, route}) {
     if (
       invoiceId &&
       typeof invoiceStore.actions?.get === 'function' &&
-      getEntityId(storeInvoice) !== invoiceId
+      (
+        getEntityId(storeInvoice) !== invoiceId ||
+        !hasHydratedInvoiceDetails(storeInvoice)
+      )
     ) {
       invoiceStore.actions.get(invoiceId).catch(() => null)
     }
   }, [invoiceId, invoiceStore.actions, storeInvoice])
 
-  const loadLinkedOrders = useCallback(async () => {
+  useEffect(() => {
     if (!invoiceId) {
-      setLinkedOrderInvoices([])
-      setLinkedOrdersError('')
-      setIsLoadingLinkedOrders(false)
+      orderInvoicesStore.actions?.setItems?.([])
+      orderInvoicesStore.actions?.setError?.('')
       return
     }
 
-    try {
-      setIsLoadingLinkedOrders(true)
-      setLinkedOrdersError('')
-      const response = await api.fetch('/order_invoices', {
-        params: {
-          invoice: `/invoices/${invoiceId}`,
-          itemsPerPage: 100,
-        },
-      })
-
-      setLinkedOrderInvoices(
-        extractCollectionItems(response)
-          .map(normalizeLinkedOrderInvoice)
-          .filter(Boolean),
-      )
-    } catch (error) {
-      setLinkedOrderInvoices([])
-      setLinkedOrdersError(formatApiError(error))
-    } finally {
-      setIsLoadingLinkedOrders(false)
+    if (typeof orderInvoicesStore.actions?.getItems === 'function') {
+      orderInvoicesStore.actions.getItems({
+        invoice: `/invoices/${invoiceId}`,
+        itemsPerPage: 100,
+      }).catch(() => null)
     }
-  }, [invoiceId])
-
-  useEffect(() => {
-    loadLinkedOrders().catch(() => null)
-  }, [loadLinkedOrders])
+  }, [invoiceId, orderInvoicesStore.actions])
 
   const linkedOrdersCount = linkedOrderInvoices.length
   const linkedOrdersAmount = useMemo(
