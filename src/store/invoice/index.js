@@ -227,6 +227,24 @@ export default {
         sortable: true,
         filterClass: "col-2 q-pa-xs",
         formClass: "col-6",
+        name: "invoiceType",
+        align: "left",
+        label: "invoiceType",
+        editable: true,
+        format: function (value) {
+          return String(value || "")
+            .trim()
+            .replace(/[_-]+/g, " ")
+            .replace(/\b\w/g, letter => letter.toUpperCase());
+        },
+        saveFormat: function (value) {
+          return String(value || "invoice").trim().toLowerCase() || "invoice";
+        },
+      },
+      {
+        sortable: true,
+        filterClass: "col-2 q-pa-xs",
+        formClass: "col-6",
         name: "installments",
         align: "center",
         label: "installments",
