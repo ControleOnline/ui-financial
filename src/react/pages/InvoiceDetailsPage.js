@@ -147,13 +147,23 @@ const normalizeLinkedOrderInvoice = orderInvoice => {
           id: orderId,
           '@id': orderId ? `/orders/${orderId}` : undefined,
         }
+  const isCancelled = isOrderCancelled(embeddedOrder)
+  const normalizedOrder = isCancelled
+    ? {
+        ...embeddedOrder,
+        status: {
+          ...(embeddedOrder?.status || {}),
+          color: '#DC2626',
+        },
+      }
+    : embeddedOrder
 
   return {
     id: orderInvoice?.id || `invoice-link-${orderId || 'unknown'}`,
-    orderId: embeddedOrder?.id || orderId,
-    order: embeddedOrder,
+    orderId: normalizedOrder?.id || orderId,
+    order: normalizedOrder,
     realPrice: normalizeMoney(orderInvoice?.realPrice ?? orderInvoice?.real_price),
-    isCancelled: isOrderCancelled(embeddedOrder),
+    isCancelled,
   }
 }
 
