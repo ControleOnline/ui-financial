@@ -87,6 +87,11 @@ const createStyles = (ppcColors, brandColors) =>
       fontSize: 13,
       fontWeight: '600',
     },
+    summaryMetaWarning: {
+      color: '#B91C1C',
+      fontSize: 12,
+      fontWeight: '800',
+    },
     summaryMetaHighlight: {
       color: ppcColors.textPrimary,
       fontWeight: '800',
@@ -151,9 +156,9 @@ const createStyles = (ppcColors, brandColors) =>
       paddingVertical: 11,
       gap: 10,
     },
-    linkedOrderCardHighlighted: {
-      borderColor: withOpacity(brandColors.primary, 0.45),
-      backgroundColor: withOpacity(brandColors.primary, 0.06),
+    linkedOrderCardCancelled: {
+      borderColor: withOpacity('#DC2626', 0.5),
+      backgroundColor: withOpacity('#DC2626', 0.06),
     },
     linkedOrderMetaRow: {
       flexDirection: 'row',
@@ -174,10 +179,19 @@ const createStyles = (ppcColors, brandColors) =>
       fontSize: 14,
       fontWeight: '800',
     },
+    linkedOrderMetaValueCancelled: {
+      color: '#B91C1C',
+      textDecorationLine: 'line-through',
+    },
     linkedOrderHint: {
       color: ppcColors.accentInfo,
       fontSize: 11,
       fontWeight: '700',
+    },
+    linkedOrderCancelledHint: {
+      color: '#B91C1C',
+      fontSize: 11,
+      fontWeight: '800',
     },
     loadingState: {
       minHeight: 120,

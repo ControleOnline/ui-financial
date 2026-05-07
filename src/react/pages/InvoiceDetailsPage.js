@@ -46,6 +46,19 @@ const normalizeMoney = value => {
   return Number.isFinite(normalizedValue) ? normalizedValue : 0
 }
 
+const normalizeStatusValue = value =>
+  String(value || '')
+    .trim()
+    .toLowerCase()
+
+const isCancelledStatusValue = value =>
+  ['canceled', 'cancelled'].includes(normalizeStatusValue(value))
+
+const isOrderCancelled = order =>
+  isCancelledStatusValue(order?.status?.status) ||
+  isCancelledStatusValue(order?.status?.realStatus) ||
+  isCancelledStatusValue(order?.status?.real_status)
+
 const hasHydratedInvoiceDetails = invoice => {
   if (!invoice || typeof invoice !== 'object') {
     return false
@@ -140,6 +153,7 @@ const normalizeLinkedOrderInvoice = orderInvoice => {
     orderId: embeddedOrder?.id || orderId,
     order: embeddedOrder,
     realPrice: normalizeMoney(orderInvoice?.realPrice ?? orderInvoice?.real_price),
+    isCancelled: isOrderCancelled(embeddedOrder),
   }
 }
 
@@ -191,6 +205,14 @@ function InvoiceDetailsPage({navigation, route}) {
         .filter(Boolean),
     [linkedOrderInvoiceItems],
   )
+  const activeLinkedOrderInvoices = useMemo(
+    () => linkedOrderInvoices.filter(linkedOrderInvoice => !linkedOrderInvoice?.isCancelled),
+    [linkedOrderInvoices],
+  )
+  const cancelledLinkedOrderInvoices = useMemo(
+    () => linkedOrderInvoices.filter(linkedOrderInvoice => !!linkedOrderInvoice?.isCancelled),
+    [linkedOrderInvoices],
+  )
   const linkedOrdersError = useMemo(
     () => formatApiError(linkedOrdersStoreError),
     [linkedOrdersStoreError],
@@ -232,14 +254,26 @@ function InvoiceDetailsPage({navigation, route}) {
     }
   }, [invoiceId, orderInvoicesStore.actions])
 
-  const linkedOrdersCount = linkedOrderInvoices.length
+  const linkedOrdersCount = activeLinkedOrderInvoices.length
+  const cancelledLinkedOrdersCount = cancelledLinkedOrderInvoices.length
   const linkedOrdersAmount = useMemo(
     () =>
-      linkedOrderInvoices.reduce(
+      activeLinkedOrderInvoices.reduce(
         (total, orderInvoice) => total + normalizeMoney(orderInvoice?.realPrice),
         0,
       ),
-    [linkedOrderInvoices],
+    [activeLinkedOrderInvoices],
+  )
+  const invoiceDisplayAmount = useMemo(() => {
+    if (linkedOrderInvoices.length) {
+      return linkedOrdersAmount
+    }
+
+    return normalizeMoney(invoice?.price)
+  }, [invoice?.price, linkedOrderInvoices.length, linkedOrdersAmount])
+  const invoiceRawAmount = useMemo(
+    () => normalizeMoney(invoice?.price),
+    [invoice?.price],
   )
 
   const detailCards = useMemo(
@@ -344,12 +378,23 @@ function InvoiceDetailsPage({navigation, route}) {
     }
 
     return linkedOrderInvoices.map(linkedOrderInvoice => {
+      const isCancelledLinkedOrder = !!linkedOrderInvoice?.isCancelled
+
       return (
         <TouchableOpacity
           key={linkedOrderInvoice.id}
           onPress={() => handleOpenOrderDetails(linkedOrderInvoice)}
-          style={styles.linkedOrderCard}>
+          style={[
+            styles.linkedOrderCard,
+            isCancelledLinkedOrder && styles.linkedOrderCardCancelled,
+          ]}>
           <OrderHeader order={linkedOrderInvoice.order} />
+          {isCancelledLinkedOrder ? (
+            <Text style={styles.linkedOrderCancelledHint}>
+              {global.t?.t('invoice', 'label', 'cancelledOrderExcludedFromTotal') ||
+                'Pedido cancelado. Valor fora do total desta invoice.'}
+            </Text>
+          ) : null}
           <View style={styles.linkedOrderMetaRow}>
             <View>
               <Text style={styles.linkedOrderMetaLabel}>
@@ -357,7 +402,11 @@ function InvoiceDetailsPage({navigation, route}) {
                   'Valor vinculado'}
               </Text>
             </View>
-            <Text style={styles.linkedOrderMetaValue}>
+            <Text
+              style={[
+                styles.linkedOrderMetaValue,
+                isCancelledLinkedOrder && styles.linkedOrderMetaValueCancelled,
+              ]}>
               {Formatter.formatMoney(linkedOrderInvoice.realPrice || 0)}
             </Text>
           </View>
@@ -411,17 +460,33 @@ function InvoiceDetailsPage({navigation, route}) {
             </View>
 
             <Text style={styles.amountText}>
-              {Formatter.formatMoney(invoice?.price || 0)}
+              {Formatter.formatMoney(invoiceDisplayAmount)}
             </Text>
 
             <View style={styles.summaryMetaStack}>
               <Text style={styles.summaryMetaText}>
-                {global.t?.t('invoice', 'label', 'linkedOrdersAmount') ||
-                  'Total vinculado em pedidos'}:{' '}
+                {global.t?.t('invoice', 'label', 'linkedOrdersAmountActive') ||
+                  'Total considerado em pedidos ativos'}:{' '}
                 <Text style={styles.summaryMetaHighlight}>
                   {Formatter.formatMoney(linkedOrdersAmount)}
                 </Text>
               </Text>
+              {cancelledLinkedOrdersCount ? (
+                <Text style={styles.summaryMetaWarning}>
+                  {cancelledLinkedOrdersCount === 1
+                    ? '1 pedido cancelado ficou fora do total.'
+                    : `${cancelledLinkedOrdersCount} pedidos cancelados ficaram fora do total.`}
+                </Text>
+              ) : null}
+              {linkedOrderInvoices.length && invoiceRawAmount !== linkedOrdersAmount ? (
+                <Text style={styles.summaryMetaText}>
+                  {global.t?.t('invoice', 'label', 'grossInvoiceAmount') ||
+                    'Valor bruto registrado na invoice'}:{' '}
+                  <Text style={styles.summaryMetaHighlight}>
+                    {Formatter.formatMoney(invoiceRawAmount)}
+                  </Text>
+                </Text>
+              ) : null}
             </View>
           </View>
 
