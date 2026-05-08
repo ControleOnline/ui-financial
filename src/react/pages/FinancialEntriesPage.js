@@ -3,9 +3,8 @@ import { ActivityIndicator, FlatList, Text, TouchableOpacity, useWindowDimension
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useStore } from '@store';
+import DefaultExternalFilters from '@controleonline/ui-default/src/react/components/filters/DefaultExternalFilters';
 import DefaultDataTable from '@controleonline/ui-default/src/react/components/table/DefaultDataTable';
-import CompactFilterSelector from '@controleonline/ui-default/src/react/components/filters/CompactFilterSelector';
-import DateShortcutFilter from '@controleonline/ui-default/src/react/components/filters/DateShortcutFilter';
 import Formatter from '@controleonline/ui-common/src/utils/formatter.js';
 import {
   formatStoreColumnLabel,
@@ -124,14 +123,6 @@ const normalizeText = value => String(value || '').trim();
 
 const getColumnKey = column => column?.key || column?.name || '';
 
-const shouldIncludeColumn = column => column?.visible !== false;
-
-const isExternalFilterColumn = column =>
-  shouldIncludeColumn(column) &&
-  column?.externalFilter === true &&
-  column?.filter !== false &&
-  column?.filters !== false;
-
 const normalizeFilterValue = value => {
   if (value && typeof value === 'object') {
     return normalizeFilterValue(value.value ?? value.id ?? value['@id'] ?? '');
@@ -148,41 +139,6 @@ const isFilledFilterValue = value => {
 
   return normalizeText(value) !== '';
 };
-
-const resolveColumnOptionLabel = (column, option) => {
-  if (!option) return '';
-
-  if (typeof column?.formatList === 'function') {
-    const formatted = column.formatList(option, column);
-    if (formatted && typeof formatted === 'object') {
-      return normalizeText(formatted.label ?? formatted.value);
-    }
-    if (formatted) return normalizeText(formatted);
-  }
-
-  return normalizeText(
-    option.label ??
-      option[column?.searchParam] ??
-      option[column?.name] ??
-      option.name ??
-      option.status ??
-      option.wallet ??
-      option.paymentType ??
-      option.alias ??
-      option.id,
-  );
-};
-
-const buildColumnOptions = (column, options = []) => [
-  {
-    key: '',
-    label: global.t?.t('invoice', 'label', 'select') || 'Todos',
-  },
-  ...(Array.isArray(options) ? options : []).map(option => ({
-    key: normalizeFilterValue(option),
-    label: resolveColumnOptionLabel(column, option) || '-',
-  })),
-];
 
 const resolveDueDateState = filterValue => {
   if (!filterValue || typeof filterValue !== 'object') {
@@ -213,13 +169,6 @@ const resolveDueDateState = filterValue => {
     customRange: { from: '', to: '' },
     value: 'all',
   };
-};
-
-const getColumnFilterIcon = column => {
-  const key = getColumnKey(column);
-  if (key === 'status') return 'check-circle';
-  if (key === 'category') return 'tag';
-  return 'sliders';
 };
 
 function FinancialEntriesPage({ mode = 'receivables' }) {
@@ -271,6 +220,8 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   const [itemsPerPage] = useState(50);
   const [loadedInvoices, setLoadedInvoices] = useState([]);
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(!isMobile);
+  const [activeFiltersCount, setActiveFiltersCount] = useState(0);
+  const [sortState, setSortState] = useState(null);
 
   const mountedRef = useRef(false);
 
@@ -316,21 +267,6 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     [peopleGetters.items, currentCompany?.id],
   );
 
-  const filterColumns = useMemo(
-    () => invoiceColumns.filter(isExternalFilterColumn),
-    [invoiceColumns],
-  );
-
-  const dueDateColumn = useMemo(
-    () => filterColumns.find(column => column.inputType === 'date-range'),
-    [filterColumns],
-  );
-
-  const selectFilterColumns = useMemo(
-    () => filterColumns.filter(column => column.inputType !== 'date-range'),
-    [filterColumns],
-  );
-
   const getOptionsForColumn = useCallback(
     column => {
       const key = getColumnKey(column);
@@ -344,26 +280,9 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     [categoryOptions, paymentTypeOptions, receiverOptions, statusOptions, walletOptions],
   );
 
-  const setStoreFilter = useCallback((key, value) => {
-    const nextFilters = { ...(invoiceGetters?.filters || {}) };
-    if (!isFilledFilterValue(value)) {
-      delete nextFilters[key];
-    } else {
-      nextFilters[key] = value;
-    }
-    actionsRef.current.invoiceActions.setFilters(nextFilters);
-  }, [invoiceGetters?.filters]);
-
-  const clearStoreFilter = useCallback(key => {
-    const nextFilters = { ...(invoiceGetters?.filters || {}) };
-    delete nextFilters[key];
-    actionsRef.current.invoiceActions.setFilters(nextFilters);
-  }, [invoiceGetters?.filters]);
-
-  const dueDateState = useMemo(
-    () => resolveDueDateState(storeFilters.dueDate),
-    [storeFilters.dueDate],
-  );
+  const setStoreFilters = useCallback(nextFilters => {
+    actionsRef.current.invoiceActions.setFilters(nextFilters || {});
+  }, []);
 
   const formatInvoiceColumnLabel = useCallback(
     (fieldName, fallbackLabel) =>
@@ -399,6 +318,9 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     const params = {};
     params.page = page;
     params.itemsPerPage = itemsPerPage;
+    if (sortState?.field && sortState?.direction) {
+      params[`order[${sortState.field}]`] = sortState.direction;
+    }
 
     Object.entries(storeFilters || {}).forEach(([key, value]) => {
       if (!isFilledFilterValue(value)) return;
@@ -440,6 +362,8 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     currentPage,
     itemsPerPage,
     mode,
+    sortState?.direction,
+    sortState?.field,
     storeFiltersKey,
     // invoiceActions removido — lido via ref para referência estável
   ]);
@@ -456,7 +380,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   useEffect(() => {
     setCurrentPage(1);
     setLoadedInvoices([]);
-  }, [currentCompany?.id, mode]);
+  }, [currentCompany?.id, mode, sortState?.direction, sortState?.field]);
 
   useEffect(() => {
     if (!Array.isArray(invoices)) return;
@@ -499,6 +423,8 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   }, [
     currentCompany?.id,
     mode,
+    sortState?.direction,
+    sortState?.field,
     storeFiltersKey,
     // fetchInvoices removido — lido via ref para evitar disparo duplo
     // quando useFocusEffect já chamou fetchInvoices no mesmo ciclo
@@ -538,13 +464,6 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
       ),
     );
   }, []);
-
-  const activeFiltersCount = useMemo(() => {
-    return filterColumns.filter(column => {
-      const key = getColumnKey(column);
-      return isFilledFilterValue(storeFilters[key]);
-    }).length;
-  }, [filterColumns, storeFiltersKey]);
 
   useEffect(() => {
     if (!isMobile) {
@@ -681,80 +600,15 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
         )}
 
         {(!isMobile || isFiltersExpanded) && (
-          <View style={styles.filterGrid}>
-            {selectFilterColumns.map(column => {
-              const key = getColumnKey(column);
-              const options = buildColumnOptions(column, getOptionsForColumn(column));
-              const selectedKey = normalizeFilterValue(storeFilters[key]);
-              const selectedLabel =
-                options.find(option => option.key === selectedKey)?.label ||
-                options[0]?.label ||
-                '';
-
-              return (
-                <CompactFilterSelector
-                  key={key}
-                  icon={getColumnFilterIcon(column)}
-                  label={selectedLabel}
-                  accentColor={config.accent}
-                  active={Boolean(selectedKey)}
-                  dense
-                  store="invoice"
-                  field={key}
-                  options={options}
-                  selectedKey={selectedKey}
-                  onSelect={optionKey => {
-                    setStoreFilter(key, optionKey);
-                    return true;
-                  }}
-                />
-              );
-            })}
-
-            {!!dueDateColumn && (
-              <DateShortcutFilter
-                value={dueDateState.value}
-                onChange={optionKey => {
-                  if (optionKey === 'all') {
-                    clearStoreFilter('dueDate');
-                    return;
-                  }
-
-                  setStoreFilter('dueDate', {
-                    ...(storeFilters.dueDate || {}),
-                    shortcut: optionKey,
-                    customRange: dueDateState.customRange,
-                  });
-                }}
-                customRange={dueDateState.customRange}
-                onCustomRangeChange={range => {
-                  setStoreFilter('dueDate', {
-                    ...(storeFilters.dueDate || {}),
-                    shortcut: 'custom',
-                    customRange: range,
-                  });
-                }}
-                dense
-                store="invoice"
-                field="dueDate"
-                colors={{
-                  accent: config.accent,
-                  appBg: 'transparent',
-                  border: '#CBD5E1',
-                  borderSoft: '#E2E8F0',
-                  cardBg: '#FFFFFF',
-                  cardBgSoft: '#F8FAFC',
-                  danger: '#DC2626',
-                  isLight: true,
-                  panelBg: '#EFF6FF',
-                  pillTextDark: '#FFFFFF',
-                  textPrimary: '#0F172A',
-                  textSecondary: '#64748B',
-                }}
-                optionKeys={['all', 'today', 'yesterday', '7d', '30d', 'custom']}
-              />
-            )}
-          </View>
+          <DefaultExternalFilters
+            accentColor={config.accent}
+            columns={invoiceColumns}
+            filters={storeFilters}
+            getOptionsForColumn={getOptionsForColumn}
+            onActiveCountChange={setActiveFiltersCount}
+            onChangeFilters={setStoreFilters}
+            storeName="invoice"
+          />
         )}
       </View>
 
@@ -801,6 +655,8 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
           data={filteredInvoices}
           hasMore={hasMoreInvoices}
           isLoading={isLoading}
+          onSortChange={setSortState}
+          sort={sortState}
           storeName="invoice"
           onEndReached={() => {
             if (!isLoading && hasMoreInvoices) {
