@@ -650,12 +650,17 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
         />
       ) : (
         <DefaultDataTable
+          accentColor={config.accent}
           actions={invoiceActions}
           columns={invoiceColumns}
           data={filteredInvoices}
+          filters={storeFilters}
+          getOptionsForColumn={getOptionsForColumn}
           hasMore={hasMoreInvoices}
           isLoading={isLoading}
+          onFilterChange={setStoreFilters}
           onSortChange={setSortState}
+          renderCard={renderInvoiceCard}
           sort={sortState}
           storeName="invoice"
           onEndReached={() => {

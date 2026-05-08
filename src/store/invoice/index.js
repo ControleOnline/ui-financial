@@ -230,7 +230,7 @@ export default {
         name: "invoiceType",
         align: "left",
         label: "invoiceType",
-        editable: true,
+        editable: false,
         format: function (value) {
           return String(value || "")
             .trim()
