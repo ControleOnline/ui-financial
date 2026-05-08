@@ -612,7 +612,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
         )}
       </View>
 
-      {isLoading && (
+      {isMobile && isLoading && (
         <View style={styles.loadingBox}>
           <ActivityIndicator size="small" color={brandColors.primary} />
           <Text style={styles.loadingText}>Carregando {config.title.toLowerCase()}...</Text>
