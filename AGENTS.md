@@ -16,3 +16,4 @@
 - Quando a invoice vier de um pedido com agrupamento por `order_invoice`, o detalhe pode mostrar tanto o valor total da invoice quanto o `real_price` daquele pedido. Nunca inferir esse valor por pedido a partir do total agregado da invoice.
 - `InvoiceDetailsPage` deve parecer uma tela operacional do sistema, proxima do detalhe de pedido, e listar os pedidos vinculados carregando `/order_invoices?invoice=...`.
 - Em invoice, `paymentType` e o meio real de pagamento; `invoiceType` classifica a natureza financeira. Nao voltar a misturar desconto, taxa ou descricao operacional dentro do meio de pagamento.
+- Totais de recebiveis, pagaveis, transferencias, pago e aberto devem vir de `invoiceGetters.summary`, preenchido pelo backend. Nao somar os cards carregados no front para exibir totais, porque a lista e paginada.

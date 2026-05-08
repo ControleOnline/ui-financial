@@ -3,8 +3,8 @@ import { ActivityIndicator, FlatList, Text, TouchableOpacity, useWindowDimension
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useStore } from '@store';
-import CompactFilterSelector from '@controleonline/ui-common/src/react/components/filters/CompactFilterSelector';
-import DateShortcutFilter from '@controleonline/ui-common/src/react/components/filters/DateShortcutFilter';
+import CompactFilterSelector from '@controleonline/ui-default/src/react/components/filters/CompactFilterSelector';
+import DateShortcutFilter from '@controleonline/ui-default/src/react/components/filters/DateShortcutFilter';
 import Formatter from '@controleonline/ui-common/src/utils/formatter.js';
 import {
   formatStoreColumnLabel,
@@ -99,15 +99,24 @@ const normalizeMoneyValue = value => {
 const resolveInvoiceAmount = invoice =>
   normalizeMoneyValue(invoice?.price ?? invoice?.value ?? invoice?.amount ?? invoice?.total);
 
-const isPaidInvoice = invoice =>
-  String(invoice?.status?.status || '')
-    .trim()
-    .toLowerCase() === 'paid';
-
 const getOpenAmountLabel = mode => {
   if (mode === 'payables') return 'A pagar';
   if (mode === 'ownTransfers') return 'A transferir';
   return 'A receber';
+};
+
+const resolveFinancialSummaryTotals = summary => {
+  const financialSummary = summary?.financial || {};
+
+  return {
+    openAmount: normalizeMoneyValue(
+      financialSummary.openAmount ??
+        financialSummary.open ??
+        financialSummary.receivableAmount ??
+        financialSummary.pendingAmount,
+    ),
+    paidAmount: normalizeMoneyValue(financialSummary.paidAmount ?? financialSummary.paid),
+  };
 };
 
 const normalizeText = value => String(value || '').trim();
@@ -245,7 +254,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     peopleActions,
   };
 
-  const { items: invoices, isLoading, totalItems } = invoiceGetters;
+  const { items: invoices, isLoading, summary: invoiceSummary, totalItems } = invoiceGetters;
   const { currentCompany } = peopleGetters;
   const invoiceColumns = useMemo(
     () => (Array.isArray(invoiceGetters?.columns) ? invoiceGetters.columns : []),
@@ -509,17 +518,10 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     });
   }, [loadedInvoices, mode]);
 
-  const totals = useMemo(() => {
-    const paidAmount = filteredInvoices
-      .filter(isPaidInvoice)
-      .reduce((sum, item) => sum + resolveInvoiceAmount(item), 0);
-    const amount = filteredInvoices.reduce((sum, item) => sum + resolveInvoiceAmount(item), 0);
-
-    return {
-      openAmount: amount - paidAmount,
-      paidAmount,
-    };
-  }, [filteredInvoices]);
+  const totals = useMemo(
+    () => resolveFinancialSummaryTotals(invoiceSummary),
+    [invoiceSummary],
+  );
 
   const activeFiltersCount = useMemo(() => {
     return filterColumns.filter(column => {
