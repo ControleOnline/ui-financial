@@ -1,9 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Modal, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, FlatList, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useStore } from '@store';
+import CompactFilterSelector from '@controleonline/ui-common/src/react/components/filters/CompactFilterSelector';
+import DateShortcutFilter from '@controleonline/ui-common/src/react/components/filters/DateShortcutFilter';
 import Formatter from '@controleonline/ui-common/src/utils/formatter.js';
+import {
+  formatStoreColumnLabel,
+  formatStoreColumnValue,
+} from '@controleonline/ui-common/src/react/utils/storeColumns';
+import { getDateRange } from '@controleonline/ui-common/src/react/utils/dateRangeFilter';
 import { colors } from '@controleonline/../../src/styles/colors';
 import { resolveThemePalette, withOpacity } from '@controleonline/../../src/styles/branding';
 import styles from './FinancialEntriesPage.styles';
@@ -72,118 +79,138 @@ const invoiceBelongsToCompany = (invoice, mode, companyId) => {
   return payerId === currentCompanyId && receiverId === currentCompanyId;
 };
 
-const SelectModal = ({
-  visible,
-  title,
-  options,
-  selectedId,
-  onClose,
-  onSelect,
-  labelKey,
-  searchPlaceholder,
-}) => {
-  const [search, setSearch] = useState('');
+const normalizeMoneyValue = value => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0;
+  }
 
-  useEffect(() => {
-    if (!visible) setSearch('');
-  }, [visible]);
+  const rawValue = String(value ?? '').trim();
+  if (!rawValue) return 0;
 
-  const filteredOptions = useMemo(() => {
-    const term = String(search || '').trim().toLowerCase();
-    if (!term) return options;
-    return (options || []).filter(item =>
-      String(item?.[labelKey] || '')
-        .toLowerCase()
-        .includes(term),
-    );
-  }, [options, search, labelKey]);
+  const sanitizedValue = rawValue.replace(/[^0-9,.-]/g, '');
+  const normalizedValue = sanitizedValue.includes(',')
+    ? sanitizedValue.replace(/\./g, '').replace(',', '.')
+    : sanitizedValue;
+  const parsedValue = Number(normalizedValue);
 
-  return (
-    <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.modalBackdrop}>
-          <TouchableWithoutFeedback>
-            <View style={styles.modalCard}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{title}</Text>
-                <TouchableOpacity onPress={onClose} style={styles.modalCloseButton}>
-                  <Icon name="x" size={18} color="#64748B" />
-                </TouchableOpacity>
-              </View>
+  return Number.isFinite(parsedValue) ? parsedValue : 0;
+};
 
-              <View style={styles.modalSearchRow}>
-                <Icon name="search" size={14} color="#94A3B8" />
-                <TextInput
-                  style={styles.modalSearchInput}
-                  value={search}
-                  onChangeText={setSearch}
-                  placeholder={searchPlaceholder || 'Buscar...'}
-                  placeholderTextColor="#94A3B8"
-                />
-              </View>
+const resolveInvoiceAmount = invoice =>
+  normalizeMoneyValue(invoice?.price ?? invoice?.value ?? invoice?.amount ?? invoice?.total);
 
-              <ScrollView style={styles.modalList} contentContainerStyle={styles.modalListContent}>
-                <TouchableOpacity
-                  style={[styles.modalOption, !selectedId && styles.modalOptionActive]}
-                  onPress={() => {
-                    onSelect('');
-                    onClose();
-                  }}>
-                  <Text style={[styles.modalOptionText, !selectedId && styles.modalOptionTextActive]}>
-                    {global.t?.t('invoice', 'label', 'select') || 'Selecione'}
-                  </Text>
-                </TouchableOpacity>
+const isPaidInvoice = invoice =>
+  String(invoice?.status?.status || '')
+    .trim()
+    .toLowerCase() === 'paid';
 
-                {filteredOptions.map(item => {
-                  const id = String(item.id);
-                  const selected = String(selectedId || '') === id;
-                  return (
-                    <TouchableOpacity
-                      key={id}
-                      style={[styles.modalOption, selected && styles.modalOptionActive]}
-                      onPress={() => {
-                        onSelect(id);
-                        onClose();
-                      }}>
-                      {!!item.color && <View style={[styles.modalOptionDot, { backgroundColor: item.color }]} />}
-                      <Text style={[styles.modalOptionText, selected && styles.modalOptionTextActive]} numberOfLines={1}>
-                        {String(item?.[labelKey] || '-')}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
-    </Modal>
+const getOpenAmountLabel = mode => {
+  if (mode === 'payables') return 'A pagar';
+  if (mode === 'ownTransfers') return 'A transferir';
+  return 'A receber';
+};
+
+const normalizeText = value => String(value || '').trim();
+
+const getColumnKey = column => column?.key || column?.name || '';
+
+const shouldIncludeColumn = column => column?.visible !== false;
+
+const isExternalFilterColumn = column =>
+  shouldIncludeColumn(column) &&
+  column?.externalFilter === true &&
+  column?.filter !== false &&
+  column?.filters !== false;
+
+const normalizeFilterValue = value => {
+  if (value && typeof value === 'object') {
+    return normalizeFilterValue(value.value ?? value.id ?? value['@id'] ?? '');
+  }
+
+  return normalizeText(value);
+};
+
+const isFilledFilterValue = value => {
+  if (Array.isArray(value)) return value.length > 0;
+  if (value && typeof value === 'object') {
+    return Object.values(value).some(isFilledFilterValue);
+  }
+
+  return normalizeText(value) !== '';
+};
+
+const resolveColumnOptionLabel = (column, option) => {
+  if (!option) return '';
+
+  if (typeof column?.formatList === 'function') {
+    const formatted = column.formatList(option, column);
+    if (formatted && typeof formatted === 'object') {
+      return normalizeText(formatted.label ?? formatted.value);
+    }
+    if (formatted) return normalizeText(formatted);
+  }
+
+  return normalizeText(
+    option.label ??
+      option[column?.searchParam] ??
+      option[column?.name] ??
+      option.name ??
+      option.status ??
+      option.wallet ??
+      option.paymentType ??
+      option.alias ??
+      option.id,
   );
 };
 
-const FilterSelectField = ({ label, value, onPress }) => (
-  <TouchableOpacity style={styles.filterField} onPress={onPress} activeOpacity={0.85}>
-    <Text style={styles.filterLabel}>{label}</Text>
-    <View style={styles.filterValueRow}>
-      <Text style={styles.filterValue} numberOfLines={1}>{value || (global.t?.t('invoice', 'label', 'select') || 'Selecione')}</Text>
-      <Icon name="chevron-down" size={14} color="#64748B" />
-    </View>
-  </TouchableOpacity>
-);
+const buildColumnOptions = (column, options = []) => [
+  {
+    key: '',
+    label: global.t?.t('invoice', 'label', 'select') || 'Todos',
+  },
+  ...(Array.isArray(options) ? options : []).map(option => ({
+    key: normalizeFilterValue(option),
+    label: resolveColumnOptionLabel(column, option) || '-',
+  })),
+];
 
-const FilterInputField = ({ label, value, onChangeText, placeholder, keyboardType }) => (
-  <View style={styles.filterField}>
-    <Text style={styles.filterLabel}>{label}</Text>
-    <TextInput
-      style={styles.filterInput}
-      value={value}
-      onChangeText={onChangeText}
-      placeholder={placeholder}
-      placeholderTextColor="#94A3B8"
-      keyboardType={keyboardType || 'default'}
-    />
-  </View>
-);
+const resolveDueDateState = filterValue => {
+  if (!filterValue || typeof filterValue !== 'object') {
+    return {
+      customRange: { from: '', to: '' },
+      value: 'all',
+    };
+  }
+
+  if (filterValue.shortcut) {
+    return {
+      customRange: filterValue.customRange || { from: '', to: '' },
+      value: filterValue.shortcut,
+    };
+  }
+
+  if (filterValue.start || filterValue.end || filterValue.after || filterValue.before) {
+    return {
+      customRange: {
+        from: filterValue.start || filterValue.after || '',
+        to: filterValue.end || filterValue.before || '',
+      },
+      value: 'custom',
+    };
+  }
+
+  return {
+    customRange: { from: '', to: '' },
+    value: 'all',
+  };
+};
+
+const getColumnFilterIcon = column => {
+  const key = getColumnKey(column);
+  if (key === 'status') return 'check-circle';
+  if (key === 'category') return 'tag';
+  return 'sliders';
+};
 
 function FinancialEntriesPage({ mode = 'receivables' }) {
   const config = MODE_CONFIG[mode] || MODE_CONFIG.receivables;
@@ -220,34 +247,22 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
 
   const { items: invoices, isLoading, totalItems } = invoiceGetters;
   const { currentCompany } = peopleGetters;
+  const invoiceColumns = useMemo(
+    () => (Array.isArray(invoiceGetters?.columns) ? invoiceGetters.columns : []),
+    [invoiceGetters?.columns],
+  );
+  const storeFilters = invoiceGetters?.filters || {};
+  const storeFiltersKey = useMemo(
+    () => JSON.stringify(storeFilters || {}),
+    [storeFilters],
+  );
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(50);
   const [loadedInvoices, setLoadedInvoices] = useState([]);
-
-  const [idFilter, setIdFilter] = useState('');
-  const [dueDateStart, setDueDateStart] = useState('');
-  const [dueDateEnd, setDueDateEnd] = useState('');
-
-  const [selectedStatusId, setSelectedStatusId] = useState('');
-  const [selectedCategoryId, setSelectedCategoryId] = useState('');
-  const [selectedWalletId, setSelectedWalletId] = useState('');
-  const [selectedPaymentTypeId, setSelectedPaymentTypeId] = useState('');
-  const [selectedReceiverId, setSelectedReceiverId] = useState('');
-  const [sourceWalletId, setSourceWalletId] = useState('');
-  const [destinationWalletId, setDestinationWalletId] = useState('');
-
-  const [activeModal, setActiveModal] = useState('');
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(!isMobile);
 
   const mountedRef = useRef(false);
-
-  useEffect(() => {
-    const stored = invoiceGetters?.filters || {};
-    if (stored.id) setIdFilter(String(stored.id));
-    if (stored.dueDate?.start) setDueDateStart(String(stored.dueDate.start));
-    if (stored.dueDate?.end) setDueDateEnd(String(stored.dueDate.end));
-  }, []);
 
   useEffect(() => {
     if (!currentCompany?.id) return;
@@ -255,12 +270,6 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     const { statusActions: sa, walletActions: wa, paymentTypeActions: pta, categoriesActions: ca, peopleActions: pa } = actionsRef.current;
 
     sa.getItems({ context: 'invoice' });
-
-    if (mode === 'ownTransfers') {
-      wa.getItems({ people: currentCompany.id });
-      return;
-    }
-
     wa.getItems({ people: currentCompany.id });
     pta.getItems({ context: 'invoice', people: currentCompany.id });
     ca.getItems({
@@ -297,30 +306,81 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     [peopleGetters.items, currentCompany?.id],
   );
 
-  const labelById = useCallback((items, id, key) => {
-    if (!id) return '';
-    const found = (items || []).find(item => String(item.id) === String(id));
-    return found ? String(found[key] || '') : '';
-  }, []);
+  const filterColumns = useMemo(
+    () => invoiceColumns.filter(isExternalFilterColumn),
+    [invoiceColumns],
+  );
 
-  const normalizeDate = useCallback((value) => {
-    const v = String(value || '').trim();
-    if (!v) return null;
+  const dueDateColumn = useMemo(
+    () => filterColumns.find(column => column.inputType === 'date-range'),
+    [filterColumns],
+  );
 
-    const ddmmyyyy = /^(\d{2})\/(\d{2})\/(\d{4})$/;
-    const yyyymmdd = /^(\d{4})-(\d{2})-(\d{2})$/;
+  const selectFilterColumns = useMemo(
+    () => filterColumns.filter(column => column.inputType !== 'date-range'),
+    [filterColumns],
+  );
 
-    if (ddmmyyyy.test(v)) {
-      const [, d, m, y] = v.match(ddmmyyyy);
-      return `${y}-${m}-${d}`;
+  const getOptionsForColumn = useCallback(
+    column => {
+      const key = getColumnKey(column);
+      if (key === 'status') return statusOptions;
+      if (key === 'category') return categoryOptions;
+      if (key === 'sourceWallet' || key === 'destinationWallet' || key === 'wallet') return walletOptions;
+      if (key === 'paymentType') return paymentTypeOptions;
+      if (key === 'payer' || key === 'receiver') return receiverOptions;
+      return [];
+    },
+    [categoryOptions, paymentTypeOptions, receiverOptions, statusOptions, walletOptions],
+  );
+
+  const setStoreFilter = useCallback((key, value) => {
+    const nextFilters = { ...(invoiceGetters?.filters || {}) };
+    if (!isFilledFilterValue(value)) {
+      delete nextFilters[key];
+    } else {
+      nextFilters[key] = value;
     }
+    actionsRef.current.invoiceActions.setFilters(nextFilters);
+  }, [invoiceGetters?.filters]);
 
-    if (yyyymmdd.test(v)) {
-      return v;
-    }
+  const clearStoreFilter = useCallback(key => {
+    const nextFilters = { ...(invoiceGetters?.filters || {}) };
+    delete nextFilters[key];
+    actionsRef.current.invoiceActions.setFilters(nextFilters);
+  }, [invoiceGetters?.filters]);
 
-    return null;
-  }, []);
+  const dueDateState = useMemo(
+    () => resolveDueDateState(storeFilters.dueDate),
+    [storeFilters.dueDate],
+  );
+
+  const formatInvoiceColumnLabel = useCallback(
+    (fieldName, fallbackLabel) =>
+      fallbackLabel ||
+      formatStoreColumnLabel({
+        columns: invoiceColumns,
+        fallbackLabel,
+        fieldName,
+        storeName: 'invoice',
+      }) || fallbackLabel,
+    [invoiceColumns],
+  );
+
+  const formatInvoiceColumnValue = useCallback(
+    (row, fieldName, fallbackValue) => {
+      const formattedValue = formatStoreColumnValue({
+        columns: invoiceColumns,
+        fieldName,
+        row,
+        storeName: 'invoice',
+        value: row?.[fieldName],
+      });
+
+      return formattedValue ?? fallbackValue ?? '-';
+    },
+    [invoiceColumns],
+  );
 
   const fetchInvoices = useCallback((pageOverride) => {
     if (!currentCompany?.id) return;
@@ -330,34 +390,38 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     params.page = page;
     params.itemsPerPage = itemsPerPage;
 
-    if (idFilter) params.id = idFilter;
-    if (selectedStatusId) params.status = selectedStatusId;
+    Object.entries(storeFilters || {}).forEach(([key, value]) => {
+      if (!isFilledFilterValue(value)) return;
 
-    const start = normalizeDate(dueDateStart);
-    const end = normalizeDate(dueDateEnd);
-    if (start) params['dueDate[after]'] = start;
-    if (end) params['dueDate[before]'] = end;
+      if (key === 'dueDate') {
+        const dateState = resolveDueDateState(value);
+        const dateRange = getDateRange(dateState.value, dateState.customRange, {
+          relativeMode: 'rolling',
+          useCurrentMoment: true,
+        });
+        if (dateRange?.after) params['dueDate[after]'] = dateRange.after;
+        if (dateRange?.before) params['dueDate[before]'] = dateRange.before;
+        return;
+      }
+
+      if (Array.isArray(value)) {
+        params[key] = value.map(normalizeFilterValue);
+        return;
+      }
+
+      params[key] = normalizeFilterValue(value);
+    });
 
     if (mode === 'receivables') {
       params.receiver = currentCompany.id;
       params.excludeOwnTransfers = 1;
-      if (selectedReceiverId) params.payer = selectedReceiverId;
-      if (selectedCategoryId) params.category = selectedCategoryId;
-      if (selectedWalletId) params.destinationWallet = selectedWalletId;
-      if (selectedPaymentTypeId) params.paymentType = selectedPaymentTypeId;
     } else if (mode === 'payables') {
       params.payer = currentCompany.id;
       params.excludeOwnTransfers = 1;
-      if (selectedReceiverId) params.receiver = selectedReceiverId;
-      if (selectedCategoryId) params.category = selectedCategoryId;
-      if (selectedWalletId) params.sourceWallet = selectedWalletId;
-      if (selectedPaymentTypeId) params.paymentType = selectedPaymentTypeId;
     } else {
       params.payer = currentCompany.id;
       params.receiver = currentCompany.id;
       params.ownTransfers = 1;
-      if (sourceWalletId) params.sourceWallet = sourceWalletId;
-      if (destinationWalletId) params.destinationWallet = destinationWalletId;
     }
 
     actionsRef.current.invoiceActions.getItems(params);
@@ -365,18 +429,8 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     currentCompany?.id,
     currentPage,
     itemsPerPage,
-    idFilter,
-    selectedStatusId,
-    dueDateStart,
-    dueDateEnd,
     mode,
-    selectedReceiverId,
-    selectedCategoryId,
-    selectedWalletId,
-    selectedPaymentTypeId,
-    sourceWalletId,
-    destinationWalletId,
-    normalizeDate,
+    storeFiltersKey,
     // invoiceActions removido — lido via ref para referência estável
   ]);
 
@@ -435,16 +489,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   }, [
     currentCompany?.id,
     mode,
-    idFilter,
-    dueDateStart,
-    dueDateEnd,
-    selectedStatusId,
-    selectedReceiverId,
-    selectedCategoryId,
-    selectedWalletId,
-    selectedPaymentTypeId,
-    sourceWalletId,
-    destinationWalletId,
+    storeFiltersKey,
     // fetchInvoices removido — lido via ref para evitar disparo duplo
     // quando useFocusEffect já chamou fetchInvoices no mesmo ciclo
   ]);
@@ -465,42 +510,23 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   }, [loadedInvoices, mode]);
 
   const totals = useMemo(() => {
-    const amount = filteredInvoices.reduce((sum, item) => sum + Number(item?.price || 0), 0);
+    const paidAmount = filteredInvoices
+      .filter(isPaidInvoice)
+      .reduce((sum, item) => sum + resolveInvoiceAmount(item), 0);
+    const amount = filteredInvoices.reduce((sum, item) => sum + resolveInvoiceAmount(item), 0);
 
     return {
-      count: filteredInvoices.length,
-      total: amount,
-      paidCount: filteredInvoices.filter(item => String(item?.status?.status || '').toLowerCase() === 'paid').length,
+      openAmount: amount - paidAmount,
+      paidAmount,
     };
   }, [filteredInvoices]);
 
   const activeFiltersCount = useMemo(() => {
-    const fields = [
-      idFilter,
-      dueDateStart,
-      dueDateEnd,
-      selectedStatusId,
-      selectedCategoryId,
-      selectedWalletId,
-      selectedPaymentTypeId,
-      selectedReceiverId,
-      sourceWalletId,
-      destinationWalletId,
-    ];
-
-    return fields.filter(value => String(value || '').trim() !== '').length;
-  }, [
-    idFilter,
-    dueDateStart,
-    dueDateEnd,
-    selectedStatusId,
-    selectedCategoryId,
-    selectedWalletId,
-    selectedPaymentTypeId,
-    selectedReceiverId,
-    sourceWalletId,
-    destinationWalletId,
-  ]);
+    return filterColumns.filter(column => {
+      const key = getColumnKey(column);
+      return isFilledFilterValue(storeFilters[key]);
+    }).length;
+  }, [filterColumns, storeFiltersKey]);
 
   useEffect(() => {
     if (!isMobile) {
@@ -515,6 +541,31 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
 
   const renderInvoiceCard = ({ item }) => {
     const statusColor = item?.status?.color || '#94A3B8';
+    const categoryValue = formatInvoiceColumnValue(
+      item,
+      'category',
+      item?.category?.name || item?.categories?.category || '-',
+    );
+    const dueDateValue = formatInvoiceColumnValue(
+      item,
+      'dueDate',
+      Formatter.formatDateYmdTodmY(item?.dueDate),
+    );
+    const paymentTypeValue = formatInvoiceColumnValue(
+      item,
+      'paymentType',
+      item?.paymentType?.paymentType || '-',
+    );
+    const installmentsValue = formatInvoiceColumnValue(
+      item,
+      'installments',
+      item?.installments || '-',
+    );
+    const amountValue = formatInvoiceColumnValue(
+      item,
+      'price',
+      Formatter.formatMoney(resolveInvoiceAmount(item)),
+    );
 
     return (
       <View style={styles.invoiceCard}>
@@ -529,8 +580,8 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
           <View style={styles.invoiceInfoCell}>
             <Text style={styles.invoiceLabel}>
               {mode === 'receivables'
-                ? global.t?.t('invoice', 'label', 'payer')
-                : global.t?.t('invoice', 'label', 'sourceWallet')}
+                ? formatInvoiceColumnLabel('payer', global.t?.t('invoice', 'label', 'payer'))
+                : formatInvoiceColumnLabel('sourceWallet', global.t?.t('invoice', 'label', 'sourceWallet'))}
             </Text>
             <Text style={styles.invoiceValue} numberOfLines={1}>{getPartyLabel(item, mode)}</Text>
           </View>
@@ -538,38 +589,54 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
           <View style={styles.invoiceInfoCell}>
             <Text style={styles.invoiceLabel}>
               {mode === 'receivables'
-                ? global.t?.t('invoice', 'label', 'destinationWallet')
-                : global.t?.t('invoice', 'label', 'receiver')}
+                ? formatInvoiceColumnLabel('destinationWallet', global.t?.t('invoice', 'label', 'destinationWallet'))
+                : formatInvoiceColumnLabel('receiver', global.t?.t('invoice', 'label', 'receiver'))}
             </Text>
             <Text style={styles.invoiceValue} numberOfLines={1}>{getSecondaryPartyLabel(item, mode)}</Text>
           </View>
 
           <View style={styles.invoiceInfoCell}>
-            <Text style={styles.invoiceLabel}>{global.t?.t('invoice', 'label', 'category')}</Text>
+            <Text style={styles.invoiceLabel}>
+              {formatInvoiceColumnLabel('category', global.t?.t('invoice', 'label', 'category'))}
+            </Text>
             <Text style={styles.invoiceValue} numberOfLines={1}>
-              {item?.category?.name || item?.categories?.category || '-'}
+              {categoryValue}
             </Text>
           </View>
 
           <View style={styles.invoiceInfoCell}>
-            <Text style={styles.invoiceLabel}>{global.t?.t('invoice', 'label', 'dueDate')}</Text>
-            <Text style={styles.invoiceValue}>{Formatter.formatDateYmdTodmY(item?.dueDate)}</Text>
+            <Text style={styles.invoiceLabel}>
+              {formatInvoiceColumnLabel('dueDate', global.t?.t('invoice', 'label', 'dueDate'))}
+            </Text>
+            <Text style={styles.invoiceValue}>{dueDateValue}</Text>
           </View>
 
           <View style={styles.invoiceInfoCell}>
-            <Text style={styles.invoiceLabel}>{global.t?.t('invoice', 'label', 'paymentType')}</Text>
-            <Text style={styles.invoiceValue} numberOfLines={1}>{item?.paymentType?.paymentType || '-'}</Text>
+            <Text style={styles.invoiceLabel}>
+              {formatInvoiceColumnLabel('paymentType', global.t?.t('invoice', 'label', 'paymentType'))}
+            </Text>
+            <Text style={styles.invoiceValue} numberOfLines={1}>{paymentTypeValue}</Text>
           </View>
 
           <View style={styles.invoiceInfoCell}>
-            <Text style={styles.invoiceLabel}>{global.t?.t('invoice', 'label', 'installments')}</Text>
-            <Text style={styles.invoiceValue}>{item?.installments || '-'}</Text>
+            <Text style={styles.invoiceLabel}>
+              {formatInvoiceColumnLabel('installments', global.t?.t('invoice', 'label', 'installments'))}
+            </Text>
+            <Text style={styles.invoiceValue}>{installmentsValue}</Text>
           </View>
         </View>
 
         <View style={styles.amountRow}>
-          <Text style={styles.amountLabel}>{global.t?.t('invoice', 'label', 'value')}</Text>
-          <Text style={[styles.amountValue, { color: brandColors.primary }]}>{Formatter.formatMoney(item?.price)}</Text>
+          <Text style={styles.amountLabel}>
+            {formatInvoiceColumnLabel('price', global.t?.t('invoice', 'label', 'value'))}
+          </Text>
+          <Text
+            style={[styles.amountValue, { color: brandColors.primary }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.72}>
+            {amountValue}
+          </Text>
         </View>
       </View>
     );
@@ -577,23 +644,6 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
 
   return (
     <View style={[styles.container, { backgroundColor: brandColors.background }]}>
-      <View style={styles.summaryRow}>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Registros</Text>
-          <Text style={styles.summaryValue}>{totals.count}</Text>
-        </View>
-
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Com status pago</Text>
-          <Text style={styles.summaryValue}>{totals.paidCount}</Text>
-        </View>
-
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Total</Text>
-          <Text style={[styles.summaryValue, { color: config.accent }]}>{Formatter.formatMoney(totals.total)}</Text>
-        </View>
-      </View>
-
       <View style={styles.filterCard}>
         {isMobile && (
           <TouchableOpacity
@@ -614,76 +664,77 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
 
         {(!isMobile || isFiltersExpanded) && (
           <View style={styles.filterGrid}>
-            <FilterInputField
-              label={global.t?.t('invoice', 'label', 'id') || 'Id'}
-              value={idFilter}
-              onChangeText={setIdFilter}
-              placeholder={global.t?.t('idInput', 'label', 'Insert id') || 'Inserir id'}
-              keyboardType="number-pad"
-            />
+            {selectFilterColumns.map(column => {
+              const key = getColumnKey(column);
+              const options = buildColumnOptions(column, getOptionsForColumn(column));
+              const selectedKey = normalizeFilterValue(storeFilters[key]);
+              const selectedLabel =
+                options.find(option => option.key === selectedKey)?.label ||
+                options[0]?.label ||
+                '';
 
-            <FilterSelectField
-              label={global.t?.t('invoice', 'label', 'status') || 'Status'}
-              value={labelById(statusOptions, selectedStatusId, 'status')}
-              onPress={() => setActiveModal('status')}
-            />
-
-            <FilterInputField
-              label={`${global.t?.t('invoice', 'label', 'dueDate') || 'Vencimento'} (inicio)`}
-              value={dueDateStart}
-              onChangeText={setDueDateStart}
-              placeholder="DD/MM/AAAA"
-            />
-
-            <FilterInputField
-              label={`${global.t?.t('invoice', 'label', 'dueDate') || 'Vencimento'} (fim)`}
-              value={dueDateEnd}
-              onChangeText={setDueDateEnd}
-              placeholder="DD/MM/AAAA"
-            />
-
-            {mode !== 'ownTransfers' && (
-              <>
-                <FilterSelectField
-                  label={mode === 'payables' ? 'Recebedor' : 'Pagador'}
-                  value={labelById(receiverOptions, selectedReceiverId, 'name')}
-                  onPress={() => setActiveModal('receiver')}
+              return (
+                <CompactFilterSelector
+                  key={key}
+                  icon={getColumnFilterIcon(column)}
+                  label={selectedLabel}
+                  accentColor={config.accent}
+                  active={Boolean(selectedKey)}
+                  dense
+                  store="invoice"
+                  field={key}
+                  options={options}
+                  selectedKey={selectedKey}
+                  onSelect={optionKey => {
+                    setStoreFilter(key, optionKey);
+                    return true;
+                  }}
                 />
+              );
+            })}
 
-                <FilterSelectField
-                  label={global.t?.t('invoice', 'label', 'category') || 'Categoria'}
-                  value={labelById(categoryOptions, selectedCategoryId, 'name')}
-                  onPress={() => setActiveModal('category')}
-                />
+            {!!dueDateColumn && (
+              <DateShortcutFilter
+                value={dueDateState.value}
+                onChange={optionKey => {
+                  if (optionKey === 'all') {
+                    clearStoreFilter('dueDate');
+                    return;
+                  }
 
-                <FilterSelectField
-                  label={global.t?.t('invoice', 'label', 'wallet') || 'Carteira'}
-                  value={labelById(walletOptions, selectedWalletId, 'wallet')}
-                  onPress={() => setActiveModal('wallet')}
-                />
-
-                <FilterSelectField
-                  label={global.t?.t('invoice', 'label', 'payment method') || 'Forma de pagamento'}
-                  value={labelById(paymentTypeOptions, selectedPaymentTypeId, 'paymentType')}
-                  onPress={() => setActiveModal('paymentType')}
-                />
-              </>
-            )}
-
-            {mode === 'ownTransfers' && (
-              <>
-                <FilterSelectField
-                  label={global.t?.t('invoice', 'label', 'sourceWallet') || 'Carteira origem'}
-                  value={labelById(walletOptions, sourceWalletId, 'wallet')}
-                  onPress={() => setActiveModal('sourceWallet')}
-                />
-
-                <FilterSelectField
-                  label={global.t?.t('invoice', 'label', 'destinationWallet') || 'Carteira destino'}
-                  value={labelById(walletOptions, destinationWalletId, 'wallet')}
-                  onPress={() => setActiveModal('destinationWallet')}
-                />
-              </>
+                  setStoreFilter('dueDate', {
+                    ...(storeFilters.dueDate || {}),
+                    shortcut: optionKey,
+                    customRange: dueDateState.customRange,
+                  });
+                }}
+                customRange={dueDateState.customRange}
+                onCustomRangeChange={range => {
+                  setStoreFilter('dueDate', {
+                    ...(storeFilters.dueDate || {}),
+                    shortcut: 'custom',
+                    customRange: range,
+                  });
+                }}
+                dense
+                store="invoice"
+                field="dueDate"
+                colors={{
+                  accent: config.accent,
+                  appBg: 'transparent',
+                  border: '#CBD5E1',
+                  borderSoft: '#E2E8F0',
+                  cardBg: '#FFFFFF',
+                  cardBgSoft: '#F8FAFC',
+                  danger: '#DC2626',
+                  isLight: true,
+                  panelBg: '#EFF6FF',
+                  pillTextDark: '#FFFFFF',
+                  textPrimary: '#0F172A',
+                  textSecondary: '#64748B',
+                }}
+                optionKeys={['all', 'today', 'yesterday', '7d', '30d', 'custom']}
+              />
             )}
           </View>
         )}
@@ -725,82 +776,32 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
         }
       />
 
-      <SelectModal
-        visible={activeModal === 'status'}
-        title={global.t?.t('invoice', 'label', 'status') || 'Status'}
-        options={statusOptions}
-        selectedId={selectedStatusId}
-        onClose={() => setActiveModal('')}
-        onSelect={setSelectedStatusId}
-        labelKey="status"
-        searchPlaceholder="Buscar status"
-      />
+      <View style={styles.summaryFooter}>
+        <View style={styles.summaryFooterItem}>
+          <Text style={styles.summaryFooterLabel}>{getOpenAmountLabel(mode)}</Text>
+          <Text
+            style={[styles.summaryFooterValue, { color: config.accent }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.76}>
+            {Formatter.formatMoney(totals.openAmount)}
+          </Text>
+        </View>
 
-      <SelectModal
-        visible={activeModal === 'receiver'}
-        title={mode === 'payables' ? 'Recebedor' : 'Pagador'}
-        options={receiverOptions}
-        selectedId={selectedReceiverId}
-        onClose={() => setActiveModal('')}
-        onSelect={setSelectedReceiverId}
-        labelKey="name"
-        searchPlaceholder="Buscar pessoa"
-      />
+        <View style={styles.summaryFooterDivider} />
 
-      <SelectModal
-        visible={activeModal === 'category'}
-        title={global.t?.t('invoice', 'label', 'category') || 'Categoria'}
-        options={categoryOptions}
-        selectedId={selectedCategoryId}
-        onClose={() => setActiveModal('')}
-        onSelect={setSelectedCategoryId}
-        labelKey="name"
-        searchPlaceholder="Buscar categoria"
-      />
+        <View style={styles.summaryFooterItem}>
+          <Text style={styles.summaryFooterLabel}>Pago</Text>
+          <Text
+            style={styles.summaryFooterValue}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.76}>
+            {Formatter.formatMoney(totals.paidAmount)}
+          </Text>
+        </View>
+      </View>
 
-      <SelectModal
-        visible={activeModal === 'wallet'}
-        title={global.t?.t('invoice', 'label', 'wallet') || 'Carteira'}
-        options={walletOptions}
-        selectedId={selectedWalletId}
-        onClose={() => setActiveModal('')}
-        onSelect={setSelectedWalletId}
-        labelKey="wallet"
-        searchPlaceholder="Buscar carteira"
-      />
-
-      <SelectModal
-        visible={activeModal === 'paymentType'}
-        title={global.t?.t('invoice', 'label', 'payment method') || 'Forma de pagamento'}
-        options={paymentTypeOptions}
-        selectedId={selectedPaymentTypeId}
-        onClose={() => setActiveModal('')}
-        onSelect={setSelectedPaymentTypeId}
-        labelKey="paymentType"
-        searchPlaceholder="Buscar forma de pagamento"
-      />
-
-      <SelectModal
-        visible={activeModal === 'sourceWallet'}
-        title={global.t?.t('invoice', 'label', 'sourceWallet') || 'Carteira origem'}
-        options={walletOptions}
-        selectedId={sourceWalletId}
-        onClose={() => setActiveModal('')}
-        onSelect={setSourceWalletId}
-        labelKey="wallet"
-        searchPlaceholder="Buscar carteira"
-      />
-
-      <SelectModal
-        visible={activeModal === 'destinationWallet'}
-        title={global.t?.t('invoice', 'label', 'destinationWallet') || 'Carteira destino'}
-        options={walletOptions}
-        selectedId={destinationWalletId}
-        onClose={() => setActiveModal('')}
-        onSelect={setDestinationWalletId}
-        labelKey="wallet"
-        searchPlaceholder="Buscar carteira"
-      />
     </View>
   );
 }
