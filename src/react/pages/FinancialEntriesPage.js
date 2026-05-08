@@ -3,6 +3,7 @@ import { ActivityIndicator, FlatList, Text, TouchableOpacity, useWindowDimension
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useStore } from '@store';
+import DefaultDataTable from '@controleonline/ui-default/src/react/components/table/DefaultDataTable';
 import CompactFilterSelector from '@controleonline/ui-default/src/react/components/filters/CompactFilterSelector';
 import DateShortcutFilter from '@controleonline/ui-default/src/react/components/filters/DateShortcutFilter';
 import Formatter from '@controleonline/ui-common/src/utils/formatter.js';
@@ -523,6 +524,21 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     [invoiceSummary],
   );
 
+  const hasMoreInvoices = loadedInvoices.length < Number(totalItems || 0);
+
+  const mergeSavedInvoice = useCallback(savedInvoice => {
+    if (!savedInvoice?.id && !savedInvoice?.['@id']) return;
+
+    const savedId = getEntityId(savedInvoice);
+    setLoadedInvoices(prev =>
+      (prev || []).map(invoice =>
+        getEntityId(invoice) === savedId
+          ? { ...invoice, ...savedInvoice }
+          : invoice,
+      ),
+    );
+  }, []);
+
   const activeFiltersCount = useMemo(() => {
     return filterColumns.filter(column => {
       const key = getColumnKey(column);
@@ -749,34 +765,51 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
         </View>
       )}
 
-      <FlatList
-        data={filteredInvoices}
-        keyExtractor={item => String(item.id)}
-        renderItem={renderInvoiceCard}
-        contentContainerStyle={styles.listContent}
-        onEndReached={() => {
-          if (!isLoading && loadedInvoices.length < Number(totalItems || 0)) {
-            setCurrentPage(page => page + 1);
+      {isMobile ? (
+        <FlatList
+          data={filteredInvoices}
+          keyExtractor={item => String(item.id)}
+          renderItem={renderInvoiceCard}
+          contentContainerStyle={styles.listContent}
+          onEndReached={() => {
+            if (!isLoading && hasMoreInvoices) {
+              setCurrentPage(page => page + 1);
+            }
+          }}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isLoading && loadedInvoices.length > 0 ? (
+              <View style={styles.loadingBox}>
+                <ActivityIndicator size="small" color={brandColors.primary} />
+                <Text style={styles.loadingText}>Carregando mais registros...</Text>
+              </View>
+            ) : null
           }
-        }}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          isLoading && loadedInvoices.length > 0 ? (
-            <View style={styles.loadingBox}>
-              <ActivityIndicator size="small" color={brandColors.primary} />
-              <Text style={styles.loadingText}>Carregando mais registros...</Text>
-            </View>
-          ) : null
-        }
-        ListEmptyComponent={
-          !isLoading ? (
-            <View style={styles.emptyBox}>
-              <Text style={styles.emptyTitle}>Nenhum registro encontrado</Text>
-              <Text style={styles.emptySubtitle}>Ajuste os filtros para visualizar lancamentos.</Text>
-            </View>
-          ) : null
-        }
-      />
+          ListEmptyComponent={
+            !isLoading ? (
+              <View style={styles.emptyBox}>
+                <Text style={styles.emptyTitle}>Nenhum registro encontrado</Text>
+                <Text style={styles.emptySubtitle}>Ajuste os filtros para visualizar lancamentos.</Text>
+              </View>
+            ) : null
+          }
+        />
+      ) : (
+        <DefaultDataTable
+          actions={invoiceActions}
+          columns={invoiceColumns}
+          data={filteredInvoices}
+          hasMore={hasMoreInvoices}
+          isLoading={isLoading}
+          storeName="invoice"
+          onEndReached={() => {
+            if (!isLoading && hasMoreInvoices) {
+              setCurrentPage(page => page + 1);
+            }
+          }}
+          onSaved={mergeSavedInvoice}
+        />
+      )}
 
       <View style={styles.summaryFooter}>
         <View style={styles.summaryFooterItem}>

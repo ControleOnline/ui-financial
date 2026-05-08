@@ -46,7 +46,7 @@ export default {
             ? value?.name + " - " + value?.alias
             : "---------------";
         },
-        formatList: function (value, row, column) {
+        formatList: function (value, _row, _column) {
           return {
             id: value?.id,
             label: value?.name,
@@ -70,7 +70,7 @@ export default {
             ? value?.name + " - " + value?.alias
             : "---------------";
         },
-        formatList: function (value, row, column) {
+        formatList: function (value, _row, _column) {
           return {
             id: value?.id,
             label: value?.name,
@@ -104,7 +104,7 @@ export default {
             label: data?.name,
           };
         },
-        saveFormat: function (value, column, row) {
+        saveFormat: function (value, _column, _row) {
           //if (row && row["@id"])
           return "/categories/" + parseInt(value.value || value);
           //else return parseInt(value.value || value);
@@ -161,7 +161,7 @@ export default {
         searchParam: "sourceWallet",
         externalFilter: false,
         format: function (value) {
-          return value?.sourceWallet;
+          return value?.wallet;
         },
         formatList(data) {
           return {
@@ -184,7 +184,7 @@ export default {
         searchParam: "destinationWallet",
         externalFilter: false,
         format: function (value) {
-          return value?.destinationWallet;
+          return value?.wallet;
         },
         formatList(data) {
           return {
@@ -257,7 +257,7 @@ export default {
         saveFormat(value) {
           return parseInt(value || 1);
         },
-        format(value, column, row, editing) {
+        format(value, _column, row, _editing) {
           if (row?.paymentType?.frequency == "single") {
             return "1X";
           }
