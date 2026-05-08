@@ -107,22 +107,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  loadingBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 8,
-    marginBottom: 8,
-  },
-  loadingText: {
-    fontSize: 12,
-    color: '#64748B',
-    fontWeight: '600',
-  },
-  listContent: {
-    paddingBottom: 12,
-    gap: 10,
-  },
   invoiceCard: {
     borderRadius: 16,
     backgroundColor: '#fff',
@@ -233,23 +217,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#0F172A',
     fontWeight: '900',
-  },
-  emptyBox: {
-    borderRadius: 16,
-    backgroundColor: '#fff',
-    padding: 20,
-    alignItems: 'center',
-    ...cardShadow,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#334155',
-    marginBottom: 4,
-  },
-  emptySubtitle: {
-    fontSize: 12,
-    color: '#94A3B8',
   },
   modalBackdrop: {
     flex: 1,

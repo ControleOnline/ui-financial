@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useStore } from '@store';
 import DefaultExternalFilters from '@controleonline/ui-default/src/react/components/filters/DefaultExternalFilters';
-import DefaultDataTable from '@controleonline/ui-default/src/react/components/table/DefaultDataTable';
+import DefaultTable from '@controleonline/ui-default/src/react/components/table/DefaultTable';
 import Formatter from '@controleonline/ui-common/src/utils/formatter.js';
 import {
   formatStoreColumnLabel,
@@ -612,65 +612,27 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
         )}
       </View>
 
-      {isMobile && isLoading && (
-        <View style={styles.loadingBox}>
-          <ActivityIndicator size="small" color={brandColors.primary} />
-          <Text style={styles.loadingText}>Carregando {config.title.toLowerCase()}...</Text>
-        </View>
-      )}
-
-      {isMobile ? (
-        <FlatList
-          data={filteredInvoices}
-          keyExtractor={item => String(item.id)}
-          renderItem={renderInvoiceCard}
-          contentContainerStyle={styles.listContent}
-          onEndReached={() => {
-            if (!isLoading && hasMoreInvoices) {
-              setCurrentPage(page => page + 1);
-            }
-          }}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={
-            isLoading && loadedInvoices.length > 0 ? (
-              <View style={styles.loadingBox}>
-                <ActivityIndicator size="small" color={brandColors.primary} />
-                <Text style={styles.loadingText}>Carregando mais registros...</Text>
-              </View>
-            ) : null
+      <DefaultTable
+        accentColor={config.accent}
+        actions={invoiceActions}
+        columns={invoiceColumns}
+        data={filteredInvoices}
+        filters={storeFilters}
+        getOptionsForColumn={getOptionsForColumn}
+        hasMore={hasMoreInvoices}
+        isLoading={isLoading}
+        onFilterChange={setStoreFilters}
+        onSortChange={setSortState}
+        renderCard={renderInvoiceCard}
+        sort={sortState}
+        storeName="invoice"
+        onEndReached={() => {
+          if (!isLoading && hasMoreInvoices) {
+            setCurrentPage(page => page + 1);
           }
-          ListEmptyComponent={
-            !isLoading ? (
-              <View style={styles.emptyBox}>
-                <Text style={styles.emptyTitle}>Nenhum registro encontrado</Text>
-                <Text style={styles.emptySubtitle}>Ajuste os filtros para visualizar lancamentos.</Text>
-              </View>
-            ) : null
-          }
-        />
-      ) : (
-        <DefaultDataTable
-          accentColor={config.accent}
-          actions={invoiceActions}
-          columns={invoiceColumns}
-          data={filteredInvoices}
-          filters={storeFilters}
-          getOptionsForColumn={getOptionsForColumn}
-          hasMore={hasMoreInvoices}
-          isLoading={isLoading}
-          onFilterChange={setStoreFilters}
-          onSortChange={setSortState}
-          renderCard={renderInvoiceCard}
-          sort={sortState}
-          storeName="invoice"
-          onEndReached={() => {
-            if (!isLoading && hasMoreInvoices) {
-              setCurrentPage(page => page + 1);
-            }
-          }}
-          onSaved={mergeSavedInvoice}
-        />
-      )}
+        }}
+        onSaved={mergeSavedInvoice}
+      />
 
       <View style={styles.summaryFooter}>
         <View style={styles.summaryFooterItem}>
