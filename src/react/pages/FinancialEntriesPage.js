@@ -476,33 +476,24 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     }
   }, [activeFiltersCount, isMobile]);
 
-  const renderInvoiceCard = ({ item }) => {
+  const renderInvoiceCard = ({ item, renderField }) => {
     const statusColor = item?.status?.color || '#94A3B8';
-    const categoryValue = formatInvoiceColumnValue(
-      item,
-      'category',
-      item?.category?.name || item?.categories?.category || '-',
-    );
-    const dueDateValue = formatInvoiceColumnValue(
-      item,
-      'dueDate',
-      Formatter.formatDateYmdTodmY(item?.dueDate),
-    );
-    const paymentTypeValue = formatInvoiceColumnValue(
-      item,
-      'paymentType',
-      item?.paymentType?.paymentType || '-',
-    );
-    const installmentsValue = formatInvoiceColumnValue(
-      item,
-      'installments',
-      item?.installments || '-',
-    );
     const amountValue = formatInvoiceColumnValue(
       item,
       'price',
       Formatter.formatMoney(resolveInvoiceAmount(item)),
     );
+    const renderCardField = (fieldName, fallback, options = {}) =>
+      renderField?.(fieldName, {
+        displayValue: fallback,
+        numberOfLines: 1,
+        readTextStyle: styles.invoiceValue,
+        ...options,
+      }) || (
+        <Text style={options.readTextStyle || styles.invoiceValue} numberOfLines={options.numberOfLines || 1}>
+          {fallback}
+        </Text>
+      );
 
     return (
       <View style={styles.invoiceCard}>
@@ -536,30 +527,44 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
             <Text style={styles.invoiceLabel}>
               {formatInvoiceColumnLabel('category', global.t?.t('invoice', 'label', 'category'))}
             </Text>
-            <Text style={styles.invoiceValue} numberOfLines={1}>
-              {categoryValue}
-            </Text>
+            {renderCardField('category', formatInvoiceColumnValue(
+              item,
+              'category',
+              item?.category?.name || item?.categories?.category || '-',
+            ))}
           </View>
 
           <View style={styles.invoiceInfoCell}>
             <Text style={styles.invoiceLabel}>
               {formatInvoiceColumnLabel('dueDate', global.t?.t('invoice', 'label', 'dueDate'))}
             </Text>
-            <Text style={styles.invoiceValue}>{dueDateValue}</Text>
+            {renderCardField('dueDate', formatInvoiceColumnValue(
+              item,
+              'dueDate',
+              Formatter.formatDateYmdTodmY(item?.dueDate),
+            ))}
           </View>
 
           <View style={styles.invoiceInfoCell}>
             <Text style={styles.invoiceLabel}>
               {formatInvoiceColumnLabel('paymentType', global.t?.t('invoice', 'label', 'paymentType'))}
             </Text>
-            <Text style={styles.invoiceValue} numberOfLines={1}>{paymentTypeValue}</Text>
+            {renderCardField('paymentType', formatInvoiceColumnValue(
+              item,
+              'paymentType',
+              item?.paymentType?.paymentType || '-',
+            ))}
           </View>
 
           <View style={styles.invoiceInfoCell}>
             <Text style={styles.invoiceLabel}>
               {formatInvoiceColumnLabel('installments', global.t?.t('invoice', 'label', 'installments'))}
             </Text>
-            <Text style={styles.invoiceValue}>{installmentsValue}</Text>
+            {renderCardField('installments', formatInvoiceColumnValue(
+              item,
+              'installments',
+              item?.installments || '-',
+            ))}
           </View>
         </View>
 
@@ -567,13 +572,9 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
           <Text style={styles.amountLabel}>
             {formatInvoiceColumnLabel('price', global.t?.t('invoice', 'label', 'value'))}
           </Text>
-          <Text
-            style={[styles.amountValue, { color: brandColors.primary }]}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.72}>
-            {amountValue}
-          </Text>
+          {renderCardField('price', amountValue, {
+            readTextStyle: [styles.amountValue, { color: brandColors.primary }],
+          })}
         </View>
       </View>
     );
