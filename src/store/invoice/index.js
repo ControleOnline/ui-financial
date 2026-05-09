@@ -32,8 +32,9 @@ export default {
           return "#" + value;
         },
       },
-   {
+      {
         sortable: true,
+        sortField: "payer.name",
         filterClass: "col-1 q-pa-xs",
         formClass: "col-12",
         name: "payer",
@@ -58,6 +59,7 @@ export default {
       },
       {
         sortable: true,
+        sortField: "receiver.name",
         filterClass: "col-1 q-pa-xs",
         formClass: "col-12",
         name: "receiver",
@@ -82,6 +84,7 @@ export default {
       },
       {
         sortable: true,
+        sortField: "category.name",
         filterClass: "col-2 q-pa-xs",
         formClass: "col-6",
         name: "category",
@@ -113,6 +116,7 @@ export default {
       {
         translate: true,
         sortable: true,
+        sortField: "status.status",
         filterClass: "col-2 q-pa-xs",
         formClass: "col-6",
         name: "status",
@@ -152,6 +156,7 @@ export default {
       },
       {
         sortable: true,
+        sortField: "sourceWallet.wallet",
         filterClass: "col-2 q-pa-xs",
         formClass: "col-6",
         name: "sourceWallet",
@@ -175,6 +180,7 @@ export default {
       },
       {
         sortable: true,
+        sortField: "destinationWallet.wallet",
         filterClass: "col-2 q-pa-xs",
         formClass: "col-6",
         name: "destinationWallet",
@@ -198,6 +204,7 @@ export default {
       },
       {
         sortable: true,
+        sortField: "paymentType.paymentType",
         filterClass: "col-2 q-pa-xs",
         formClass: "col-6",
         name: "paymentType",
