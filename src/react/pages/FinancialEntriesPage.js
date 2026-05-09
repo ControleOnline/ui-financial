@@ -566,7 +566,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
 
   return (
     <View style={[styles.container, { backgroundColor: brandColors.background }]}>
-      <View style={styles.filterCard}>
+      <View style={styles.filterBar}>
         <DefaultExternalFilters
           accentColor={config.accent}
           columns={invoiceColumns}
@@ -589,6 +589,11 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
         onFilterChange={setStoreFilters}
         onSortChange={setSortState}
         renderCard={renderInvoiceCard}
+        searchProps={{
+          filters: storeFilters,
+          onChangeFilters: setStoreFilters,
+          placeholder: global.t?.t('invoice', 'input', 'search'),
+        }}
         sort={sortState}
         storeName="invoice"
         onEndReached={() => {

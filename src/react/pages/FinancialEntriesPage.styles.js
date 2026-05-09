@@ -17,9 +17,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
   },
-  filterCard: {
-    borderRadius: 12,
-    backgroundColor: 'transparent',
+  filterBar: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    gap: 8,
     marginBottom: 8,
   },
   invoiceCard: {

@@ -17,3 +17,4 @@
 - `InvoiceDetailsPage` deve parecer uma tela operacional do sistema, proxima do detalhe de pedido, e listar os pedidos vinculados carregando `/order_invoices?invoice=...`.
 - Em invoice, `paymentType` e o meio real de pagamento; `invoiceType` classifica a natureza financeira. Nao voltar a misturar desconto, taxa ou descricao operacional dentro do meio de pagamento.
 - Totais de recebiveis, pagaveis, transferencias, pago e aberto devem vir de `invoiceGetters.summary`, preenchido pelo backend. Nao somar os cards carregados no front para exibir totais, porque a lista e paginada.
+- Listagens React de invoices devem usar `DefaultSearch` e `DefaultExternalFilters` de `ui-default`, mantendo a busca em `filters.search` do store.
