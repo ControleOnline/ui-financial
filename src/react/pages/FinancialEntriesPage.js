@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useStore } from '@store';
 import DefaultExternalFilters from '@controleonline/ui-default/src/react/components/filters/DefaultExternalFilters';
 import DefaultTable from '@controleonline/ui-default/src/react/components/table/DefaultTable';
@@ -172,6 +172,7 @@ const resolveDueDateState = filterValue => {
 
 function FinancialEntriesPage({ mode = 'receivables' }) {
   const config = MODE_CONFIG[mode] || MODE_CONFIG.receivables;
+  const navigation = useNavigation();
 
   const invoiceStore = useStore('invoice');
   const peopleStore = useStore('people');
@@ -460,7 +461,14 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     );
   }, []);
 
-  const renderInvoiceCard = ({ item, renderField }) => {
+  const openInvoiceDetails = useCallback(invoice => {
+    const invoiceId = String(invoice?.id || invoice?.['@id'] || '').replace(/\D/g, '');
+    if (!invoiceId) return;
+
+    navigation.navigate('InvoiceDetailsPage', { id: invoiceId });
+  }, [navigation]);
+
+  const renderInvoiceCard = ({ item, renderField, openRow }) => {
     const statusColor = item?.status?.color || '#94A3B8';
     const amountValue = formatInvoiceColumnValue(
       item,
@@ -480,7 +488,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
       );
 
     return (
-      <View style={styles.invoiceCard}>
+      <TouchableOpacity style={styles.invoiceCard} activeOpacity={0.84} onPress={openRow || (() => openInvoiceDetails(item))}>
         <View style={styles.invoiceTopRow}>
           <Text style={styles.invoiceId}>#{item.id}</Text>
           <View style={[styles.statusChip, { backgroundColor: withOpacity(statusColor, 0.14), borderColor: statusColor }]}>
@@ -560,7 +568,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
             readTextStyle: [styles.amountValue, { color: brandColors.primary }],
           })}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -587,6 +595,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
         hasMore={hasMoreInvoices}
         isLoading={isLoading}
         onFilterChange={setStoreFilters}
+        onRowPress={openInvoiceDetails}
         onSortChange={setSortState}
         renderCard={renderInvoiceCard}
         searchProps={{
