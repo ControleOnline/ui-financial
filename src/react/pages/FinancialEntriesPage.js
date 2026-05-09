@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Feather';
 import { useStore } from '@store';
 import DefaultExternalFilters from '@controleonline/ui-default/src/react/components/filters/DefaultExternalFilters';
 import DefaultTable from '@controleonline/ui-default/src/react/components/table/DefaultTable';
@@ -173,8 +172,6 @@ const resolveDueDateState = filterValue => {
 
 function FinancialEntriesPage({ mode = 'receivables' }) {
   const config = MODE_CONFIG[mode] || MODE_CONFIG.receivables;
-  const { width } = useWindowDimensions();
-  const isMobile = width <= 768;
 
   const invoiceStore = useStore('invoice');
   const peopleStore = useStore('people');
@@ -219,8 +216,6 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(50);
   const [loadedInvoices, setLoadedInvoices] = useState([]);
-  const [isFiltersExpanded, setIsFiltersExpanded] = useState(!isMobile);
-  const [activeFiltersCount, setActiveFiltersCount] = useState(0);
   const [sortState, setSortState] = useState(null);
 
   const mountedRef = useRef(false);
@@ -465,17 +460,6 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     );
   }, []);
 
-  useEffect(() => {
-    if (!isMobile) {
-      setIsFiltersExpanded(true);
-      return;
-    }
-
-    if (activeFiltersCount > 0) {
-      setIsFiltersExpanded(false);
-    }
-  }, [activeFiltersCount, isMobile]);
-
   const renderInvoiceCard = ({ item, renderField }) => {
     const statusColor = item?.status?.color || '#94A3B8';
     const amountValue = formatInvoiceColumnValue(
@@ -583,34 +567,14 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   return (
     <View style={[styles.container, { backgroundColor: brandColors.background }]}>
       <View style={styles.filterCard}>
-        {isMobile && (
-          <TouchableOpacity
-            style={styles.filterHeaderButton}
-            activeOpacity={0.8}
-            onPress={() => setIsFiltersExpanded(prev => !prev)}>
-            <View style={styles.filterHeaderLeft}>
-              <Text style={styles.filterHeaderTitle}>Filtros</Text>
-              {activeFiltersCount > 0 && (
-                <View style={styles.filterCountBadge}>
-                  <Text style={styles.filterCountBadgeText}>{activeFiltersCount}</Text>
-                </View>
-              )}
-            </View>
-            <Icon name={isFiltersExpanded ? 'chevron-up' : 'chevron-down'} size={16} color="#64748B" />
-          </TouchableOpacity>
-        )}
-
-        {(!isMobile || isFiltersExpanded) && (
-          <DefaultExternalFilters
-            accentColor={config.accent}
-            columns={invoiceColumns}
-            filters={storeFilters}
-            getOptionsForColumn={getOptionsForColumn}
-            onActiveCountChange={setActiveFiltersCount}
-            onChangeFilters={setStoreFilters}
-            storeName="invoice"
-          />
-        )}
+        <DefaultExternalFilters
+          accentColor={config.accent}
+          columns={invoiceColumns}
+          filters={storeFilters}
+          getOptionsForColumn={getOptionsForColumn}
+          onChangeFilters={setStoreFilters}
+          storeName="invoice"
+        />
       </View>
 
       <DefaultTable
