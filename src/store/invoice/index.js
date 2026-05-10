@@ -15,6 +15,7 @@ export default {
     error: "",
     totalItems: 0,
     summary: {},
+    add: true,
     messages: [],
     message: {},
     filters: {},
@@ -238,6 +239,7 @@ export default {
         align: "left",
         label: "invoiceType",
         editable: false,
+        defaultValue: "invoice",
         format: function (value) {
           return String(value || "")
             .trim()
@@ -256,6 +258,7 @@ export default {
         align: "center",
         label: "installments",
         editable: false,
+        defaultValue: 1,
         inputType: "number",
         mask: "####",
         editFormat(value) {

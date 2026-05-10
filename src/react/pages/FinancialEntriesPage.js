@@ -444,16 +444,22 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
 
   const mergeSavedInvoice = useCallback(savedInvoice => {
     if (!savedInvoice?.id && !savedInvoice?.['@id']) return;
+    if (!invoiceBelongsToCompany(savedInvoice, mode, currentCompany?.id)) return;
 
     const savedId = getEntityId(savedInvoice);
-    setLoadedInvoices(prev =>
-      (prev || []).map(invoice =>
+    setLoadedInvoices(prev => {
+      const currentItems = prev || [];
+      const hasExistingInvoice = currentItems.some(invoice => getEntityId(invoice) === savedId);
+
+      if (!hasExistingInvoice) return [savedInvoice, ...currentItems];
+
+      return currentItems.map(invoice =>
         getEntityId(invoice) === savedId
           ? { ...invoice, ...savedInvoice }
           : invoice,
-      ),
-    );
-  }, []);
+      );
+    });
+  }, [currentCompany?.id, mode]);
 
   const openInvoiceDetails = useCallback(invoice => {
     const invoiceId = String(invoice?.id || invoice?.['@id'] || '').replace(/\D/g, '');
