@@ -104,20 +104,6 @@ const getOpenAmountLabel = mode => {
   return 'A receber';
 };
 
-const resolveFinancialSummaryTotals = summary => {
-  const financialSummary = summary?.financial || {};
-
-  return {
-    openAmount: normalizeMoneyValue(
-      financialSummary.openAmount ??
-        financialSummary.open ??
-        financialSummary.receivableAmount ??
-        financialSummary.pendingAmount,
-    ),
-    paidAmount: normalizeMoneyValue(financialSummary.paidAmount ?? financialSummary.paid),
-  };
-};
-
 const normalizeText = value => String(value || '').trim();
 
 const getColumnKey = column => column?.key || column?.name || '';
@@ -202,7 +188,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     peopleActions,
   };
 
-  const { items: invoices, isLoading, summary: invoiceSummary, totalItems } = invoiceGetters;
+  const { items: invoices, isLoading, totalItems } = invoiceGetters;
   const { currentCompany } = peopleGetters;
   const invoiceColumns = useMemo(
     () => (Array.isArray(invoiceGetters?.columns) ? invoiceGetters.columns : []),
@@ -441,10 +427,18 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     });
   }, [loadedInvoices, mode]);
 
-  const totals = useMemo(
-    () => resolveFinancialSummaryTotals(invoiceSummary),
-    [invoiceSummary],
-  );
+  const summaryLabels = useMemo(() => {
+    const openAmountLabel = getOpenAmountLabel(mode);
+
+    return {
+      'financial.open': openAmountLabel,
+      'financial.openAmount': openAmountLabel,
+      'financial.pendingAmount': openAmountLabel,
+      'financial.receivableAmount': openAmountLabel,
+      'financial.paid': 'Pago',
+      'financial.paidAmount': 'Pago',
+    };
+  }, [mode]);
 
   const hasMoreInvoices = loadedInvoices.length < Number(totalItems || 0);
 
@@ -603,6 +597,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
           onChangeFilters: setStoreFilters,
           placeholder: global.t?.t('invoice', 'input', 'search'),
         }}
+        summaryLabels={summaryLabels}
         sort={sortState}
         storeName="invoice"
         onEndReached={() => {
@@ -612,32 +607,6 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
         }}
         onSaved={mergeSavedInvoice}
       />
-
-      <View style={styles.summaryFooter}>
-        <View style={styles.summaryFooterItem}>
-          <Text style={styles.summaryFooterLabel}>{getOpenAmountLabel(mode)}</Text>
-          <Text
-            style={[styles.summaryFooterValue, { color: config.accent }]}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.76}>
-            {Formatter.formatMoney(totals.openAmount)}
-          </Text>
-        </View>
-
-        <View style={styles.summaryFooterDivider} />
-
-        <View style={styles.summaryFooterItem}>
-          <Text style={styles.summaryFooterLabel}>Pago</Text>
-          <Text
-            style={styles.summaryFooterValue}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.76}>
-            {Formatter.formatMoney(totals.paidAmount)}
-          </Text>
-        </View>
-      </View>
 
     </View>
   );

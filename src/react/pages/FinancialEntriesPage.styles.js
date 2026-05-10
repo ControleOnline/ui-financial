@@ -98,43 +98,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '900',
   },
-  summaryFooter: {
-    minHeight: 52,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginTop: 8,
-    marginBottom: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    ...cardShadow,
-  },
-  summaryFooterItem: {
-    flex: 1,
-    minWidth: 0,
-  },
-  summaryFooterDivider: {
-    width: 1,
-    height: 30,
-    backgroundColor: '#E2E8F0',
-    marginHorizontal: 10,
-  },
-  summaryFooterLabel: {
-    fontSize: 10,
-    color: '#64748B',
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-    marginBottom: 2,
-  },
-  summaryFooterValue: {
-    fontSize: 15,
-    color: '#0F172A',
-    fontWeight: '900',
-  },
 });
 
 export default styles;
