@@ -98,6 +98,13 @@ const normalizeMoneyValue = value => {
 const resolveInvoiceAmount = invoice =>
   normalizeMoneyValue(invoice?.price ?? invoice?.value ?? invoice?.amount ?? invoice?.total);
 
+const normalizeInvoiceType = invoice =>
+  String(invoice?.invoiceType || invoice?.invoice_type || 'invoice')
+    .trim()
+    .toLowerCase() || 'invoice';
+
+const isRealInvoice = invoice => normalizeInvoiceType(invoice) === 'invoice';
+
 const getOpenAmountLabel = mode => {
   if (mode === 'payables') return 'A pagar';
   if (mode === 'ownTransfers') return 'A transferir';
@@ -338,6 +345,8 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
       params.ownTransfers = 1;
     }
 
+    params.invoiceType = 'invoice';
+
     actionsRef.current.invoiceActions.getItems(params);
   }, [
     currentCompany?.id,
@@ -368,7 +377,8 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     if (!Array.isArray(invoices)) return;
 
     const scopedInvoices = invoices.filter(invoice =>
-      invoiceBelongsToCompany(invoice, mode, currentCompany?.id),
+      invoiceBelongsToCompany(invoice, mode, currentCompany?.id) &&
+      isRealInvoice(invoice),
     );
 
     if (currentPage === 1) {
@@ -418,12 +428,15 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   }, [currentPage]);
 
   const filteredInvoices = useMemo(() => {
-    if (mode === 'ownTransfers') return loadedInvoices || [];
+    if (mode === 'ownTransfers') return (loadedInvoices || []).filter(isRealInvoice);
 
     return (loadedInvoices || []).filter(invoice => {
       const payerId = getEntityId(invoice?.payer);
       const receiverId = getEntityId(invoice?.receiver);
-      return !(payerId && receiverId && payerId === receiverId);
+      return (
+        !(payerId && receiverId && payerId === receiverId) &&
+        isRealInvoice(invoice)
+      );
     });
   }, [loadedInvoices, mode]);
 
@@ -445,6 +458,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   const mergeSavedInvoice = useCallback(savedInvoice => {
     if (!savedInvoice?.id && !savedInvoice?.['@id']) return;
     if (!invoiceBelongsToCompany(savedInvoice, mode, currentCompany?.id)) return;
+    if (!isRealInvoice(savedInvoice)) return;
 
     const savedId = getEntityId(savedInvoice);
     setLoadedInvoices(prev => {
