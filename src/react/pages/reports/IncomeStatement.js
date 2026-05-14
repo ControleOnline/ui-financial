@@ -126,7 +126,7 @@ const FinancePage = () => {
     }
 
     if (typeof getIncomeStatements !== 'function') {
-      setError('Acao getIncomeStatements indisponivel.');
+      setError('Ação getIncomeStatements indisponível.');
       setIncomeRows([]);
       return;
     }
@@ -150,7 +150,7 @@ const FinancePage = () => {
       setIncomeRows(filteredRows);
     } catch (e) {
       console.error('Erro ao carregar income statements:', e);
-      setError('Nao foi possivel carregar os dados de comissoes.');
+      setError('Não foi possível carregar os dados de comissões.');
       setIncomeRows([]);
     } finally {
       setIsLoading(false);
@@ -249,7 +249,7 @@ const FinancePage = () => {
 
         <View style={styles.cardContent}>
           <Text style={styles.cardTitle} numberOfLines={1}>
-            {`Comissao ${monthLabel}/${exerciseYear}`}
+            {`Comissão ${monthLabel}/${exerciseYear}`}
           </Text>
           <Text style={styles.cardSubtitle}>
             Receitas {formatMoney(item?.income)} - Despesas {formatMoney(item?.expense)}
@@ -295,7 +295,7 @@ const FinancePage = () => {
 
         <View style={styles.filtersPanel}>
           <View style={styles.yearSelector}>
-            <Text style={styles.yearTitle}>Exercicio</Text>
+            <Text style={styles.yearTitle}>Exercício</Text>
             <View style={styles.yearSelectorControl}>
               <TouchableOpacity
                 onPress={() => changeExerciseYear(-1)}
@@ -320,7 +320,7 @@ const FinancePage = () => {
             </View>
           ) : (
             <View style={styles.monthSection}>
-              <Text style={styles.monthSectionLabel}>Mes</Text>
+              <Text style={styles.monthSectionLabel}>Mês</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -335,7 +335,7 @@ const FinancePage = () => {
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Carregando comissoes...</Text>
+          <Text style={styles.loadingText}>Carregando comissões...</Text>
         </View>
       ) : error ? (
         <View style={styles.errorContainer}>
@@ -359,8 +359,8 @@ const FinancePage = () => {
               <Icon name="exchange" size={48} color="#CBD5E1" />
               <Text style={styles.emptyText}>
                 {isCurrentExerciseYear
-                  ? 'Nenhuma comissao no periodo'
-                  : `Nenhuma comissao em ${selectedMonthLabel}/${exerciseYear}`}
+                  ? 'Nenhuma comissão no período'
+                  : `Nenhuma comissão em ${selectedMonthLabel}/${exerciseYear}`}
               </Text>
             </View>
           )}
