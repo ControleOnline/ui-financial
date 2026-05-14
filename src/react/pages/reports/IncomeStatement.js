@@ -270,12 +270,12 @@ const FinancePage = () => {
     <View style={styles.container}>
       <View style={[styles.header, {paddingTop: Math.max(insets.top, 16) + 16}]}>
         <View style={styles.headerTop}>
-          <Text style={styles.headerTitle}>Comissoes</Text>
+          <Text style={styles.headerTitle}>Comissões</Text>
         </View>
 
         <View style={styles.summaryRow}>
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Comissoes</Text>
+            <Text style={styles.summaryLabel}>Comissões</Text>
             <Text style={[styles.summaryValue, {color: '#4CAF50'}]}>
               {formatMoney(computedSummary.income)}
             </Text>
