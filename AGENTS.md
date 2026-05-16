@@ -20,3 +20,4 @@
 - Listagens React de invoices devem usar busca via `searchProps` do `DefaultTable` e `DefaultExternalFilters` de `ui-default`, mantendo a busca em `filters.search` do store.
 - Listagens React de invoices devem seguir `add` do store. Quando `invoice.state.add` for `true`, o botao de criar invoice pertence a toolbar do `DefaultTable`; se a tela nao passar `onAdd`, o fallback padrao e o `DefaultForm` de `ui-default`.
 - O rodape de contagem e summary das invoices pertence ao `DefaultTable`; a tela financeira nao deve renderizar rodape paralelo para totais quando o backend/store preencher `summary`.
+- Criacao de carteira em telas React deve usar o store `wallet` com `people: '/people/<empresa ativa>'`; nao criar carteira sem amarrar a empresa ativa e nao aceitar selecao fora desse contexto. Isso vale para fluxos de cadastro rapido, como o usado pela integracao 99Food.
