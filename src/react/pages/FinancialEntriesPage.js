@@ -195,7 +195,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     peopleActions,
   };
 
-  const { items: invoices, isLoading, totalItems } = invoiceGetters;
+  const { items: invoices, isLoading, summary: invoiceSummary, totalItems } = invoiceGetters;
   const { currentCompany } = peopleGetters;
   const invoiceColumns = useMemo(
     () => (Array.isArray(invoiceGetters?.columns) ? invoiceGetters.columns : []),
@@ -440,6 +440,25 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     });
   }, [loadedInvoices, mode]);
 
+  const filteredSummary = useMemo(() => {
+    if (!invoiceSummary || typeof invoiceSummary !== 'object' || Array.isArray(invoiceSummary)) {
+      return invoiceSummary;
+    }
+
+    const nextSummary = { ...invoiceSummary };
+
+    if (nextSummary?.sum && typeof nextSummary.sum === 'object' && !Array.isArray(nextSummary.sum)) {
+      const { price, ...sumWithoutPrice } = nextSummary.sum;
+      nextSummary.sum = sumWithoutPrice;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(nextSummary, 'price')) {
+      delete nextSummary.price;
+    }
+
+    return nextSummary;
+  }, [invoiceSummary]);
+
   const summaryLabels = useMemo(() => {
     const openAmountLabel = getOpenAmountLabel(mode);
 
@@ -618,6 +637,9 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
           onChangeFilters: setStoreFilters,
           placeholder: global.t?.t('invoice', 'input', 'search'),
         }}
+        showTotalItemsInFooter={false}
+        showTotalItemsInCompactToolbar
+        summary={filteredSummary}
         summaryLabels={summaryLabels}
         sort={sortState}
         storeName="invoice"
