@@ -105,10 +105,10 @@ const normalizeInvoiceType = invoice =>
 
 const isRealInvoice = invoice => normalizeInvoiceType(invoice) === 'invoice';
 
-const getOpenAmountLabel = mode => {
-  if (mode === 'payables') return 'A pagar';
-  if (mode === 'ownTransfers') return 'A transferir';
-  return 'A receber';
+const getOpenAmountTranslationKey = mode => {
+  if (mode === 'payables') return 'payableAmount';
+  if (mode === 'ownTransfers') return 'transferAmount';
+  return 'receivableAmount';
 };
 
 const normalizeText = value => String(value || '').trim();
@@ -460,15 +460,20 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   }, [invoiceSummary]);
 
   const summaryLabels = useMemo(() => {
-    const openAmountLabel = getOpenAmountLabel(mode);
+    const openAmountLabel = global.t?.t(
+      'invoice',
+      'label',
+      getOpenAmountTranslationKey(mode),
+    );
 
     return {
+      'financial.totalAmount': global.t?.t('invoice', 'label', 'totalAmount'),
       'financial.open': openAmountLabel,
       'financial.openAmount': openAmountLabel,
       'financial.pendingAmount': openAmountLabel,
       'financial.receivableAmount': openAmountLabel,
-      'financial.paid': 'Pago',
-      'financial.paidAmount': 'Pago',
+      'financial.paid': global.t?.t('invoice', 'label', 'paidAmount'),
+      'financial.paidAmount': global.t?.t('invoice', 'label', 'paidAmount'),
     };
   }, [mode]);
 
