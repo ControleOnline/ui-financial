@@ -579,6 +579,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
             {formatInvoiceColumnLabel('price', global.t?.t('invoice', 'label', 'value'))}
           </Text>
           {renderCardField('price', amountValue, {
+            containerStyle: styles.amountField,
             readTextStyle: [styles.amountValue, { color: brandColors.primary }],
           })}
         </View>

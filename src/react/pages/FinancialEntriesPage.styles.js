@@ -91,9 +91,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase',
   },
+  amountField: {
+    flex: 1,
+    minWidth: 0,
+  },
   amountValue: {
     flexShrink: 1,
     minWidth: 0,
+    paddingRight: 10,
     textAlign: 'right',
     fontSize: 22,
     fontWeight: '900',
