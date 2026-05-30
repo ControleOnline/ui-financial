@@ -1,3 +1,16 @@
+/*
+ * Contract imported from AGENTS.md
+ * ## Escopo
+ * - `ui-financial` e o modulo React das telas financeiras.
+ * - Esta pagina e a referencia de listagem e navegacao de lancamentos financeiros.
+ *
+ * ## Estado
+ * - Se existir `src/vue`, ela e apenas legado e nao deve receber este contrato.
+ *
+ * ## Limites
+ * - Nao duplicar calculos financeiros fora do dono desta tela.
+ * - Manter aqui apenas a coordenacao da apresentacao e dos filtros financeiros.
+ */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
