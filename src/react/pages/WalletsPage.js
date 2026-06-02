@@ -143,8 +143,8 @@ const ChipSelect = ({ options, value, onChange, palette }) => (
             s.choiceChip,
             isSelected
               ? {
-                  backgroundColor: palette.primary || '#0EA5E9',
-                  borderColor: palette.primary || '#0EA5E9',
+                  backgroundColor: palette.primary,
+                  borderColor: palette.primary,
                 }
               : null,
           ]}
@@ -299,7 +299,7 @@ export default function WalletsPage() {
   const instLabel = v => INSTALLMENT_OPTIONS.find(o => o.value === v)?.label || v || '-';
 
   return (
-    <SafeAreaView style={[ps.root, { backgroundColor: palette.background || '#F8FAFC' }]}>
+    <SafeAreaView style={[ps.root, { backgroundColor: palette.background }]}>
       {/* cabeçalho */}
       <View style={[ps.header, { backgroundColor: '#fff', borderBottomColor: '#E2E8F0' }]}>
         <Text style={ps.headerTitle}>Carteiras</Text>
@@ -308,13 +308,13 @@ export default function WalletsPage() {
             style={[
               ps.addBtn,
               {
-                borderColor: withOpacity(palette.primary || '#0EA5E9', 0.24),
-                backgroundColor: withOpacity(palette.primary || '#0EA5E9', 0.08),
+                borderColor: withOpacity(palette.primary, 0.24),
+                backgroundColor: withOpacity(palette.primary, 0.08),
               },
             ]}
             onPress={openNewWallet}>
-            <Icon name="plus" size={14} color={palette.primary || '#0EA5E9'} />
-            <Text style={[ps.addBtnText, { color: palette.primary || '#0EA5E9' }]}>
+            <Icon name="plus" size={14} color={palette.primary} />
+            <Text style={[ps.addBtnText, { color: palette.primary }]}>
               Nova carteira
             </Text>
           </TouchableOpacity>

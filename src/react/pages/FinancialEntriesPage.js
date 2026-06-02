@@ -520,7 +520,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   }, [navigation]);
 
   const renderInvoiceCard = ({ item, renderField, openRow }) => {
-    const statusColor = item?.status?.color || '#94A3B8';
+    const statusColor = item?.status?.color;
     const amountValue = formatInvoiceColumnValue(
       item,
       'price',

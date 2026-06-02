@@ -78,7 +78,7 @@ const ChipSelect = ({ options, value, onChange, palette }) => (
           style={[
             ic.chip,
             sel
-              ? { backgroundColor: palette.primary || '#0EA5E9', borderColor: palette.primary || '#0EA5E9' }
+              ? { backgroundColor: palette.primary, borderColor: palette.primary }
               : { backgroundColor: '#F8FAFC', borderColor: '#CBD5E1' },
           ]}
         >
@@ -205,11 +205,11 @@ export default function InvoiceCategoriesPage({ route }) {
   const contextLabel = (ctx) => CONTEXT_OPTIONS.find(o => o.value === ctx)?.label || ctx;
 
   return (
-    <SafeAreaView style={[ic.root, { backgroundColor: palette.background || '#F8FAFC' }]}>
+    <SafeAreaView style={[ic.root, { backgroundColor: palette.background }]}>
       {/* cabeçalho */}
       <View style={[ic.header, { borderBottomColor: '#E2E8F0' }]}>
         <Text style={ic.headerTitle}>{pageTitle}</Text>
-        <TouchableOpacity style={[ic.addBtn, { backgroundColor: palette.primary || '#0EA5E9' }]} onPress={openNew}>
+        <TouchableOpacity style={[ic.addBtn, { backgroundColor: palette.primary }]} onPress={openNew}>
           <Icon name="plus" size={16} color="#fff" />
           <Text style={ic.addBtnText}>Nova categoria</Text>
         </TouchableOpacity>
@@ -231,9 +231,9 @@ export default function InvoiceCategoriesPage({ route }) {
         </View>
       ) : (
         <View style={ic.lockedContextRow}>
-          <View style={[ic.lockedContextBadge, { backgroundColor: withOpacity(palette.primary || '#0EA5E9', 0.12) }]}>
-            <Icon name="lock" size={13} color={palette.primary || '#0EA5E9'} />
-            <Text style={[ic.lockedContextText, { color: palette.primary || '#0EA5E9' }]}>
+          <View style={[ic.lockedContextBadge, { backgroundColor: withOpacity(palette.primary, 0.12) }]}>
+            <Icon name="lock" size={13} color={palette.primary} />
+            <Text style={[ic.lockedContextText, { color: palette.primary }]}>
               {lockedContextLabel}
             </Text>
           </View>
@@ -274,7 +274,7 @@ export default function InvoiceCategoriesPage({ route }) {
             <View key={cat.id} style={[ic.card, cardShadow]}>
               <View style={ic.cardTop}>
                 {/* bolinha de cor */}
-                <View style={[ic.colorDot, { backgroundColor: cat.color || '#CBD5E1' }]} />
+                <View style={[ic.colorDot, { backgroundColor: cat.color }]} />
                 <View style={inlineStyle_241_22}>
                   <Text style={ic.cardName}>{cat.name}</Text>
                   {!!cat.icon && (
@@ -370,7 +370,7 @@ export default function InvoiceCategoriesPage({ route }) {
                     <Text style={ic.btnCancelText}>Cancelar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[ic.btnSave, { backgroundColor: palette.primary || '#0EA5E9' }, isSaving && { opacity: 0.6 }]}
+                    style={[ic.btnSave, { backgroundColor: palette.primary }, isSaving && { opacity: 0.6 }]}
                     onPress={save}
                     disabled={isSaving}
                   >
