@@ -5,7 +5,6 @@
  * - Esta pagina e a referencia de listagem e navegacao de lancamentos financeiros.
  *
  * ## Estado
- * - Se existir `src/vue`, ela e apenas legado e nao deve receber este contrato.
  *
  * ## Limites
  * - Nao duplicar calculos financeiros fora do dono desta tela.
