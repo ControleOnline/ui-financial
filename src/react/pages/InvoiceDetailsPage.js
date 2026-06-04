@@ -286,65 +286,61 @@ function InvoiceDetailsPage({navigation, route}) {
     [invoice?.price],
   )
 
-  const detailCards = useMemo(
-    () =>
-      [
-        {
-          key: 'invoiceType',
-          label: global.t?.t('orders', 'label', 'invoiceType') || 'Tipo',
-          value: formatInvoiceTypeLabel(
-            invoice?.invoiceType || invoice?.invoice_type || 'invoice',
-          ),
-        },
-        {
-          key: 'paymentType',
-          label:
-            global.t?.t('orders', 'label', 'paymentMethod') ||
-            'Forma de pagamento',
-          value: getInvoicePaymentTypeLabel(invoice),
-        },
-        {
-          key: 'dueDate',
-          label: global.t?.t('invoice', 'label', 'dueDate') || 'Vencimento',
-          value: Formatter.formatDateYmdTodmY(invoice?.dueDate),
-        },
-        {
-          key: 'linkedOrders',
-          label: global.t?.t('orders', 'title', 'orders') || 'Pedidos',
-          value: linkedOrdersCount ? String(linkedOrdersCount) : '',
-        },
-        {
-          key: 'payer',
-          label: global.t?.t('orders', 'label', 'payer') || 'Pagador',
-          value: getInvoicePartyLabel(invoice?.payer),
-        },
-        {
-          key: 'receiver',
-          label: global.t?.t('orders', 'label', 'receiver') || 'Recebedor',
-          value: getInvoicePartyLabel(invoice?.receiver),
-        },
-        {
-          key: 'sourceWallet',
-          label:
-            global.t?.t('invoice', 'label', 'sourceWallet') || 'Carteira origem',
-          value: String(invoice?.sourceWallet?.wallet || '').trim(),
-        },
-        {
-          key: 'destinationWallet',
-          label:
-            global.t?.t('invoice', 'label', 'destinationWallet') ||
-            'Carteira destino',
-          value: String(invoice?.destinationWallet?.wallet || '').trim(),
-        },
-        {
-          key: 'description',
-          label: global.t?.t('orders', 'label', 'description') || 'Descrição',
-          value: String(invoice?.description || '').trim(),
-          wide: true,
-        },
-      ].filter(card => card.value),
-    [invoice, linkedOrdersCount],
-  )
+  const detailCards = [
+    {
+      key: 'invoiceType',
+      label: global.t?.t('orders', 'label', 'invoiceType') || 'Tipo',
+      value: formatInvoiceTypeLabel(
+        invoice?.invoiceType || invoice?.invoice_type || 'invoice',
+      ),
+    },
+    {
+      key: 'paymentType',
+      label:
+        global.t?.t('orders', 'label', 'paymentMethod') ||
+        'Forma de pagamento',
+      value: getInvoicePaymentTypeLabel(invoice),
+    },
+    {
+      key: 'dueDate',
+      label: global.t?.t('invoice', 'label', 'dueDate') || 'Vencimento',
+      value: Formatter.formatDateYmdTodmY(invoice?.dueDate),
+    },
+    {
+      key: 'linkedOrders',
+      label: global.t?.t('orders', 'title', 'orders') || 'Pedidos',
+      value: linkedOrdersCount ? String(linkedOrdersCount) : '',
+    },
+    {
+      key: 'payer',
+      label: global.t?.t('orders', 'label', 'payer') || 'Pagador',
+      value: getInvoicePartyLabel(invoice?.payer),
+    },
+    {
+      key: 'receiver',
+      label: global.t?.t('orders', 'label', 'receiver') || 'Recebedor',
+      value: getInvoicePartyLabel(invoice?.receiver),
+    },
+    {
+      key: 'sourceWallet',
+      label:
+        global.t?.t('invoice', 'label', 'sourceWallet') || 'Carteira origem',
+      value: String(invoice?.sourceWallet?.wallet || '').trim(),
+    },
+    {
+      key: 'destinationWallet',
+      label:
+        global.t?.t('invoice', 'label', 'destinationWallet') ||
+        'Carteira destino',
+      value: String(invoice?.destinationWallet?.wallet || '').trim(),
+    },
+    {
+      key: 'description',
+      label: global.t?.t('orders', 'label', 'description') || 'Descrição',
+      value: String(invoice?.description || '').trim(),
+      wide: true,
+    },
+  ].filter(card => card.value)
 
   const handleOpenOrderDetails = useCallback(
     linkedOrderInvoice => {

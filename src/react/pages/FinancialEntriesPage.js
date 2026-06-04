@@ -471,7 +471,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     return nextSummary;
   }, [invoiceSummary]);
 
-  const summaryLabels = useMemo(() => {
+  const summaryLabels = (() => {
     const openAmountLabel = global.t?.t(
       'invoice',
       'label',
@@ -487,7 +487,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
       'financial.paid': global.t?.t('invoice', 'label', 'paidAmount'),
       'financial.paidAmount': global.t?.t('invoice', 'label', 'paidAmount'),
     };
-  }, [mode]);
+  })();
 
   const hasMoreInvoices = loadedInvoices.length < Number(totalItems || 0);
 
