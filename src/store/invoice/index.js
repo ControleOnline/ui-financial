@@ -115,7 +115,6 @@ export default {
         },
       },
       {
-        translate: true,
         sortable: true,
         sortField: "status.status",
         filterClass: "col-2 q-pa-xs",
@@ -287,7 +286,7 @@ export default {
         sortable: true,
         name: "price",
         align: "left",
-        label: "price",
+        label: "value",
         sum: true,
         editFormat(value) {
           return Formatter.formatMoney(value);

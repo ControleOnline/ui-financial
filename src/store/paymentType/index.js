@@ -33,14 +33,13 @@ export default {
       {
         editable: false,
         sortable: true,
-        translate: true,
         name: 'frequency',
         align: 'left',
         label: 'frequency',
         list: [
-          {label: 'Ãšnica', value: 'single'},
-          {label: 'DiÃ¡rio', value: 'daily'},
-          {label: 'Semanal', value: 'weeakly'},
+          {label: 'Única', value: 'single'},
+          {label: 'Diário', value: 'daily'},
+          {label: 'Semanal', value: 'weekly'},
           {label: 'Mensal', value: 'monthly'},
         ],
         externalFilter: false,
@@ -51,12 +50,11 @@ export default {
       {
         editable: false,
         sortable: true,
-        translate: true,
         name: 'installments',
         align: 'left',
         label: 'installments',
         list: [
-          {label: 'Ãšnica', value: 'single'},
+          {label: 'Única', value: 'single'},
           {label: 'Parcelas', value: 'split'},
         ],
         externalFilter: false,
