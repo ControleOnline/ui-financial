@@ -642,6 +642,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
         columns={invoiceColumns}
         data={filteredInvoices}
         filters={storeFilters}
+        forceCardsOnCompact={false}
         getOptionsForColumn={getOptionsForColumn}
         hasMore={hasMoreInvoices}
         isLoading={isLoading}
