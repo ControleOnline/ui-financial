@@ -33,6 +33,7 @@ export default {
       {
         editable: false,
         sortable: true,
+        translate: true,
         name: 'frequency',
         align: 'left',
         label: 'frequency',
@@ -50,6 +51,7 @@ export default {
       {
         editable: false,
         sortable: true,
+        translate: true,
         name: 'installments',
         align: 'left',
         label: 'installments',
