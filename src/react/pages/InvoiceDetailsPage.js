@@ -109,7 +109,7 @@ const resolveStatusColor = invoice => {
   }
 
   if (['canceled', 'cancelled'].includes(normalizedStatus)) {
-    return '#EF4444'
+    return '#c10015'
   }
 
   return '#0EA5E9'

@@ -351,7 +351,7 @@ export default function WalletsPage() {
                   </TouchableOpacity>
                   <TouchableOpacity style={[ps.iconBtn, { borderColor: '#FCA5A5' }]}
                     onPress={() => setDeleteConfirm({ type: 'wallet', id: w.id, label: w.wallet })}>
-                    <Icon name="trash-2" size={16} color="#EF4444" />
+                    <Icon name="trash-2" size={16} color="#c10015" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -422,7 +422,7 @@ export default function WalletsPage() {
                           </Text>
                         </View>
                         <TouchableOpacity onPress={() => removePaymentType(wpt.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                          <Icon name="trash-2" size={15} color="#EF4444" />
+                          <Icon name="trash-2" size={15} color="#c10015" />
                         </TouchableOpacity>
                       </View>
                     );
@@ -531,7 +531,7 @@ export default function WalletsPage() {
                   <TouchableOpacity style={s.btnCancel} onPress={() => setDeleteConfirm(null)}>
                     <Text style={s.btnCancelText}>Cancelar</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[s.btnSave, { backgroundColor: '#EF4444' }]}
+                  <TouchableOpacity style={[s.btnSave, { backgroundColor: '#c10015' }]}
                     onPress={() => deleteWallet(deleteConfirm?.id)}>
                     <Text style={s.btnSaveText}>Excluir</Text>
                   </TouchableOpacity>

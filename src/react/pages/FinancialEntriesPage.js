@@ -29,11 +29,11 @@ import styles from './FinancialEntriesPage.styles';
 const MODE_CONFIG = {
   receivables: {
     title: 'Recebiveis',
-    accent: '#22C55E',
+    accent: '#10b981',
   },
   payables: {
     title: 'Pagaveis',
-    accent: '#EF4444',
+    accent: '#c10015',
   },
   ownTransfers: {
     title: 'Transferencias proprias',

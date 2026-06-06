@@ -26,7 +26,7 @@ const cardShadow = Platform.select({
 
 /* ─── paleta de cores para seleção de cor ────────────────────────────── */
 const COLOR_PRESETS = [
-  '#EF4444', '#F97316', '#EAB308', '#22C55E',
+  '#c10015', '#F97316', '#EAB308', '#10b981',
   '#14B8A6', '#0EA5E9', '#8B5CF6', '#EC4899',
   '#64748B', '#0F172A',
 ];
@@ -289,7 +289,7 @@ export default function InvoiceCategoriesPage({ route }) {
                     style={[ic.iconBtn, { borderColor: '#FCA5A5' }]}
                     onPress={() => setDeleteConfirm({ id: cat.id, label: cat.name })}
                   >
-                    <Icon name="trash-2" size={16} color="#EF4444" />
+                    <Icon name="trash-2" size={16} color="#c10015" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -399,7 +399,7 @@ export default function InvoiceCategoriesPage({ route }) {
                     <Text style={ic.btnCancelText}>Cancelar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[ic.btnSave, { backgroundColor: '#EF4444' }]}
+                    style={[ic.btnSave, { backgroundColor: '#c10015' }]}
                     onPress={() => remove(deleteConfirm?.id)}
                   >
                     <Text style={ic.btnSaveText}>Excluir</Text>
