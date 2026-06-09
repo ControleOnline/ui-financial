@@ -24,22 +24,7 @@ import {
 import { getDateRange } from '@controleonline/ui-common/src/react/utils/dateRangeFilter';
 import { colors } from '@controleonline/../../src/styles/colors';
 import { resolveThemePalette, withOpacity } from '@controleonline/../../src/styles/branding';
-import styles from './FinancialEntriesPage.styles';
-
-const MODE_CONFIG = {
-  receivables: {
-    title: 'Recebiveis',
-    accent: '#10b981',
-  },
-  payables: {
-    title: 'Pagaveis',
-    accent: '#c10015',
-  },
-  ownTransfers: {
-    title: 'Transferencias proprias',
-    accent: '#8B5CF6',
-  },
-};
+import { createStyles } from './FinancialEntriesPage.styles';
 
 const getEntityId = entity => {
   if (!entity) return null;
@@ -176,7 +161,6 @@ const resolveDueDateState = filterValue => {
 };
 
 function FinancialEntriesPage({ mode = 'receivables' }) {
-  const config = MODE_CONFIG[mode] || MODE_CONFIG.receivables;
   const navigation = useNavigation();
 
   const invoiceStore = useStore('invoice');
@@ -193,7 +177,12 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   const { getters: categoriesGetters, actions: categoriesActions } = categoriesStore;
   const { getters: walletGetters, actions: walletActions } = walletStore;
   const { getters: paymentTypeGetters, actions: paymentTypeActions } = paymentTypeStore;
+  const { currentCompany } = peopleGetters;
   const { colors: themeColors } = themeStore.getters;
+  const themeTokens = useMemo(
+    () => ({...themeColors, ...(currentCompany?.theme?.colors || {})}),
+    [currentCompany?.theme?.colors, themeColors],
+  );
 
   // Referências estáveis para as actions — evita que mudanças de referência
   // nas actions do store disparem efeitos em cascata desnecessários
@@ -208,7 +197,6 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   };
 
   const { items: invoices, isLoading, summary: invoiceSummary, totalItems } = invoiceGetters;
-  const { currentCompany } = peopleGetters;
   const invoiceColumns = useMemo(
     () => (Array.isArray(invoiceGetters?.columns) ? invoiceGetters.columns : []),
     [invoiceGetters?.columns],
@@ -249,11 +237,16 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   const brandColors = useMemo(
     () =>
       resolveThemePalette(
-        { ...themeColors, ...(currentCompany?.theme?.colors || {}) },
+        themeTokens,
         colors,
       ),
-    [themeColors, currentCompany?.id],
+    [themeTokens],
   );
+  const styles = useMemo(() => createStyles(brandColors), [brandColors]);
+  const tableAccentColor = brandColors.primary || brandColors.text;
+  const tableSurfaceColor = brandColors.background || brandColors.white;
+  const tableTextColor = brandColors.secondary || brandColors.text;
+  const tableMutedColor = brandColors.textSecondary;
 
   const statusOptions = useMemo(
     () => (statusGetters.items || []).filter(item => !item.context || item.context === 'invoice'),
@@ -460,7 +453,8 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     const nextSummary = { ...invoiceSummary };
 
     if (nextSummary?.sum && typeof nextSummary.sum === 'object' && !Array.isArray(nextSummary.sum)) {
-      const { price, ...sumWithoutPrice } = nextSummary.sum;
+      const sumWithoutPrice = { ...nextSummary.sum };
+      delete sumWithoutPrice.price;
       nextSummary.sum = sumWithoutPrice;
     }
 
@@ -538,9 +532,12 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
       );
 
     return (
-      <TouchableOpacity style={styles.invoiceCard} activeOpacity={0.84} onPress={openRow || (() => openInvoiceDetails(item))}>
+      <TouchableOpacity
+        style={[styles.invoiceCard, {backgroundColor: tableSurfaceColor}]}
+        activeOpacity={0.84}
+        onPress={openRow || (() => openInvoiceDetails(item))}>
         <View style={styles.invoiceTopRow}>
-          <Text style={styles.invoiceId}>#{item.id}</Text>
+          <Text style={[styles.invoiceId, {color: tableTextColor}]}>#{item.id}</Text>
           <View style={[styles.statusChip, { backgroundColor: withOpacity(statusColor, 0.14), borderColor: statusColor }]}>
             <Text style={[styles.statusChipText, { color: statusColor }]}>{getStatusLabel(item?.status?.status)}</Text>
           </View>
@@ -548,25 +545,25 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
 
         <View style={styles.invoiceInfoGrid}>
           <View style={styles.invoiceInfoCell}>
-            <Text style={styles.invoiceLabel}>
+            <Text style={[styles.invoiceLabel, {color: tableMutedColor}]}>
               {mode === 'receivables'
                 ? formatInvoiceColumnLabel('payer', global.t?.t('invoice', 'label', 'payer'))
                 : formatInvoiceColumnLabel('sourceWallet', global.t?.t('invoice', 'label', 'sourceWallet'))}
             </Text>
-            <Text style={styles.invoiceValue} numberOfLines={1}>{getPartyLabel(item, mode)}</Text>
+            <Text style={[styles.invoiceValue, {color: tableTextColor}]} numberOfLines={1}>{getPartyLabel(item, mode)}</Text>
           </View>
 
           <View style={styles.invoiceInfoCell}>
-            <Text style={styles.invoiceLabel}>
+            <Text style={[styles.invoiceLabel, {color: tableMutedColor}]}>
               {mode === 'receivables'
                 ? formatInvoiceColumnLabel('destinationWallet', global.t?.t('invoice', 'label', 'destinationWallet'))
                 : formatInvoiceColumnLabel('receiver', global.t?.t('invoice', 'label', 'receiver'))}
             </Text>
-            <Text style={styles.invoiceValue} numberOfLines={1}>{getSecondaryPartyLabel(item, mode)}</Text>
+            <Text style={[styles.invoiceValue, {color: tableTextColor}]} numberOfLines={1}>{getSecondaryPartyLabel(item, mode)}</Text>
           </View>
 
           <View style={styles.invoiceInfoCell}>
-            <Text style={styles.invoiceLabel}>
+            <Text style={[styles.invoiceLabel, {color: tableMutedColor}]}>
               {formatInvoiceColumnLabel('category', global.t?.t('invoice', 'label', 'category'))}
             </Text>
             {renderCardField('category', formatInvoiceColumnValue(
@@ -577,7 +574,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
           </View>
 
           <View style={styles.invoiceInfoCell}>
-            <Text style={styles.invoiceLabel}>
+            <Text style={[styles.invoiceLabel, {color: tableMutedColor}]}>
               {formatInvoiceColumnLabel('dueDate', global.t?.t('invoice', 'label', 'dueDate'))}
             </Text>
             {renderCardField('dueDate', formatInvoiceColumnValue(
@@ -588,7 +585,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
           </View>
 
           <View style={styles.invoiceInfoCell}>
-            <Text style={styles.invoiceLabel}>
+            <Text style={[styles.invoiceLabel, {color: tableMutedColor}]}>
               {formatInvoiceColumnLabel('paymentType', global.t?.t('invoice', 'label', 'paymentType'))}
             </Text>
             {renderCardField('paymentType', formatInvoiceColumnValue(
@@ -599,7 +596,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
           </View>
 
           <View style={styles.invoiceInfoCell}>
-            <Text style={styles.invoiceLabel}>
+            <Text style={[styles.invoiceLabel, {color: tableMutedColor}]}>
               {formatInvoiceColumnLabel('installments', global.t?.t('invoice', 'label', 'installments'))}
             </Text>
             {renderCardField('installments', formatInvoiceColumnValue(
@@ -611,12 +608,12 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
         </View>
 
         <View style={styles.amountRow}>
-          <Text style={styles.amountLabel}>
+          <Text style={[styles.amountLabel, {color: tableMutedColor}]}>
             {formatInvoiceColumnLabel('price', global.t?.t('invoice', 'label', 'value'))}
           </Text>
           {renderCardField('price', amountValue, {
             containerStyle: styles.amountField,
-            readTextStyle: [styles.amountValue, { color: brandColors.primary }],
+            readTextStyle: [styles.amountValue, { color: tableTextColor }],
           })}
         </View>
       </TouchableOpacity>
@@ -627,7 +624,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     <View style={[styles.container, { backgroundColor: brandColors.background }]}>
       <View style={styles.filterBar}>
         <DefaultExternalFilters
-          accentColor={config.accent}
+          accentColor={tableAccentColor}
           columns={invoiceColumns}
           filters={storeFilters}
           getOptionsForColumn={getOptionsForColumn}
@@ -637,7 +634,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
       </View>
 
       <DefaultTable
-        accentColor={config.accent}
+        accentColor={tableAccentColor}
         actions={invoiceActions}
         columns={invoiceColumns}
         data={filteredInvoices}
