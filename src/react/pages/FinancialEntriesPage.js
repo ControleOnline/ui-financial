@@ -108,7 +108,16 @@ const getOpenAmountTranslationKey = mode => {
   return 'receivableAmount';
 };
 
+const DEFAULT_FINANCIAL_DATE_FILTER = {
+  shortcut: '30d',
+  customRange: { from: '', to: '' },
+};
+
 const normalizeText = value => String(value || '').trim();
+const normalizeStatusValue = value =>
+  String(value || '')
+    .trim()
+    .toLowerCase();
 
 const getColumnKey = column => column?.key || column?.name || '';
 
@@ -160,6 +169,29 @@ const resolveDueDateState = filterValue => {
   };
 };
 
+const isCancelledInvoice = invoice => {
+  const normalizedStatus = normalizeStatusValue(invoice?.status?.status);
+  const normalizedRealStatus = normalizeStatusValue(
+    invoice?.status?.realStatus || invoice?.status?.real_status,
+  );
+
+  return ['canceled', 'cancelled'].includes(normalizedStatus) ||
+    ['canceled', 'cancelled'].includes(normalizedRealStatus);
+};
+
+const isPaidInvoice = invoice => {
+  const normalizedStatus = normalizeStatusValue(invoice?.status?.status);
+  const normalizedRealStatus = normalizeStatusValue(
+    invoice?.status?.realStatus || invoice?.status?.real_status,
+  );
+
+  return normalizedRealStatus === 'closed' ||
+    normalizedStatus === 'closed' ||
+    normalizedStatus === 'paid';
+};
+
+const roundMoney = value => Math.round(Number(value || 0) * 100) / 100;
+
 function FinancialEntriesPage({ mode = 'receivables' }) {
   const navigation = useNavigation();
 
@@ -196,7 +228,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     peopleActions,
   };
 
-  const { items: invoices, isLoading, summary: invoiceSummary, totalItems } = invoiceGetters;
+  const { items: invoices, isLoading, totalItems } = invoiceGetters;
   const invoiceColumns = useMemo(
     () => (Array.isArray(invoiceGetters?.columns) ? invoiceGetters.columns : []),
     [invoiceGetters?.columns],
@@ -213,6 +245,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   const [sortState, setSortState] = useState(null);
 
   const mountedRef = useRef(false);
+  const defaultDateFilterScopeRef = useRef('');
 
   useEffect(() => {
     if (!currentCompany?.id) return;
@@ -277,6 +310,27 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   const setStoreFilters = useCallback(nextFilters => {
     actionsRef.current.invoiceActions.setFilters(nextFilters || {});
   }, []);
+
+  useEffect(() => {
+    if (!currentCompany?.id) return;
+
+    const scopeKey = `${currentCompany.id}:${mode}`;
+    if (defaultDateFilterScopeRef.current === scopeKey) {
+      return;
+    }
+
+    defaultDateFilterScopeRef.current = scopeKey;
+
+    const dueDateState = resolveDueDateState(storeFilters?.dueDate);
+    if (dueDateState.value !== 'all') {
+      return;
+    }
+
+    setStoreFilters({
+      ...(storeFilters || {}),
+      dueDate: DEFAULT_FINANCIAL_DATE_FILTER,
+    });
+  }, [currentCompany?.id, mode, setStoreFilters, storeFilters]);
 
   const formatInvoiceColumnLabel = useCallback(
     (fieldName, fallbackLabel) =>
@@ -446,24 +500,35 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   }, [loadedInvoices, mode]);
 
   const filteredSummary = useMemo(() => {
-    if (!invoiceSummary || typeof invoiceSummary !== 'object' || Array.isArray(invoiceSummary)) {
-      return invoiceSummary;
-    }
+    const totals = filteredInvoices.reduce((summary, invoice) => {
+      const amount = resolveInvoiceAmount(invoice);
+      summary.totalAmount += amount;
 
-    const nextSummary = { ...invoiceSummary };
+      if (isCancelledInvoice(invoice)) {
+        return summary;
+      }
 
-    if (nextSummary?.sum && typeof nextSummary.sum === 'object' && !Array.isArray(nextSummary.sum)) {
-      const sumWithoutPrice = { ...nextSummary.sum };
-      delete sumWithoutPrice.price;
-      nextSummary.sum = sumWithoutPrice;
-    }
+      if (isPaidInvoice(invoice)) {
+        summary.paidAmount += amount;
+      } else {
+        summary.openAmount += amount;
+      }
 
-    if (Object.prototype.hasOwnProperty.call(nextSummary, 'price')) {
-      delete nextSummary.price;
-    }
+      return summary;
+    }, {
+      openAmount: 0,
+      paidAmount: 0,
+      totalAmount: 0,
+    });
 
-    return nextSummary;
-  }, [invoiceSummary]);
+    return {
+      financial: {
+        openAmount: roundMoney(totals.openAmount),
+        paidAmount: roundMoney(totals.paidAmount),
+        totalAmount: roundMoney(totals.totalAmount),
+      },
+    };
+  }, [filteredInvoices]);
 
   const summaryLabels = (() => {
     const openAmountLabel = global.t?.t(
