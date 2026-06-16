@@ -8,6 +8,7 @@ import Formatter from '@controleonline/ui-common/src/utils/formatter.js';
 import { resolveThemePalette, withOpacity } from '@controleonline/../../src/styles/branding';
 import { colors } from '@controleonline/../../src/styles/colors';
 import { ps, s } from './WalletsPage.styles'
+import {getWalletPaymentTypePreview} from './walletsPagePreview';
 
 import {
   inlineStyle_95_24,
@@ -356,9 +357,9 @@ export default function WalletsPage() {
                 </View>
               </View>
               {/* formas vinculadas (preview) */}
-              {(w.walletPaymentTypes || []).length > 0 && (
+              {getWalletPaymentTypePreview(w.walletPaymentTypes || []).length > 0 && (
                 <View style={ps.chipRow}>
-                  {(w.walletPaymentTypes || []).map(wpt => {
+                  {getWalletPaymentTypePreview(w.walletPaymentTypes || []).map(wpt => {
                     const pt = typeof wpt.paymentType === 'object' ? wpt.paymentType : null;
                     if (!pt) return null;
                     return (
