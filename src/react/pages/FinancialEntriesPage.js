@@ -165,7 +165,7 @@ const resolveDueDateState = filterValue => {
   };
 };
 
-function FinancialEntriesPage({ mode = 'receivables' }) {
+function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
   const navigation = useNavigation();
 
   const invoiceStore = useStore('invoice');
@@ -708,6 +708,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
           }
         }}
         onSaved={mergeSavedInvoice}
+        toolbarActions={toolbarActions}
       />
 
     </View>
