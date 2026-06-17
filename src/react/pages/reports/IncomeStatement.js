@@ -62,6 +62,9 @@ const normalizeGroup = group => {
   };
 };
 
+const safeLabel = value =>
+  value && String(value).trim() ? String(value).trim() : 'Sem categoria';
+
 const formatMoney = value =>
   Number(value || 0).toLocaleString('pt-BR', {
     style: 'currency',
@@ -317,7 +320,7 @@ const IncomeStatement = () => {
                   return (
                     <View key={`${parentCategory?.parent_id || index}`} style={styles.modalSection}>
                       <Text style={styles.modalSectionTitle}>
-                        {parentCategory?.parent_category_name || 'Categoria'}
+                        {safeLabel(parentCategory?.parent_category_name)}
                       </Text>
 
                       {childCategories.length > 0 ? (
@@ -325,7 +328,7 @@ const IncomeStatement = () => {
                           <Text
                             key={`${category?.category_id || childIndex}`}
                             style={styles.modalText}>
-                            {category?.category_name || 'Categoria'}:{' '}
+                            {safeLabel(category?.category_name)}:{' '}
                             {formatMoney(category?.category_price || 0)}
                           </Text>
                         ))
