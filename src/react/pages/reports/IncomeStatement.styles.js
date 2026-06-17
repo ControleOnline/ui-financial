@@ -1,259 +1,270 @@
-import { Platform, StyleSheet } from 'react-native';
-import {colors} from '@controleonline/../../src/styles/colors';
+import {Platform, StyleSheet} from 'react-native';
+
+const cardShadow = Platform.select({
+  android: {elevation: 2},
+  ios: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
+  default: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
+});
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F5F5F5',
   },
-  header: {
-    backgroundColor: '#fff',
+  scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    ...Platform.select({
-      android: {elevation: 4},
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-      },
-    }),
+    paddingTop: 16,
+    paddingBottom: 32,
   },
-  headerTop: {
+  pageTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#111111',
     marginBottom: 16,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#0F172A',
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-    gap: 8,
-  },
-  summaryCard: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 12,
-    alignItems: 'center',
-  },
-  summaryLabel: {
-    fontSize: 12,
-    color: '#64748B',
-    marginBottom: 4,
-  },
-  summaryValue: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  filtersPanel: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 14,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#EDF2F7',
-  },
-  yearSelector: {
-    marginBottom: 8,
-  },
-  yearTitle: {
-    fontSize: 11,
-    color: '#64748B',
-    marginBottom: 6,
-    fontWeight: '600',
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
-  },
-  yearSelectorControl: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  filterCard: {
     backgroundColor: '#FFFFFF',
+    borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-  },
-  yearArrowButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
-  },
-  yearLabel: {
-    fontSize: 15,
-    color: '#1E293B',
-    fontWeight: '700',
+    borderColor: '#E5E7EB',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 24,
+    ...cardShadow,
   },
   filterRow: {
     flexDirection: 'row',
-    gap: 8,
+    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
     flexWrap: 'wrap',
   },
-  filterButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: '#F1F5F9',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+  yearField: {
+    minWidth: 110,
+    marginRight: 16,
+    marginBottom: 8,
   },
-  filterButtonActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+  yearLabel: {
+    fontSize: 12,
+    color: '#7A7A7A',
+    marginBottom: 2,
+  },
+  yearInput: {
+    minWidth: 96,
+    borderBottomWidth: 1,
+    borderBottomColor: '#D4D4D8',
+    paddingVertical: 2,
+    paddingHorizontal: 0,
+    fontSize: 16,
+    color: '#111111',
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#111111',
+    borderRadius: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    marginRight: 8,
+    marginBottom: 8,
+    minHeight: 42,
+    ...cardShadow,
   },
   filterButtonText: {
     fontSize: 13,
-    color: '#64748B',
-    fontWeight: '500',
-  },
-  filterButtonTextActive: {
-    color: '#FFF',
-  },
-  monthSection: {
-    marginTop: 2,
-  },
-  monthSectionLabel: {
-    fontSize: 11,
-    color: '#64748B',
-    marginBottom: 6,
-    fontWeight: '600',
-    letterSpacing: 0.4,
+    fontWeight: '700',
+    color: '#F4C400',
+    marginRight: 8,
     textTransform: 'uppercase',
   },
-  monthScrollContent: {
-    paddingBottom: 2,
+  clearButton: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 4,
+    backgroundColor: '#111111',
+    marginBottom: 8,
+    ...cardShadow,
   },
-  monthButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginRight: 8,
-  },
-  monthButtonActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  monthButtonText: {
+  errorText: {
+    marginBottom: 12,
+    color: '#B91C1C',
     fontSize: 13,
-    color: '#64748B',
-    fontWeight: '500',
   },
-  monthButtonTextActive: {
-    color: '#FFF',
+  monthGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -8,
   },
-  loadingContainer: {
+  monthCardContainer: {
+    paddingHorizontal: 8,
+    marginBottom: 16,
+  },
+  monthCard: {
     flex: 1,
+    minHeight: 278,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    padding: 14,
+    ...cardShadow,
+  },
+  monthTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111111',
+    marginBottom: 16,
+  },
+  metricBox: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#DCDDDF',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 26,
+  },
+  metricLabel: {
+    fontSize: 13,
+    color: '#8B8B8B',
+  },
+  metricAction: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#F4C400',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  loadingText: {
-    marginTop: 12,
-    color: '#64748B',
-    fontSize: 14,
+  totalsBlock: {
+    marginTop: 2,
   },
-  errorContainer: {
+  totalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  totalLabel: {
+    fontSize: 13,
+  },
+  totalValue: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  textGreen: {
+    color: '#22AA46',
+  },
+  textRed: {
+    color: '#FF3B30',
+  },
+  bold: {
+    fontWeight: '700',
+  },
+  emptyState: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
-  errorText: {
+  emptyStateTitle: {
     marginTop: 12,
-    color: '#64748B',
-    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111111',
+  },
+  emptyStateText: {
+    marginTop: 8,
     fontSize: 14,
+    lineHeight: 20,
+    color: '#6B7280',
+    textAlign: 'center',
   },
-  retryButton: {
-    marginTop: 16,
-    backgroundColor: colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  retryButtonText: {
-    color: '#FFF',
-    fontWeight: '600',
-  },
-  listContent: {
-    padding: 16,
-    paddingBottom: 24,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    ...Platform.select({
-      android: {elevation: 2},
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-      },
-    }),
-  },
-  cardIconContainer: {
-    marginRight: 16,
-  },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 16,
   },
-  cardContent: {
-    flex: 1,
+  modalCard: {
+    width: '100%',
+    maxWidth: 640,
+    maxHeight: '85%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 16,
+    ...cardShadow,
   },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1E293B',
-    marginBottom: 4,
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111111',
+    marginBottom: 12,
   },
-  cardSubtitle: {
-    fontSize: 12,
-    color: '#64748B',
+  modalScroll: {
+    flexGrow: 0,
   },
-  cardAmount: {
-    alignItems: 'flex-end',
+  modalScrollContent: {
+    paddingBottom: 4,
   },
-  amountText: {
+  modalSection: {
+    marginBottom: 14,
+  },
+  modalSectionTitle: {
     fontSize: 15,
     fontWeight: '700',
+    color: '#111111',
+    marginBottom: 6,
+  },
+  modalText: {
+    fontSize: 14,
+    color: '#374151',
     marginBottom: 4,
   },
-  statusText: {
-    fontSize: 11,
-    color: '#94A3B8',
+  modalEmptyText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 4,
   },
-  emptyContainer: {
+  modalButton: {
+    marginTop: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 60,
+    backgroundColor: '#111111',
+    borderRadius: 4,
+    paddingVertical: 12,
   },
-  emptyText: {
-    marginTop: 16,
-    color: '#94A3B8',
-    fontSize: 16,
+  modalButtonText: {
+    color: '#F4C400',
+    fontSize: 13,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.72)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 14,
+    color: '#6B7280',
   },
 });
 

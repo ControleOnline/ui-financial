@@ -1,373 +1,363 @@
-﻿import React, {useCallback, useMemo, useState} from 'react';
-import { Text, View, TouchableOpacity, FlatList, ScrollView, ActivityIndicator, RefreshControl, Platform } from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useFocusEffect} from '@react-navigation/native';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useStore} from '@store';
-import {colors} from '@controleonline/../../src/styles/colors';
-import Icon from 'react-native-vector-icons/FontAwesome';
 import styles from './IncomeStatement.styles';
 
 const CURRENT_YEAR = new Date().getFullYear();
-const CURRENT_MONTH = new Date().getMonth() + 1;
+
 const MONTHS = [
-  {id: 1, label: 'Jan'},
-  {id: 2, label: 'Fev'},
-  {id: 3, label: 'Mar'},
-  {id: 4, label: 'Abr'},
-  {id: 5, label: 'Mai'},
-  {id: 6, label: 'Jun'},
-  {id: 7, label: 'Jul'},
-  {id: 8, label: 'Ago'},
-  {id: 9, label: 'Set'},
-  {id: 10, label: 'Out'},
-  {id: 11, label: 'Nov'},
-  {id: 12, label: 'Dez'},
+  {id: 1, label: 'Janeiro'},
+  {id: 2, label: 'Fevereiro'},
+  {id: 3, label: 'Março'},
+  {id: 4, label: 'Abril'},
+  {id: 5, label: 'Maio'},
+  {id: 6, label: 'Junho'},
+  {id: 7, label: 'Julho'},
+  {id: 8, label: 'Agosto'},
+  {id: 9, label: 'Setembro'},
+  {id: 10, label: 'Outubro'},
+  {id: 11, label: 'Novembro'},
+  {id: 12, label: 'Dezembro'},
 ];
 
-const FinancePage = () => {
-  const insets = useSafeAreaInsets();
+const EMPTY_GROUP = {
+  total_month_price: 0,
+  parent_categories: {},
+};
+
+const normalizeObject = value => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  return value;
+};
+
+const normalizeCollection = value => {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  return Object.values(normalizeObject(value));
+};
+
+const normalizeGroup = group => {
+  const normalized = normalizeObject(group);
+
+  return {
+    total_month_price: Number(normalized.total_month_price || 0),
+    parent_categories: normalizeObject(normalized.parent_categories),
+  };
+};
+
+const formatMoney = value =>
+  Number(value || 0).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
+
+const getColumnsByWidth = width => {
+  if (width >= 1024) return 6;
+  if (width >= 768) return 4;
+  if (width >= 600) return 2;
+  return 1;
+};
+
+const getMonthData = (incomeStatements, monthId) => {
+  const rawMonth =
+    incomeStatements?.[monthId] ?? incomeStatements?.[String(monthId)] ?? {};
+
+  return {
+    receive: normalizeGroup(rawMonth.receive || EMPTY_GROUP),
+    pay: normalizeGroup(rawMonth.pay || EMPTY_GROUP),
+  };
+};
+
+const getParentCategories = categories =>
+  normalizeCollection(categories);
+
+const IncomeStatement = () => {
+  const {width} = useWindowDimensions();
   const invoiceStore = useStore('invoice');
   const peopleStore = useStore('people');
   const {currentCompany} = peopleStore.getters || {};
   const getIncomeStatements = invoiceStore?.actions?.getIncomeStatements;
 
-  const [period, setPeriod] = useState(7);
-  const [exerciseYear, setExerciseYear] = useState(CURRENT_YEAR);
-  const [selectedMonth, setSelectedMonth] = useState(CURRENT_MONTH);
-  const [refreshing, setRefreshing] = useState(false);
+  const [year, setYear] = useState(String(CURRENT_YEAR));
+  const [incomeStatements, setIncomeStatements] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [incomeRows, setIncomeRows] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedTitle, setSelectedTitle] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState([]);
 
-  const isCurrentExerciseYear = exerciseYear === CURRENT_YEAR;
+  const columns = useMemo(() => getColumnsByWidth(width), [width]);
 
-  const formatMoney = value => {
-    return parseFloat(value || 0).toLocaleString('pt-br', {
-      style: 'currency',
-      currency: 'BRL',
-    });
-  };
-
-  const calculateDateRange = ({days, year, month}) => {
-    if (year !== CURRENT_YEAR) {
-      const start = new Date(year, month - 1, 1, 0, 0, 0, 0);
-      const end = new Date(year, month, 0, 23, 59, 59, 999);
-      return {start, end};
-    }
-
-    const now = new Date();
-    const end = new Date(now);
-    end.setHours(23, 59, 59, 999);
-
-    const start = new Date(end);
-    start.setHours(0, 0, 0, 0);
-    start.setDate(start.getDate() - days + 1);
-
-    return {start, end};
-  };
-
-  const normalizeIncomeMap = incomeMap => {
-    if (!incomeMap || typeof incomeMap !== 'object' || Array.isArray(incomeMap)) {
-      return {};
-    }
-
-    return incomeMap;
-  };
-
-  const toRows = useCallback(incomeMap => {
-    const normalized = normalizeIncomeMap(incomeMap);
-
-    return Object.keys(normalized)
-      .map(key => Number(key))
-      .filter(month => month >= 1 && month <= 12)
-      .map(month => {
-        const monthData = normalized?.[month] || normalized?.[String(month)] || {};
-        const income = Number(monthData?.receive?.total_month_price || 0);
-        const expense = Number(monthData?.pay?.total_month_price || 0);
-
-        return {
-          month,
-          income,
-          expense,
-          balance: income - expense,
-        };
-      })
-      .sort((a, b) => b.month - a.month);
-  }, []);
-
-  const applyPeriodFilter = useCallback(
-    rows => {
-      if (!Array.isArray(rows) || rows.length === 0) {
-        return [];
+  const loadData = useCallback(
+    async requestedYear => {
+      if (!currentCompany?.id) {
+        return;
       }
 
-      if (!isCurrentExerciseYear) {
-        return rows.filter(row => row.month === selectedMonth);
+      if (typeof getIncomeStatements !== 'function') {
+        setError('Ação getIncomeStatements indisponível.');
+        setIncomeStatements({});
+        return;
       }
 
-      const {start, end} = calculateDateRange({
-        days: period,
-        year: exerciseYear,
-        month: selectedMonth,
-      });
+      const targetYear = String(requestedYear || '').trim();
 
-      return rows.filter(row => {
-        const monthStart = new Date(exerciseYear, row.month - 1, 1, 0, 0, 0, 0);
-        const monthEnd = new Date(exerciseYear, row.month, 0, 23, 59, 59, 999);
-        return monthEnd >= start && monthStart <= end;
-      });
+      if (targetYear.length !== 4) {
+        Alert.alert('Ano inválido', 'Informe um ano válido com 4 dígitos.');
+        return;
+      }
+
+      setIsLoading(true);
+      setError('');
+
+      try {
+        const response = await getIncomeStatements({
+          people: currentCompany.id,
+          year: targetYear,
+        });
+
+        setIncomeStatements(normalizeObject(response));
+      } catch (e) {
+        console.error('Erro ao carregar income statements:', e);
+        setError('Não foi possível carregar os dados de comissões.');
+        setIncomeStatements({});
+      } finally {
+        setIsLoading(false);
+      }
     },
-    [exerciseYear, isCurrentExerciseYear, period, selectedMonth],
+    [currentCompany?.id, getIncomeStatements],
   );
 
-  const loadTransactions = useCallback(async () => {
-    if (!currentCompany?.id) {
+  // Reload only when the company context changes. Year changes are explicit via the filter button.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (currentCompany?.id) {
+      loadData(year);
       return;
     }
 
-    if (typeof getIncomeStatements !== 'function') {
-      setError('Ação getIncomeStatements indisponível.');
-      setIncomeRows([]);
-      return;
-    }
+    setIncomeStatements({});
+  }, [currentCompany?.id]);
 
-    setIsLoading(true);
-    setError('');
-
-    try {
-      const params = {
-        people: currentCompany.id,
-        year: exerciseYear,
-      };
-
-      if (!isCurrentExerciseYear) {
-        params.month = selectedMonth;
-      }
-
-      const response = await getIncomeStatements(params);
-      const rows = toRows(response);
-      const filteredRows = applyPeriodFilter(rows);
-      setIncomeRows(filteredRows);
-    } catch (e) {
-      console.error('Erro ao carregar income statements:', e);
-      setError('Não foi possível carregar os dados de comissões.');
-      setIncomeRows([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [
-    applyPeriodFilter,
-    currentCompany?.id,
-    exerciseYear,
-    getIncomeStatements,
-    isCurrentExerciseYear,
-    selectedMonth,
-    toRows,
-  ]);
-
-  const changeExerciseYear = direction => {
-    setExerciseYear(prev => {
-      const next = prev + direction;
-      return Math.max(2000, Math.min(CURRENT_YEAR, next));
-    });
+  const handleYearChange = text => {
+    setYear(text.replace(/\D/g, '').slice(0, 4));
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      loadTransactions();
-    }, [loadTransactions]),
-  );
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await loadTransactions();
-    setRefreshing(false);
+  const handleFilter = () => {
+    loadData(year);
   };
 
-  const summary = useMemo(() => {
-    return incomeRows.reduce(
-      (acc, row) => {
-        acc.income += Number(row?.income || 0);
-        acc.expense += Number(row?.expense || 0);
-        return acc;
-      },
-      {income: 0, expense: 0},
-    );
-  }, [incomeRows]);
-
-  const computedSummary = {
-    ...summary,
-    balance: summary.income - summary.expense,
+  const handleClear = () => {
+    const nextYear = String(CURRENT_YEAR);
+    setYear(nextYear);
+    loadData(nextYear);
   };
 
-  const selectedMonthLabel =
-    MONTHS.find(month => month.id === selectedMonth)?.label || '';
+  const openDetails = (title, categories) => {
+    setSelectedTitle(title);
+    setSelectedCategories(getParentCategories(categories));
+    setModalVisible(true);
+  };
 
-  const renderFilterButton = days => (
-    <TouchableOpacity
-      style={[styles.filterButton, period === days && styles.filterButtonActive]}
-      onPress={() => setPeriod(days)}>
-      <Text
-        style={[
-          styles.filterButtonText,
-          period === days && styles.filterButtonTextActive,
-        ]}>
-        {days} dias
-      </Text>
-    </TouchableOpacity>
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedTitle('');
+    setSelectedCategories([]);
+  };
+
+  const renderCategorySection = (label, onPress) => (
+    <View style={styles.metricBox}>
+      <Text style={styles.metricLabel}>{label}</Text>
+      <TouchableOpacity activeOpacity={0.9} style={styles.metricAction} onPress={onPress}>
+        <Icon name="info" size={16} color="#FFFFFF" />
+      </TouchableOpacity>
+    </View>
   );
 
-  const renderMonthButton = month => (
-    <TouchableOpacity
-      key={month.id}
-      style={[
-        styles.monthButton,
-        selectedMonth === month.id && styles.monthButtonActive,
-      ]}
-      onPress={() => setSelectedMonth(month.id)}>
-      <Text
-        style={[
-          styles.monthButtonText,
-          selectedMonth === month.id && styles.monthButtonTextActive,
-        ]}>
-        {month.label}
-      </Text>
-    </TouchableOpacity>
-  );
-
-  const renderInvoice = ({item}) => {
-    const amountColor = item?.balance >= 0 ? '#4CAF50' : '#F44336';
-    const monthLabel = MONTHS.find(month => month.id === item?.month)?.label || '--';
+  const renderMonthCard = month => {
+    const monthData = getMonthData(incomeStatements, month.id);
+    const income = monthData.receive.total_month_price;
+    const expense = monthData.pay.total_month_price;
+    const balance = income - expense;
+    const balanceColor = balance < 0 ? styles.textRed : styles.textGreen;
 
     return (
-      <TouchableOpacity style={styles.card}>
-        <View style={styles.cardIconContainer}>
-          <View style={[styles.iconCircle, {backgroundColor: '#DCFCE7'}]}>
-            <Icon name="line-chart" size={16} color={amountColor} />
+      <View key={month.id} style={[styles.monthCardContainer, {width: `${100 / columns}%`}]}>
+        <View style={styles.monthCard}>
+          <Text style={styles.monthTitle}>{month.label}</Text>
+
+          {renderCategorySection('Receitas', () =>
+            openDetails('Receitas', monthData.receive.parent_categories),
+          )}
+
+          {renderCategorySection('Despesas', () =>
+            openDetails('Despesas', monthData.pay.parent_categories),
+          )}
+
+          <View style={styles.totalsBlock}>
+            <View style={styles.totalRow}>
+              <Text style={[styles.totalLabel, styles.textGreen]}>Total de Receitas</Text>
+              <Text style={[styles.totalValue, styles.textGreen]}>
+                {formatMoney(income)}
+              </Text>
+            </View>
+            <View style={styles.totalRow}>
+              <Text style={[styles.totalLabel, styles.textRed]}>Total de Despesas</Text>
+              <Text style={[styles.totalValue, styles.textRed]}>
+                {formatMoney(expense)}
+              </Text>
+            </View>
+            <View style={styles.totalRow}>
+              <Text style={[styles.totalLabel, styles.bold, balanceColor]}>Saldo</Text>
+              <Text style={[styles.totalValue, styles.bold, balanceColor]}>
+                {formatMoney(balance)}
+              </Text>
+            </View>
           </View>
         </View>
-
-        <View style={styles.cardContent}>
-          <Text style={styles.cardTitle} numberOfLines={1}>
-            {`Comissão ${monthLabel}/${exerciseYear}`}
-          </Text>
-          <Text style={styles.cardSubtitle}>
-            Receitas {formatMoney(item?.income)} - Despesas {formatMoney(item?.expense)}
-          </Text>
-        </View>
-
-        <View style={styles.cardAmount}>
-          <Text style={[styles.amountText, {color: amountColor}]}>
-            {formatMoney(item?.balance)}
-          </Text>
-          <Text style={styles.statusText}>{item?.balance >= 0 ? 'Positivo' : 'Negativo'}</Text>
-        </View>
-      </TouchableOpacity>
+      </View>
     );
   };
 
+  if (!currentCompany?.id) {
+    return (
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <View style={styles.emptyState}>
+          <Icon name="business" size={36} color="#9CA3AF" />
+          <Text style={styles.emptyStateTitle}>Selecione uma empresa</Text>
+          <Text style={styles.emptyStateText}>
+            O relatório de comissões precisa de uma empresa ativa para carregar os dados.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, {paddingTop: Math.max(insets.top, 16) + 16}]}>
-        <View style={styles.headerTop}>
-          <Text style={styles.headerTitle}>Comissões</Text>
-        </View>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}>
+        <Text style={styles.pageTitle}>Comissões</Text>
 
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Comissões</Text>
-            <Text style={[styles.summaryValue, {color: '#4CAF50'}]}>
-              {formatMoney(computedSummary.income)}
-            </Text>
+        <View style={styles.filterCard}>
+          <View style={styles.filterRow}>
+            <View style={styles.yearField}>
+              <Text style={styles.yearLabel}>Ano</Text>
+              <TextInput
+                value={year}
+                onChangeText={handleYearChange}
+                onSubmitEditing={handleFilter}
+                keyboardType="numeric"
+                maxLength={4}
+                style={styles.yearInput}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.filterButton}
+              activeOpacity={0.9}
+              onPress={handleFilter}>
+              <Text style={styles.filterButtonText}>FILTRAR</Text>
+              <Icon name="search" size={18} color="#F4C400" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.clearButton}
+              activeOpacity={0.9}
+              onPress={handleClear}>
+              <Icon name="filter-alt-off" size={18} color="#F4C400" />
+            </TouchableOpacity>
           </View>
+        </View>
 
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Saldo</Text>
-            <Text
-              style={[
-                styles.summaryValue,
-                {color: computedSummary.balance >= 0 ? '#4CAF50' : '#F44336'},
-              ]}>
-              {formatMoney(computedSummary.balance)}
-            </Text>
+        {!!error && <Text style={styles.errorText}>{error}</Text>}
+
+        <View style={styles.monthGrid}>
+          {MONTHS.map(month => renderMonthCard(month))}
+        </View>
+      </ScrollView>
+
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={closeModal}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>{selectedTitle}</Text>
+
+            <ScrollView
+              style={styles.modalScroll}
+              contentContainerStyle={styles.modalScrollContent}
+              showsVerticalScrollIndicator={false}>
+              {selectedCategories.length > 0 ? (
+                selectedCategories.map((parentCategory, index) => {
+                  const childCategories = normalizeCollection(
+                    parentCategory?.categories_childs,
+                  );
+
+                  return (
+                    <View key={`${parentCategory?.parent_id || index}`} style={styles.modalSection}>
+                      <Text style={styles.modalSectionTitle}>
+                        {parentCategory?.parent_category_name || 'Categoria'}
+                      </Text>
+
+                      {childCategories.length > 0 ? (
+                        childCategories.map((category, childIndex) => (
+                          <Text
+                            key={`${category?.category_id || childIndex}`}
+                            style={styles.modalText}>
+                            {category?.category_name || 'Categoria'}:{' '}
+                            {formatMoney(category?.category_price || 0)}
+                          </Text>
+                        ))
+                      ) : (
+                        <Text style={styles.modalEmptyText}>Nenhuma subcategoria</Text>
+                      )}
+                    </View>
+                  );
+                })
+              ) : (
+                <Text style={styles.modalEmptyText}>Nenhuma categoria disponível</Text>
+              )}
+            </ScrollView>
+
+            <TouchableOpacity
+              activeOpacity={0.9}
+              style={styles.modalButton}
+              onPress={closeModal}>
+              <Text style={styles.modalButtonText}>Fechar</Text>
+            </TouchableOpacity>
           </View>
         </View>
+      </Modal>
 
-        <View style={styles.filtersPanel}>
-          <View style={styles.yearSelector}>
-            <Text style={styles.yearTitle}>Exercício</Text>
-            <View style={styles.yearSelectorControl}>
-              <TouchableOpacity
-                onPress={() => changeExerciseYear(-1)}
-                style={styles.yearArrowButton}>
-                <Icon name="chevron-left" size={14} color="#64748B" />
-              </TouchableOpacity>
-              <Text style={styles.yearLabel}>{exerciseYear}</Text>
-              <TouchableOpacity
-                onPress={() => changeExerciseYear(1)}
-                style={styles.yearArrowButton}>
-                <Icon name="chevron-right" size={14} color="#64748B" />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {isCurrentExerciseYear ? (
-            <View style={styles.filterRow}>
-              {renderFilterButton(7)}
-              {renderFilterButton(30)}
-              {renderFilterButton(60)}
-              {renderFilterButton(90)}
-            </View>
-          ) : (
-            <View style={styles.monthSection}>
-              <Text style={styles.monthSectionLabel}>Mês</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.monthScrollContent}>
-                {MONTHS.map(renderMonthButton)}
-              </ScrollView>
-            </View>
-          )}
+      {isLoading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#F4C400" />
+          <Text style={styles.loadingText}>Carregando...</Text>
         </View>
-      </View>
-
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Carregando comissões...</Text>
-        </View>
-      ) : error ? (
-        <View style={styles.errorContainer}>
-          <Icon name="exclamation-triangle" size={46} color="#F44336" />
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadTransactions}>
-            <Text style={styles.retryButtonText}>Tentar novamente</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <FlatList
-          data={incomeRows}
-          keyExtractor={item => String(item?.month)}
-          renderItem={renderInvoice}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          ListEmptyComponent={() => (
-            <View style={styles.emptyContainer}>
-              <Icon name="exchange" size={48} color="#CBD5E1" />
-              <Text style={styles.emptyText}>
-                {isCurrentExerciseYear
-                  ? 'Nenhuma comissão no período'
-                  : `Nenhuma comissão em ${selectedMonthLabel}/${exerciseYear}`}
-              </Text>
-            </View>
-          )}
-        />
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
-export default FinancePage;
+export default IncomeStatement;
