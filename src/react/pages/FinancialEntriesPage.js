@@ -12,7 +12,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { useStore } from '@store';
 import DefaultExternalFilters from '@controleonline/ui-default/src/react/components/filters/DefaultExternalFilters';
 import DefaultTable from '@controleonline/ui-default/src/react/components/table/DefaultTable';
@@ -167,6 +167,7 @@ const resolveDueDateState = filterValue => {
 
 function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
 
   const invoiceStore = useStore('invoice');
   const peopleStore = useStore('people');
@@ -393,8 +394,8 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
 
   // Ref que sempre aponta para a versão mais recente de fetchInvoices.
   // Permite que o efeito com debounce chame a versão atualizada sem precisar
-  // incluir fetchInvoices nas suas deps (o que causaria disparo duplo junto
-  // com o useFocusEffect).
+  // incluir fetchInvoices nas suas deps e disparar a busca duas vezes quando
+  // foco da tela e filtros mudam no mesmo ciclo.
   const fetchInvoicesRef = useRef(fetchInvoices);
   useEffect(() => {
     fetchInvoicesRef.current = fetchInvoices;
@@ -425,17 +426,13 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
     });
   }, [invoices, currentPage, currentCompany?.id, mode]);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchInvoices();
-    }, [fetchInvoices]),
-  );
-
   useEffect(() => {
     if (!mountedRef.current) {
       mountedRef.current = true;
       return;
     }
+
+    if (!isFocused) return;
 
     const timeout = setTimeout(() => {
       setCurrentPage(1);
@@ -450,8 +447,9 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
     sortState?.direction,
     sortState?.field,
     storeFiltersKey,
+    isFocused,
     // fetchInvoices removido — lido via ref para evitar disparo duplo
-    // quando useFocusEffect já chamou fetchInvoices no mesmo ciclo
+    // quando o foco da tela e os filtros mudam no mesmo ciclo
   ]);
 
   useEffect(() => {
