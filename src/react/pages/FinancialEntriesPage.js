@@ -214,7 +214,6 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
   );
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(50);
   const [loadedInvoices, setLoadedInvoices] = useState([]);
   const [sortState, setSortState] = useState(null);
 
@@ -339,7 +338,6 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
     const page = pageOverride || currentPage;
     const params = {};
     params.page = page;
-    params.itemsPerPage = itemsPerPage;
     if (sortState?.field && sortState?.direction) {
       params[`order[${sortState.field}]`] = sortState.direction;
     }
@@ -384,7 +382,6 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
   }, [
     currentCompany?.id,
     currentPage,
-    itemsPerPage,
     mode,
     sortState?.direction,
     sortState?.field,

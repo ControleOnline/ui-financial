@@ -259,7 +259,6 @@ function InvoiceDetailsPage({navigation, route}) {
     if (typeof orderInvoicesStore.actions?.getItems === 'function') {
       orderInvoicesStore.actions.getItems({
         invoice: `/invoices/${invoiceId}`,
-        itemsPerPage: 100,
       }).catch(() => null)
     }
   }, [invoiceId, orderInvoicesStore.actions])
