@@ -114,10 +114,6 @@ const DEFAULT_FINANCIAL_DATE_FILTER = {
 };
 
 const normalizeText = value => String(value || '').trim();
-const normalizeStatusValue = value =>
-  String(value || '')
-    .trim()
-    .toLowerCase();
 
 const getColumnKey = column => column?.key || column?.name || '';
 
@@ -169,29 +165,6 @@ const resolveDueDateState = filterValue => {
   };
 };
 
-const isCancelledInvoice = invoice => {
-  const normalizedStatus = normalizeStatusValue(invoice?.status?.status);
-  const normalizedRealStatus = normalizeStatusValue(
-    invoice?.status?.realStatus || invoice?.status?.real_status,
-  );
-
-  return ['canceled', 'cancelled'].includes(normalizedStatus) ||
-    ['canceled', 'cancelled'].includes(normalizedRealStatus);
-};
-
-const isPaidInvoice = invoice => {
-  const normalizedStatus = normalizeStatusValue(invoice?.status?.status);
-  const normalizedRealStatus = normalizeStatusValue(
-    invoice?.status?.realStatus || invoice?.status?.real_status,
-  );
-
-  return normalizedRealStatus === 'closed' ||
-    normalizedStatus === 'closed' ||
-    normalizedStatus === 'paid';
-};
-
-const roundMoney = value => Math.round(Number(value || 0) * 100) / 100;
-
 function FinancialEntriesPage({ mode = 'receivables' }) {
   const navigation = useNavigation();
 
@@ -228,7 +201,7 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
     peopleActions,
   };
 
-  const { items: invoices, isLoading, totalItems } = invoiceGetters;
+  const { items: invoices, isLoading, summary: invoiceSummary, totalItems } = invoiceGetters;
   const invoiceColumns = useMemo(
     () => (Array.isArray(invoiceGetters?.columns) ? invoiceGetters.columns : []),
     [invoiceGetters?.columns],
@@ -500,35 +473,41 @@ function FinancialEntriesPage({ mode = 'receivables' }) {
   }, [loadedInvoices, mode]);
 
   const filteredSummary = useMemo(() => {
-    const totals = filteredInvoices.reduce((summary, invoice) => {
-      const amount = resolveInvoiceAmount(invoice);
-      summary.totalAmount += amount;
+    if (!invoiceSummary || typeof invoiceSummary !== 'object' || Array.isArray(invoiceSummary)) {
+      return invoiceSummary;
+    }
 
-      if (isCancelledInvoice(invoice)) {
-        return summary;
-      }
+    const nextSummary = { ...invoiceSummary };
+    const hasStandardFilteredTotal =
+      nextSummary?.sum &&
+      typeof nextSummary.sum === 'object' &&
+      !Array.isArray(nextSummary.sum) &&
+      Object.prototype.hasOwnProperty.call(nextSummary.sum, 'price');
+    const standardFilteredTotal = normalizeMoneyValue(nextSummary?.sum?.price);
 
-      if (isPaidInvoice(invoice)) {
-        summary.paidAmount += amount;
+    if (hasStandardFilteredTotal) {
+      nextSummary.financial = {
+        ...(nextSummary?.financial || {}),
+        totalAmount: standardFilteredTotal,
+      };
+    }
+
+    if (nextSummary?.sum && typeof nextSummary.sum === 'object' && !Array.isArray(nextSummary.sum)) {
+      const sumWithoutPrice = { ...nextSummary.sum };
+      delete sumWithoutPrice.price;
+      if (Object.keys(sumWithoutPrice).length > 0) {
+        nextSummary.sum = sumWithoutPrice;
       } else {
-        summary.openAmount += amount;
+        delete nextSummary.sum;
       }
+    }
 
-      return summary;
-    }, {
-      openAmount: 0,
-      paidAmount: 0,
-      totalAmount: 0,
-    });
+    if (Object.prototype.hasOwnProperty.call(nextSummary, 'price')) {
+      delete nextSummary.price;
+    }
 
-    return {
-      financial: {
-        openAmount: roundMoney(totals.openAmount),
-        paidAmount: roundMoney(totals.paidAmount),
-        totalAmount: roundMoney(totals.totalAmount),
-      },
-    };
-  }, [filteredInvoices]);
+    return nextSummary;
+  }, [invoiceSummary]);
 
   const summaryLabels = (() => {
     const openAmountLabel = global.t?.t(
