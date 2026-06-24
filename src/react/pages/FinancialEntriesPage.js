@@ -117,6 +117,43 @@ const normalizeText = value => String(value || '').trim();
 
 const getColumnKey = column => column?.key || column?.name || '';
 
+const buildPaymentTypeOptionFromValue = value => {
+  if (!value || typeof value !== 'object') return null;
+
+  const id = getEntityId(value);
+  const label = normalizeText(value?.paymentType || value?.label);
+  if (!id || !label) return null;
+
+  return {
+    ...value,
+    '@id': value?.['@id'] || `/payment_types/${id}`,
+    id,
+    paymentType: label,
+  };
+};
+
+const mergePaymentTypeOptions = (...optionSets) => {
+  const dedupedOptions = new Map();
+
+  optionSets
+    .flat()
+    .map(buildPaymentTypeOptionFromValue)
+    .filter(Boolean)
+    .forEach(option => {
+      const key = String(option.id);
+      if (!dedupedOptions.has(key)) {
+        dedupedOptions.set(key, option);
+      }
+    });
+
+  return Array.from(dedupedOptions.values()).sort((left, right) =>
+    normalizeText(left?.paymentType).localeCompare(
+      normalizeText(right?.paymentType),
+      'pt-BR',
+    ),
+  );
+};
+
 const normalizeFilterValue = value => {
   if (value && typeof value === 'object') {
     return normalizeFilterValue(value.value ?? value.id ?? value['@id'] ?? '');
@@ -260,7 +297,14 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
   );
   const categoryOptions = useMemo(() => categoriesGetters.items || [], [categoriesGetters.items]);
   const walletOptions = useMemo(() => walletGetters.items || [], [walletGetters.items]);
-  const paymentTypeOptions = useMemo(() => paymentTypeGetters.items || [], [paymentTypeGetters.items]);
+  const paymentTypeOptions = useMemo(
+    () =>
+      mergePaymentTypeOptions(
+        paymentTypeGetters.items || [],
+        (loadedInvoices || []).map(invoice => invoice?.paymentType),
+      ),
+    [loadedInvoices, paymentTypeGetters.items],
+  );
   const receiverOptions = useMemo(
     () =>
       (peopleGetters.items || []).filter(item => Number(item?.id) !== Number(currentCompany?.id)),
