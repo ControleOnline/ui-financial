@@ -25,6 +25,7 @@ import { getDateRange } from '@controleonline/ui-common/src/react/utils/dateRang
 import { colors } from '@controleonline/../../src/styles/colors';
 import { resolveThemePalette, withOpacity } from '@controleonline/../../src/styles/branding';
 import { createStyles } from './FinancialEntriesPage.styles';
+import { resolveFinancialFilterParamValue } from './financialEntriesFilters';
 
 const getEntityId = entity => {
   if (!entity) return null;
@@ -112,10 +113,14 @@ const DEFAULT_FINANCIAL_DATE_FILTER = {
   shortcut: '30d',
   customRange: { from: '', to: '' },
 };
+const FINANCIAL_ITEMS_PER_PAGE = 50;
 
 const normalizeText = value => String(value || '').trim();
 
 const getColumnKey = column => column?.key || column?.name || '';
+
+const resolveVisibleColumnsPreferenceKey = mode =>
+  `financialEntries:${normalizeText(mode) || 'receivables'}`;
 
 const buildPaymentTypeOptionFromValue = value => {
   if (!value || typeof value !== 'object') return null;
@@ -152,14 +157,6 @@ const mergePaymentTypeOptions = (...optionSets) => {
       'pt-BR',
     ),
   );
-};
-
-const normalizeFilterValue = value => {
-  if (value && typeof value === 'object') {
-    return normalizeFilterValue(value.value ?? value.id ?? value['@id'] ?? '');
-  }
-
-  return normalizeText(value);
 };
 
 const isFilledFilterValue = value => {
@@ -290,6 +287,10 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
   const tableSurfaceColor = brandColors.background || brandColors.white;
   const tableTextColor = brandColors.secondary || brandColors.text;
   const tableMutedColor = brandColors.textSecondary;
+  const visibleColumnsPreferenceKey = useMemo(
+    () => resolveVisibleColumnsPreferenceKey(mode),
+    [mode],
+  );
 
   const statusOptions = useMemo(
     () => (statusGetters.items || []).filter(item => !item.context || item.context === 'invoice'),
@@ -382,6 +383,7 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
     const page = pageOverride || currentPage;
     const params = {};
     params.page = page;
+    params.itemsPerPage = FINANCIAL_ITEMS_PER_PAGE;
     if (sortState?.field && sortState?.direction) {
       params[`order[${sortState.field}]`] = sortState.direction;
     }
@@ -401,11 +403,19 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
       }
 
       if (Array.isArray(value)) {
-        params[key] = value.map(normalizeFilterValue);
+        params[key] = resolveFinancialFilterParamValue({
+          columns: invoiceColumns,
+          fieldName: key,
+          value,
+        });
         return;
       }
 
-      params[key] = normalizeFilterValue(value);
+      params[key] = resolveFinancialFilterParamValue({
+        columns: invoiceColumns,
+        fieldName: key,
+        value,
+      });
     });
 
     if (mode === 'receivables') {
@@ -429,6 +439,7 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
     mode,
     sortState?.direction,
     sortState?.field,
+    invoiceColumns,
     storeFiltersKey,
     // invoiceActions removido — lido via ref para referência estável
   ]);
@@ -547,6 +558,17 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
 
     return nextSummary;
   }, [invoiceSummary]);
+
+  const totalItemsText = useMemo(() => {
+    const totalCount = Number(totalItems || 0);
+    const visibleCount = filteredInvoices.length;
+
+    if (!Number.isFinite(totalCount) || totalCount <= 0 || visibleCount <= 0) {
+      return totalCount > 0 ? `0 de ${totalCount}` : '';
+    }
+
+    return `1-${visibleCount} de ${totalCount}`;
+  }, [filteredInvoices.length, totalItems]);
 
   const summaryLabels = (() => {
     const openAmountLabel = global.t?.t(
@@ -735,12 +757,14 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
           onChangeFilters: setStoreFilters,
           placeholder: global.t?.t('invoice', 'input', 'search'),
         }}
-        showTotalItemsInFooter={false}
+        showTotalItemsInFooter
         showTotalItemsInCompactToolbar
         summary={filteredSummary}
         summaryLabels={summaryLabels}
         sort={sortState}
         storeName="invoice"
+        totalItemsText={totalItemsText}
+        visibleColumnsPreferenceKey={visibleColumnsPreferenceKey}
         onEndReached={() => {
           if (!isLoading && hasMoreInvoices) {
             setCurrentPage(page => page + 1);
