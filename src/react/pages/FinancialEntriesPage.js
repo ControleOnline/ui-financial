@@ -27,6 +27,8 @@ const DEFAULT_FINANCIAL_DATE_FILTER = {
 
 const normalizeText = value => String(value || '').trim();
 
+const translate = (store, type, key) => global.t?.t(store, type, key);
+
 const resolveVisibleColumnsPreferenceKey = mode =>
   `financialEntries:${normalizeText(mode) || 'receivables'}`;
 
@@ -63,11 +65,14 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
   const peopleStore = useStore('people');
   const themeStore = useStore('theme');
   const authStore = useStore('auth');
+  const translateStore = useStore('translate');
 
   const { getters: invoiceGetters } = invoiceStore;
   const { getters: peopleGetters } = peopleStore;
   const { getters: themeGetters } = themeStore;
   const { getters: authGetters } = authStore;
+  const translateMessages = translateStore?.getters?.messages || {};
+  const pendingTranslateMessages = translateStore?.getters?.pendingMessages || {};
 
   const { currentCompany } = peopleGetters || {};
   const { colors: themeColors } = themeGetters || {};
@@ -149,18 +154,26 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
   }, [invoiceSummary]);
 
   const summaryLabels = useMemo(() => {
-    const openAmountLabel = global.t?.t('invoice', 'label', mode === 'payables' ? 'payableAmount' : mode === 'ownTransfers' ? 'transferAmount' : 'receivableAmount');
+    const openAmountLabel = translate(
+      'invoice',
+      'label',
+      mode === 'payables'
+        ? 'payableAmount'
+        : mode === 'ownTransfers'
+          ? 'transferAmount'
+          : 'receivableAmount',
+    );
 
     return {
-      'financial.totalAmount': global.t?.t('invoice', 'label', 'totalAmount'),
+      'financial.totalAmount': translate('invoice', 'label', 'totalAmount'),
       'financial.open': openAmountLabel,
       'financial.openAmount': openAmountLabel,
       'financial.pendingAmount': openAmountLabel,
       'financial.receivableAmount': openAmountLabel,
-      'financial.paid': global.t?.t('invoice', 'label', 'paidAmount'),
-      'financial.paidAmount': global.t?.t('invoice', 'label', 'paidAmount'),
+      'financial.paid': translate('invoice', 'label', 'paidAmount'),
+      'financial.paidAmount': translate('invoice', 'label', 'paidAmount'),
     };
-  }, [mode]);
+  }, [mode, translateMessages, pendingTranslateMessages]);
 
   if (!isBootstrapReady) {
     return (
@@ -192,7 +205,7 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
           onRowPress={openInvoiceDetails}
           requestParams={requestParams}
           searchProps={{
-            placeholder: global.t?.t('invoice', 'input', 'search'),
+            placeholder: translate('invoice', 'input', 'search'),
           }}
           showTotalItemsInFooter
           showTotalItemsInCompactToolbar
