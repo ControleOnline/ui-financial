@@ -123,6 +123,9 @@ export default {
         align: "left",
         label: "status",
         list: "status/getItems",
+        listRequestParams: {
+          context: "invoice",
+        },
         searchParam: "status",
         externalFilter: true,
         format: function (value) {
