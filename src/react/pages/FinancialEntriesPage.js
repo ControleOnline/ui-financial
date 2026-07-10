@@ -201,7 +201,6 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
           accentColor={brandColors.primary}
           add={false}
           filters={initialFilters}
-          forceCardsOnCompact={false}
           onRowPress={openInvoiceDetails}
           requestParams={requestParams}
           searchProps={{
