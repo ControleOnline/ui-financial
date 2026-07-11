@@ -1,5 +1,7 @@
 const {
   resolveFinancialFilterParamValue,
+  resolveInvoiceCategoryListParams,
+  resolveInvoicePartyListParams,
 } = require('../../../react/pages/financialEntriesFilters');
 
 const { describe, expect, it } = global;
@@ -48,6 +50,51 @@ describe('financialEntriesFilters', () => {
         value: 'pix',
       }),
     ).toBe('pix');
+  });
+});
+
+describe('invoice master list scopes', () => {
+  it('uses receive categories for receivables and payer categories for payables', () => {
+    expect(resolveInvoiceCategoryListParams({
+      currentCompanyId: 21,
+      requestParams: {receiver: 21},
+    })).toEqual({company: 21, context: 'receive'});
+    expect(resolveInvoiceCategoryListParams({
+      currentCompanyId: 21,
+      requestParams: {payer: 21},
+    })).toEqual({company: 21, context: 'payer'});
+  });
+
+  it('uses client and provider links for receivable payers', () => {
+    expect(resolveInvoicePartyListParams({
+      columnName: 'payer',
+      currentCompanyId: 21,
+      requestParams: {receiver: 21},
+    })).toEqual({
+      'link.company': '/people/21',
+      'link.linkType': ['client', 'provider'],
+    });
+  });
+
+  it('uses every company link for payable receivers', () => {
+    expect(resolveInvoicePartyListParams({
+      columnName: 'receiver',
+      currentCompanyId: 21,
+      requestParams: {payer: 21},
+    })).toEqual({'link.company': '/people/21'});
+  });
+
+  it('keeps the selected company fixed on the non-variable side', () => {
+    expect(resolveInvoicePartyListParams({
+      columnName: 'receiver',
+      currentCompanyId: 21,
+      requestParams: {receiver: 21},
+    })).toEqual({id: 21});
+    expect(resolveInvoicePartyListParams({
+      columnName: 'payer',
+      currentCompanyId: 21,
+      requestParams: {payer: 21},
+    })).toEqual({id: 21});
   });
 });
 

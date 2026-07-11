@@ -127,7 +127,8 @@ export default function InvoiceCategoriesPage({ route }) {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   /* contexto mapeado para o backend */
-  const backendContext = (ctx) => ctx; // 'receiver' | 'payer' direto
+  const backendContext = (ctx) => ctx === 'receiver' ? 'receive' : ctx;
+  const frontendContext = (ctx) => ctx === 'receive' ? 'receiver' : ctx;
 
   useEffect(() => {
     if (!activeContext) return;
@@ -137,7 +138,7 @@ export default function InvoiceCategoriesPage({ route }) {
 
   useFocusEffect(useCallback(() => {
     if (!currentCompany?.id) return;
-    categoriesStore.actions.getItems({ context: backendContext(activeContext || tab), people: currentCompany.id });
+    categoriesStore.actions.getItems({ context: backendContext(activeContext || tab), company: currentCompany.id });
   }, [activeContext, currentCompany?.id, tab]));
 
   // recarrega ao mudar de tab
@@ -146,7 +147,7 @@ export default function InvoiceCategoriesPage({ route }) {
     setTab(t);
     setFilterText('');
     if (currentCompany?.id) {
-      categoriesStore.actions.getItems({ context: backendContext(t), people: currentCompany.id });
+      categoriesStore.actions.getItems({ context: backendContext(t), company: currentCompany.id });
     }
   };
 
@@ -164,7 +165,7 @@ export default function InvoiceCategoriesPage({ route }) {
     setName(cat.name || '');
     setColor(cat.color || '');
     setIcon(cat.icon || '');
-    setContext(activeContext || cat.context || tab);
+    setContext(activeContext || frontendContext(cat.context) || tab);
     setFormModal(true);
   };
 
@@ -186,7 +187,7 @@ export default function InvoiceCategoriesPage({ route }) {
       });
     }
     setFormModal(false);
-    categoriesStore.actions.getItems({ context: backendContext(activeContext || tab), people: currentCompany.id });
+    categoriesStore.actions.getItems({ context: backendContext(activeContext || tab), company: currentCompany.id });
   };
 
   const remove = async (id) => {
@@ -202,7 +203,7 @@ export default function InvoiceCategoriesPage({ route }) {
     );
   }, [items, filterText]);
 
-  const contextLabel = (ctx) => CONTEXT_OPTIONS.find(o => o.value === ctx)?.label || ctx;
+  const contextLabel = (ctx) => CONTEXT_OPTIONS.find(o => o.value === frontendContext(ctx))?.label || ctx;
 
   return (
     <SafeAreaView style={[ic.root, { backgroundColor: palette.background }]}>

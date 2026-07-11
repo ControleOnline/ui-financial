@@ -3,6 +3,10 @@ import * as getters from "@controleonline/ui-default/src/store/default/getters";
 import mutations from "@controleonline/ui-default/src/store/default/mutations";
 import Formatter from "@controleonline/ui-common/src/utils/formatter.js";
 import * as customActions from "./customActions";
+import {
+  resolveInvoiceCategoryListParams,
+  resolveInvoicePartyListParams,
+} from "../../react/pages/financialEntriesFilters";
 
 export default {
   namespaced: true,
@@ -42,6 +46,12 @@ export default {
         align: "left",
         label: "payer",
         list: "people/getItems",
+        listRequestParams: ({currentCompanyId, requestParams}) =>
+          resolveInvoicePartyListParams({
+            columnName: "payer",
+            currentCompanyId,
+            requestParams,
+          }),
         externalFilter: false,
         format: function (value) {
           return value?.name
@@ -67,6 +77,12 @@ export default {
         align: "left",
         label: "receiver",
         list: "people/getItems",
+        listRequestParams: ({currentCompanyId, requestParams}) =>
+          resolveInvoicePartyListParams({
+            columnName: "receiver",
+            currentCompanyId,
+            requestParams,
+          }),
         externalFilter: false,
         format: function (value) {
           return value?.name
@@ -92,6 +108,7 @@ export default {
         align: "left",
         label: "category",
         list: "categories/getItems",
+        listRequestParams: resolveInvoiceCategoryListParams,
         searchParam: "name",
         externalFilter: true,
         format: function (value) {

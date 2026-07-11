@@ -42,3 +42,45 @@ export const resolveFinancialFilterParamValue = ({
 
   return resolveSavedFilterValue(column, value);
 };
+
+export const resolveInvoiceCategoryListParams = ({currentCompanyId, requestParams = {}} = {}) => {
+  if (!currentCompanyId) return {};
+
+  const context = requestParams.ownTransfers
+    ? 'transfer'
+    : requestParams.payer
+      ? 'payer'
+      : 'receive';
+
+  return {company: currentCompanyId, context};
+};
+
+export const resolveInvoicePartyListParams = ({
+  columnName,
+  currentCompanyId,
+  requestParams = {},
+} = {}) => {
+  if (!currentCompanyId) return {};
+
+  const companyIri = `/people/${currentCompanyId}`;
+  const isOwnTransfer = Boolean(requestParams.ownTransfers);
+  const isPayables = Boolean(requestParams.payer) && !requestParams.receiver;
+  const isReceivables = Boolean(requestParams.receiver) && !requestParams.payer;
+
+  if (
+    isOwnTransfer
+    || (isReceivables && columnName === 'receiver')
+    || (isPayables && columnName === 'payer')
+  ) {
+    return {id: currentCompanyId};
+  }
+
+  if (isReceivables && columnName === 'payer') {
+    return {
+      'link.company': companyIri,
+      'link.linkType': ['client', 'provider'],
+    };
+  }
+
+  return {'link.company': companyIri};
+};
