@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, FlatList, Modal, Text, Alert, TouchableOpacity, TextInput as RNTextInput } from 'react-native';
 import {useStore} from '@store';
-import StateStore from '@controleonline/ui-layout/src/react/components/StateStore';
+import StateStore from '@controleonline/ui-common/src/react/components/StateStore';
 import Formatter from '@controleonline/ui-common/src/utils/formatter.js';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import styles from './IncomeStatement (ui-manager).styles';
