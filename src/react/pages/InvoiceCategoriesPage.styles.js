@@ -14,7 +14,7 @@ const ic = StyleSheet.create({
   },
   headerTitle: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10 },
-  addBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  addBtnText: { fontWeight: '700', fontSize: 13 },
   tabRow: {
     flexDirection: 'row', backgroundColor: '#fff',
     borderBottomWidth: 1, borderBottomColor: '#E2E8F0',

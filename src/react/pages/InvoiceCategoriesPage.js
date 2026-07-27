@@ -210,9 +210,9 @@ export default function InvoiceCategoriesPage({ route }) {
       {/* cabeçalho */}
       <View style={[ic.header, { borderBottomColor: '#E2E8F0' }]}>
         <Text style={ic.headerTitle}>{pageTitle}</Text>
-        <TouchableOpacity style={[ic.addBtn, { backgroundColor: palette.primary }]} onPress={openNew}>
-          <Icon name="plus" size={16} color="#fff" />
-          <Text style={ic.addBtnText}>Nova categoria</Text>
+        <TouchableOpacity style={[ic.addBtn, { backgroundColor: themeColors.buttonBackground }]} onPress={openNew}>
+          <Icon name="plus" size={16} color={themeColors.buttonIcon} />
+          <Text style={[ic.addBtnText, { color: themeColors.buttonText }]}>Nova categoria</Text>
         </TouchableOpacity>
       </View>
       {/* tabs de contexto */}

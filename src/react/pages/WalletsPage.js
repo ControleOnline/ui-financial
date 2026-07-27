@@ -308,14 +308,11 @@ export default function WalletsPage() {
           <TouchableOpacity
             style={[
               ps.addBtn,
-              {
-                borderColor: withOpacity(palette.primary, 0.24),
-                backgroundColor: withOpacity(palette.primary, 0.08),
-              },
+              { backgroundColor: themeColors.buttonBackground },
             ]}
             onPress={openNewWallet}>
-            <Icon name="plus" size={14} color={palette.primary} />
-            <Text style={[ps.addBtnText, { color: palette.primary }]}>
+            <Icon name="plus" size={16} color={themeColors.buttonIcon} />
+            <Text style={[ps.addBtnText, { color: themeColors.buttonText }]}>
               Nova carteira
             </Text>
           </TouchableOpacity>
