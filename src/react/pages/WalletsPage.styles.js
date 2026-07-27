@@ -51,8 +51,7 @@ const ps = StyleSheet.create({
   cardActions: { flexDirection: 'row', gap: 6 },
   iconBtn: {
     width: 34, height: 34, borderRadius: 8, borderWidth: 1,
-    borderColor: '#E2E8F0', justifyContent: 'center', alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    justifyContent: 'center', alignItems: 'center',
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
   chip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },

@@ -341,15 +341,41 @@ export default function WalletsPage() {
                   )}
                 </View>
                 <View style={ps.cardActions}>
-                  <TouchableOpacity style={ps.iconBtn} onPress={() => openPtModal(w)}>
-                    <Icon name="link" size={16} color="#64748B" />
+                  <TouchableOpacity
+                    style={[
+                      ps.iconBtn,
+                      {
+                        backgroundColor: themeColors.buttonBackground,
+                        borderColor: themeColors.buttonBackground,
+                      },
+                    ]}
+                    onPress={() => openPtModal(w)}
+                  >
+                    <Icon name="link" size={16} color={themeColors.buttonIcon} />
                   </TouchableOpacity>
-                  <TouchableOpacity style={ps.iconBtn} onPress={() => openEditWallet(w)}>
-                    <Icon name="edit-2" size={16} color="#64748B" />
+                  <TouchableOpacity
+                    style={[
+                      ps.iconBtn,
+                      {
+                        backgroundColor: themeColors.buttonBackground,
+                        borderColor: themeColors.buttonBackground,
+                      },
+                    ]}
+                    onPress={() => openEditWallet(w)}
+                  >
+                    <Icon name="edit-2" size={16} color={themeColors.buttonIcon} />
                   </TouchableOpacity>
-                  <TouchableOpacity style={[ps.iconBtn, { borderColor: '#FCA5A5' }]}
-                    onPress={() => setDeleteConfirm({ type: 'wallet', id: w.id, label: w.wallet })}>
-                    <Icon name="trash-2" size={16} color="#c10015" />
+                  <TouchableOpacity
+                    style={[
+                      ps.iconBtn,
+                      {
+                        backgroundColor: themeColors.buttonBackground,
+                        borderColor: themeColors.buttonBackground,
+                      },
+                    ]}
+                    onPress={() => setDeleteConfirm({ type: 'wallet', id: w.id, label: w.wallet })}
+                  >
+                    <Icon name="trash-2" size={16} color={themeColors.buttonIcon} />
                   </TouchableOpacity>
                 </View>
               </View>
