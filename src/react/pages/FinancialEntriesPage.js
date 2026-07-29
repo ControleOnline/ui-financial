@@ -21,7 +21,7 @@ import { colors } from '@controleonline/../../src/styles/colors';
 import { createStyles } from './FinancialEntriesPage.styles';
 
 const DEFAULT_FINANCIAL_DATE_FILTER = {
-  shortcut: '30d',
+  shortcut: 'today',
   customRange: { from: '', to: '' },
 };
 
