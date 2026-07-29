@@ -10,7 +10,7 @@
  * - Nao duplicar calculos financeiros fora do dono desta tela.
  * - Manter aqui apenas a coordenacao da apresentacao e dos filtros financeiros.
  */
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -61,6 +61,7 @@ const resolveInvoiceRequestParams = ({ companyId, mode }) => {
 
 function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
   const navigation = useNavigation();
+  const defaultFiltersAppliedRef = useRef(false);
   const invoiceStore = useStore('invoice');
   const peopleStore = useStore('people');
   const themeStore = useStore('theme');
@@ -94,9 +95,9 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
   const storeFilters = invoiceGetters?.filters || {};
   const initialFilters = useMemo(
     () =>
-      Object.keys(storeFilters || {}).length > 0
+      storeFilters?.dueDate
         ? storeFilters
-        : { dueDate: DEFAULT_FINANCIAL_DATE_FILTER },
+        : { ...(storeFilters || {}), dueDate: DEFAULT_FINANCIAL_DATE_FILTER },
     [storeFilters],
   );
   const requestParams = useMemo(
@@ -104,6 +105,22 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
     [currentCompany?.id, mode],
   );
   const isBootstrapReady = Boolean(sessionChecked) && Boolean(currentCompany?.id) && Boolean(themeColors);
+  const shouldApplyDefaultFilters =
+    isBootstrapReady &&
+    !defaultFiltersAppliedRef.current &&
+    !storeFilters?.dueDate;
+
+  useEffect(() => {
+    if (!isBootstrapReady || defaultFiltersAppliedRef.current) {
+      return;
+    }
+
+    defaultFiltersAppliedRef.current = true;
+
+    if (!storeFilters?.dueDate) {
+      invoiceStore.actions.setFilters(initialFilters);
+    }
+  }, [initialFilters, invoiceStore.actions, isBootstrapReady, storeFilters]);
 
   const openInvoiceDetails = useCallback(
     invoice => {
@@ -187,6 +204,14 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
     return (
       <View style={styles.container}>
         <Text>Empresa nao identificada.</Text>
+      </View>
+    );
+  }
+
+  if (shouldApplyDefaultFilters) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={brandColors.primary || '#2563EB'} />
       </View>
     );
   }
