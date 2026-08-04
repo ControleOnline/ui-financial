@@ -250,7 +250,12 @@ export default {
           return value ? "/payment_types/" + (value?.value || value) : null;
         },
         filterFormat: function (value) {
-          return value?.label || value?.object?.paymentType || value?.paymentType || value;
+          const selectedValue = value?.value || value?.id || value?.key || value?.['@id'] || value;
+          if (String(selectedValue || '').trim().toLowerCase() === 'select') return '';
+
+          return selectedValue
+            ? value?.label || value?.object?.paymentType || value?.paymentType || value
+            : '';
         },
       },
       {
