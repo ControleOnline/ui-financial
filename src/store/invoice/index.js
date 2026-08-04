@@ -231,7 +231,7 @@ export default {
         align: "left",
         label: "paymentType",
         list: "paymentType/getItems",
-        searchParam: "paymentType",
+        searchParam: "paymentType.paymentType",
         externalFilter: false,
         editable: true,
         format: function (value) {
@@ -248,6 +248,9 @@ export default {
         },
         saveFormat: function (value) {
           return value ? "/payment_types/" + (value?.value || value) : null;
+        },
+        filterFormat: function (value) {
+          return value?.label || value?.object?.paymentType || value?.paymentType || value;
         },
       },
       {
