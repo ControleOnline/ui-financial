@@ -55,6 +55,46 @@ export const resolveInvoiceCategoryListParams = ({currentCompanyId, requestParam
   return {company: currentCompanyId, context};
 };
 
+const resolveRequestContext = requestParams => {
+  const isPayables = Boolean(requestParams?.payer) && !requestParams?.receiver;
+  const isReceivables = Boolean(requestParams?.receiver) && !requestParams?.payer;
+
+  return {isPayables, isReceivables};
+};
+
+const resolveEntityId = value => {
+  if (value && typeof value === 'object') {
+    return resolveEntityId(value.value ?? value.id ?? value['@id'] ?? '');
+  }
+
+  return String(value || '').replace(/\D/g, '');
+};
+
+export const resolveInvoiceCreateFieldVisibility = ({fieldName, requestParams = {}} = {}) => {
+  const {isPayables, isReceivables} = resolveRequestContext(requestParams);
+
+  if (fieldName === 'payer') return isReceivables;
+  if (fieldName === 'receiver') return isPayables;
+  if (fieldName === 'sourceWallet') return isPayables;
+  if (fieldName === 'destinationWallet') return isReceivables;
+  if (fieldName === 'invoiceType') return false;
+
+  return true;
+};
+
+export const resolveInvoicePaymentTypeListParams = ({requestParams = {}, row = {}, variant = 'cell'} = {}) => {
+  const {isPayables, isReceivables} = resolveRequestContext(requestParams);
+  const walletId = isPayables
+    ? resolveEntityId(row.sourceWallet)
+    : isReceivables
+      ? resolveEntityId(row.destinationWallet)
+      : resolveEntityId(row.sourceWallet || row.destinationWallet);
+
+  if (walletId) return {wallet: walletId};
+
+  return variant === 'form' ? {wallet: 0} : {};
+};
+
 export const resolveInvoicePartyListParams = ({
   columnName,
   currentCompanyId,

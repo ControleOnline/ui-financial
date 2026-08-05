@@ -5,6 +5,8 @@ import Formatter from "@controleonline/ui-common/src/utils/formatter.js";
 import * as customActions from "./customActions";
 import {
   resolveInvoiceCategoryListParams,
+  resolveInvoiceCreateFieldVisibility,
+  resolveInvoicePaymentTypeListParams,
   resolveInvoicePartyListParams,
 } from "../../react/pages/financialEntriesFilters";
 
@@ -45,6 +47,7 @@ export default {
         name: "payer",
         align: "left",
         label: "payer",
+        createPayload: true,
         list: "people/getItems",
         listRequestParams: ({currentCompanyId, requestParams}) =>
           resolveInvoicePartyListParams({
@@ -53,15 +56,23 @@ export default {
             requestParams,
           }),
         externalFilter: false,
+        visibleForm: row => resolveInvoiceCreateFieldVisibility({fieldName: "payer", requestParams: row}),
         format: function (value) {
           return value?.name
             ? value?.name + " - " + value?.alias
             : "---------------";
         },
         formatList: function (value, _row, _column) {
+          if (!value || typeof value !== "object") {
+            return {
+              value,
+              label: String(value || ""),
+            };
+          }
+
           return {
-            id: value?.id,
-            label: value?.name,
+            value: value?.id || value?.value || String(value?.["@id"] || "").split("/").pop(),
+            label: value?.name || value?.label,
           };
         },
         saveFormat: function (value) {
@@ -76,6 +87,7 @@ export default {
         name: "receiver",
         align: "left",
         label: "receiver",
+        createPayload: true,
         list: "people/getItems",
         listRequestParams: ({currentCompanyId, requestParams}) =>
           resolveInvoicePartyListParams({
@@ -84,15 +96,23 @@ export default {
             requestParams,
           }),
         externalFilter: false,
+        visibleForm: row => resolveInvoiceCreateFieldVisibility({fieldName: "receiver", requestParams: row}),
         format: function (value) {
           return value?.name
             ? value?.name + " - " + value?.alias
             : "---------------";
         },
         formatList: function (value, _row, _column) {
+          if (!value || typeof value !== "object") {
+            return {
+              value,
+              label: String(value || ""),
+            };
+          }
+
           return {
-            id: value?.id,
-            label: value?.name,
+            value: value?.id || value?.value || String(value?.["@id"] || "").split("/").pop(),
+            label: value?.name || value?.label,
           };
         },
         saveFormat: function (value) {
@@ -182,9 +202,11 @@ export default {
         name: "sourceWallet",
         align: "left",
         label: "source wallet",
+        createPayload: true,
         list: "wallet/getItems",
         searchParam: "sourceWallet",
         externalFilter: false,
+        visibleForm: row => resolveInvoiceCreateFieldVisibility({fieldName: "sourceWallet", requestParams: row}),
         format: function (value) {
           return value?.wallet;
         },
@@ -206,9 +228,11 @@ export default {
         name: "destinationWallet",
         align: "left",
         label: "destination wallet",
+        createPayload: true,
         list: "wallet/getItems",
         searchParam: "destinationWallet",
         externalFilter: false,
+        visibleForm: row => resolveInvoiceCreateFieldVisibility({fieldName: "destinationWallet", requestParams: row}),
         format: function (value) {
           return value?.wallet;
         },
@@ -230,7 +254,9 @@ export default {
         name: "paymentType",
         align: "left",
         label: "paymentType",
-        list: "paymentType/getItems",
+        formLabel: "Tipo de pagamento",
+        list: "walletPaymentType/getItems",
+        listRequestParams: resolveInvoicePaymentTypeListParams,
         searchParam: "paymentType.paymentType",
         externalFilter: false,
         editable: true,
@@ -238,11 +264,12 @@ export default {
           return value?.paymentType;
         },
         formatList: function (value) {
-          if (value && value["@id"])
+          const paymentType = value?.paymentType || value;
+          if (paymentType && paymentType["@id"])
             return {
-              value: value["@id"].split("/").pop(),
-              label: value?.paymentType,
-              object: value,
+              value: paymentType["@id"].split("/").pop(),
+              label: paymentType?.paymentType,
+              object: paymentType,
             };
           return value;
         },
@@ -265,8 +292,10 @@ export default {
         name: "invoiceType",
         align: "left",
         label: "invoiceType",
+        createPayload: true,
         editable: false,
         defaultValue: "invoice",
+        visibleForm: false,
         format: function (value) {
           return String(value || "")
             .trim()
