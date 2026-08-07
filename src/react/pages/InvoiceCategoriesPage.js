@@ -1,43 +1,59 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Modal,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useStore } from '@store';
+import DefaultTable from '@controleonline/ui-default/src/react/components/table/DefaultTable';
 import { resolveThemePalette, withOpacity } from '@controleonline/../../src/styles/branding';
 import { colors } from '@controleonline/../../src/styles/colors';
-import ic from './InvoiceCategoriesPage.styles';
-
-import {
+import ic, {
   inlineStyle_33_8,
   inlineStyle_62_8,
-  inlineStyle_241_22,
   inlineStyle_277_64,
   inlineStyle_278_24,
   inlineStyle_349_39,
 } from './InvoiceCategoriesPage.styles';
 
-/* ─── sombra padrão ─────────────────────────────────────────────────── */
 const cardShadow = Platform.select({
-  ios: { shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12 },
+  ios: {
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+  },
   android: { elevation: 2 },
   web: { boxShadow: '0 4px 12px rgba(15,23,42,0.06)' },
 });
 
-/* ─── paleta de cores para seleção de cor ────────────────────────────── */
 const COLOR_PRESETS = [
-  '#c10015', '#F97316', '#EAB308', '#10b981',
-  '#14B8A6', '#0EA5E9', '#8B5CF6', '#EC4899',
-  '#64748B', '#0F172A',
+  '#c10015',
+  '#F97316',
+  '#EAB308',
+  '#10b981',
+  '#14B8A6',
+  '#0EA5E9',
+  '#8B5CF6',
+  '#EC4899',
+  '#64748B',
+  '#0F172A',
 ];
 
-/* ─── contextos disponíveis para categorias de invoice ──────────────── */
 const CONTEXT_OPTIONS = [
   { value: 'receiver', label: 'Receita' },
-  { value: 'payer',    label: 'Despesa' },
+  { value: 'payer', label: 'Despesa' },
 ];
 
-/* ─── componente de seleção de cor ───────────────────────────────────── */
 const ColorPicker = ({ value, onChange }) => (
   <View style={inlineStyle_33_8}>
     {COLOR_PRESETS.map(color => (
@@ -48,27 +64,23 @@ const ColorPicker = ({ value, onChange }) => (
           ic.colorSwatch,
           { backgroundColor: color },
           value === color && ic.colorSwatchActive,
-        ]}
-      >
+        ]}>
         {value === color && <Icon name="check" size={14} color="#fff" />}
       </TouchableOpacity>
     ))}
-    {/* input customizado */}
     <TextInput
       value={value && !COLOR_PRESETS.includes(value) ? value : ''}
       onChangeText={onChange}
       placeholder="#hex"
       placeholderTextColor="#94A3B8"
-      style={[ic.colorInput, value && !COLOR_PRESETS.includes(value) && { borderColor: value }]}
+      style={[ic.textInput, inlineStyle_62_8]}
       autoCapitalize="none"
-      maxLength={7}
     />
   </View>
 );
 
-/* ─── chips de seleção ───────────────────────────────────────────────── */
 const ChipSelect = ({ options, value, onChange, palette }) => (
-  <View style={inlineStyle_62_8}>
+  <View style={ic.chipGroup}>
     {options.map(opt => {
       const sel = opt.value === value;
       return (
@@ -80,8 +92,7 @@ const ChipSelect = ({ options, value, onChange, palette }) => (
             sel
               ? { backgroundColor: palette.primary, borderColor: palette.primary }
               : { backgroundColor: '#F8FAFC', borderColor: '#CBD5E1' },
-          ]}
-        >
+          ]}>
           <Text style={[ic.chipText, { color: sel ? '#fff' : '#64748B' }]}>{opt.label}</Text>
         </TouchableOpacity>
       );
@@ -89,18 +100,24 @@ const ChipSelect = ({ options, value, onChange, palette }) => (
   </View>
 );
 
-/* ─── componente principal ───────────────────────────────────────────── */
+const backendContext = ctx => (ctx === 'receiver' ? 'receive' : ctx);
+const frontendContext = ctx => (ctx === 'receive' ? 'receiver' : ctx);
+
 export default function InvoiceCategoriesPage({ route }) {
   const categoriesStore = useStore('categories');
-  const peopleStore     = useStore('people');
-  const themeStore      = useStore('theme');
+  const peopleStore = useStore('people');
+  const themeStore = useStore('theme');
 
-  const { currentCompany }   = peopleStore.getters;
-  const { items, isLoading, isSaving } = categoriesStore.getters;
-  const { colors: themeColors }        = themeStore.getters;
+  const { currentCompany } = peopleStore.getters || {};
+  const { isSaving } = categoriesStore.getters || {};
+  const { colors: themeColors } = themeStore.getters || {};
 
   const palette = useMemo(
-    () => resolveThemePalette({ ...themeColors, ...(currentCompany?.theme?.colors || {}) }, colors),
+    () =>
+      resolveThemePalette(
+        { ...themeColors, ...(currentCompany?.theme?.colors || {}) },
+        colors,
+      ),
     [themeColors, currentCompany?.id],
   );
 
@@ -110,44 +127,54 @@ export default function InvoiceCategoriesPage({ route }) {
   );
   const isContextLocked = Boolean(routeContext && route?.params?.lockContext !== false);
   const activeContext = isContextLocked ? routeContext : null;
-  const lockedContextLabel = route?.params?.contextLabel
-    || CONTEXT_OPTIONS.find(option => option.value === routeContext)?.label
-    || '';
-  const pageTitle = route?.params?.title
-    || (isContextLocked ? `Categorias de ${CONTEXT_OPTIONS.find(option => option.value === routeContext)?.label.toLowerCase()}` : 'Categorias financeiras');
+  const lockedContextLabel =
+    route?.params?.contextLabel ||
+    CONTEXT_OPTIONS.find(option => option.value === routeContext)?.label ||
+    '';
+  const pageTitle =
+    route?.params?.title ||
+    (isContextLocked
+      ? `Categorias de ${CONTEXT_OPTIONS.find(option => option.value === routeContext)?.label.toLowerCase()}`
+      : 'Categorias financeiras');
 
-  const [tab, setTab]               = useState(activeContext || 'receiver'); // 'receiver' | 'payer'
-  const [formModal, setFormModal]   = useState(false);
-  const [editing, setEditing]       = useState(null);
-  const [name, setName]             = useState('');
-  const [color, setColor]           = useState('');
-  const [icon, setIcon]             = useState('');
-  const [context, setContext]       = useState(activeContext || 'receiver');
-  const [filterText, setFilterText] = useState('');
+  const [tab, setTab] = useState(activeContext || 'receiver');
+  const [formModal, setFormModal] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [name, setName] = useState('');
+  const [color, setColor] = useState('');
+  const [icon, setIcon] = useState('');
+  const [context, setContext] = useState(activeContext || 'receiver');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
-  /* contexto mapeado para o backend */
-  const backendContext = (ctx) => ctx === 'receiver' ? 'receive' : ctx;
-  const frontendContext = (ctx) => ctx === 'receive' ? 'receiver' : ctx;
+  const requestParams = useMemo(
+    () =>
+      currentCompany?.id
+        ? {
+            context: backendContext(activeContext || tab),
+            company: currentCompany.id,
+          }
+        : {},
+    [activeContext, currentCompany?.id, tab],
+  );
 
-  useEffect(() => {
-    if (!activeContext) return;
-    setTab(activeContext);
-    setContext(activeContext);
-  }, [activeContext]);
+  useFocusEffect(
+    useCallback(() => {
+      if (!currentCompany?.id) return;
+      categoriesStore.actions.getItems({
+        context: backendContext(activeContext || tab),
+        company: currentCompany.id,
+      });
+    }, [activeContext, currentCompany?.id, tab]),
+  );
 
-  useFocusEffect(useCallback(() => {
-    if (!currentCompany?.id) return;
-    categoriesStore.actions.getItems({ context: backendContext(activeContext || tab), company: currentCompany.id });
-  }, [activeContext, currentCompany?.id, tab]));
-
-  // recarrega ao mudar de tab
-  const switchTab = (t) => {
+  const switchTab = t => {
     if (isContextLocked) return;
     setTab(t);
-    setFilterText('');
     if (currentCompany?.id) {
-      categoriesStore.actions.getItems({ context: backendContext(t), company: currentCompany.id });
+      categoriesStore.actions.getItems({
+        context: backendContext(t),
+        company: currentCompany.id,
+      });
     }
   };
 
@@ -160,7 +187,7 @@ export default function InvoiceCategoriesPage({ route }) {
     setFormModal(true);
   };
 
-  const openEdit = (cat) => {
+  const openEdit = cat => {
     setEditing(cat);
     setName(cat.name || '');
     setColor(cat.color || '');
@@ -187,44 +214,80 @@ export default function InvoiceCategoriesPage({ route }) {
       });
     }
     setFormModal(false);
-    categoriesStore.actions.getItems({ context: backendContext(activeContext || tab), company: currentCompany.id });
+    categoriesStore.actions.getItems({
+      context: backendContext(activeContext || tab),
+      company: currentCompany.id,
+    });
   };
 
-  const remove = async (id) => {
+  const remove = async id => {
     await categoriesStore.actions.remove(id);
-    categoriesStore.actions.getItems({ context: backendContext(activeContext || tab), people: currentCompany.id });
+    categoriesStore.actions.getItems({
+      context: backendContext(activeContext || tab),
+      company: currentCompany.id,
+    });
     setDeleteConfirm(null);
   };
 
-  const filtered = useMemo(() => {
-    const q = filterText.trim().toLowerCase();
-    return (items || []).filter(cat =>
-      !q || String(cat.name || '').toLowerCase().includes(q),
-    );
-  }, [items, filterText]);
+  const contextLabel = ctx =>
+    CONTEXT_OPTIONS.find(o => o.value === frontendContext(ctx))?.label || ctx;
 
-  const contextLabel = (ctx) => CONTEXT_OPTIONS.find(o => o.value === frontendContext(ctx))?.label || ctx;
+  const renderCategoryCard = useCallback(({ item: cat }) => {
+    if (!cat) return null;
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={[ic.colorDot, { backgroundColor: cat.color || '#CBD5E1' }]} />
+        <View style={{ flex: 1, marginLeft: 8 }}>
+          <Text style={ic.cardName}>{cat.name}</Text>
+          {!!cat.icon && <Text style={ic.cardIcon}>{cat.icon}</Text>}
+        </View>
+      </View>
+    );
+  }, []);
+
+  const rowActionsComponent = useCallback(
+    ({ row }) => (
+      <View style={ic.cardActions}>
+        <TouchableOpacity style={ic.iconBtn} onPress={() => openEdit(row)}>
+          <Icon name="edit-2" size={16} color="#64748B" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[ic.iconBtn, { borderColor: '#FCA5A5' }]}
+          onPress={() => setDeleteConfirm({ id: row.id, label: row.name })}>
+          <Icon name="trash-2" size={16} color="#c10015" />
+        </TouchableOpacity>
+      </View>
+    ),
+    [],
+  );
 
   return (
     <SafeAreaView style={[ic.root, { backgroundColor: palette.background }]}>
-      {/* cabeçalho */}
       <View style={[ic.header, { borderBottomColor: '#E2E8F0' }]}>
         <Text style={ic.headerTitle}>{pageTitle}</Text>
-        <TouchableOpacity style={[ic.addBtn, { backgroundColor: themeColors.buttonBackground }]} onPress={openNew}>
+        <TouchableOpacity
+          style={[ic.addBtn, { backgroundColor: themeColors.buttonBackground }]}
+          onPress={openNew}>
           <Icon name="plus" size={16} color={themeColors.buttonIcon} />
           <Text style={[ic.addBtnText, { color: themeColors.buttonText }]}>Nova categoria</Text>
         </TouchableOpacity>
       </View>
-      {/* tabs de contexto */}
+
       {!isContextLocked ? (
         <View style={ic.tabRow}>
           {CONTEXT_OPTIONS.map(opt => (
             <TouchableOpacity
               key={opt.value}
-              style={[ic.tab, tab === opt.value && [ic.tabActive, { borderBottomColor: palette.primary }]]}
-              onPress={() => switchTab(opt.value)}
-            >
-              <Text style={[ic.tabText, tab === opt.value && [ic.tabTextActive, { color: palette.primary }]]}>
+              style={[
+                ic.tab,
+                tab === opt.value && [ic.tabActive, { borderBottomColor: palette.primary }],
+              ]}
+              onPress={() => switchTab(opt.value)}>
+              <Text
+                style={[
+                  ic.tabText,
+                  tab === opt.value && [ic.tabTextActive, { color: palette.primary }],
+                ]}>
                 {opt.label}
               </Text>
             </TouchableOpacity>
@@ -232,7 +295,11 @@ export default function InvoiceCategoriesPage({ route }) {
         </View>
       ) : (
         <View style={ic.lockedContextRow}>
-          <View style={[ic.lockedContextBadge, { backgroundColor: withOpacity(palette.primary, 0.12) }]}>
+          <View
+            style={[
+              ic.lockedContextBadge,
+              { backgroundColor: withOpacity(palette.primary, 0.12) },
+            ]}>
             <Icon name="lock" size={13} color={palette.primary} />
             <Text style={[ic.lockedContextText, { color: palette.primary }]}>
               {lockedContextLabel}
@@ -240,80 +307,53 @@ export default function InvoiceCategoriesPage({ route }) {
           </View>
         </View>
       )}
-      {/* busca */}
-      <View style={ic.searchBar}>
-        <Icon name="search" size={14} color="#94A3B8" />
-        <TextInput
-          style={ic.searchInput}
-          value={filterText}
-          onChangeText={setFilterText}
-          placeholder="Buscar categoria..."
-          placeholderTextColor="#94A3B8"
+
+      <View style={{ flex: 1, paddingHorizontal: 12, paddingTop: 4 }}>
+        <DefaultTable
+          key={`categories-${activeContext || tab}-${currentCompany?.id || 'x'}`}
+          storeName="categories"
+          requestParams={requestParams}
+          initialViewMode="cards"
+          forceCardsOnCompact
+          add
+          onAdd={openNew}
+          onEditRow={openEdit}
+          onRowPress={openEdit}
+          showRowActions
+          pinRowActions
+          rowActionsComponent={rowActionsComponent}
+          renderCard={renderCategoryCard}
+          searchProps={{
+            compact: true,
+            placeholder: 'Buscar categoria...',
+            searchKey: 'search',
+            storeName: 'categories',
+          }}
+          totalItemsLabel="categories"
+          visibleColumnsPreferenceKey={`invoice-categories-${activeContext || tab}`}
+          accentColor={palette.primary}
         />
-        {!!filterText && (
-          <TouchableOpacity onPress={() => setFilterText('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Icon name="x" size={14} color="#94A3B8" />
-          </TouchableOpacity>
-        )}
       </View>
-      {isLoading ? (
-        <View style={ic.centered}><ActivityIndicator size="large" color={palette.primary} /></View>
-      ) : (
-        <ScrollView contentContainerStyle={ic.list}>
-          {filtered.length === 0 && (
-            <View style={[ic.emptyBox, cardShadow]}>
-              <Icon name="tag" size={36} color="#CBD5E1" />
-              <Text style={ic.emptyTitle}>
-                {filterText
-                  ? 'Nenhuma categoria encontrada'
-                  : `Nenhuma categoria de ${(isContextLocked ? lockedContextLabel : contextLabel(tab)).toLowerCase()} cadastrada`}
-              </Text>
-              <Text style={ic.emptySubtitle}>Clique em "Nova categoria" para começar.</Text>
-            </View>
-          )}
-          {filtered.map(cat => (
-            <View key={cat.id} style={[ic.card, cardShadow]}>
-              <View style={ic.cardTop}>
-                {/* bolinha de cor */}
-                <View style={[ic.colorDot, { backgroundColor: cat.color }]} />
-                <View style={inlineStyle_241_22}>
-                  <Text style={ic.cardName}>{cat.name}</Text>
-                  {!!cat.icon && (
-                    <Text style={ic.cardIcon}>{cat.icon}</Text>
-                  )}
-                </View>
-                <View style={ic.cardActions}>
-                  <TouchableOpacity style={ic.iconBtn} onPress={() => openEdit(cat)}>
-                    <Icon name="edit-2" size={16} color="#64748B" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[ic.iconBtn, { borderColor: '#FCA5A5' }]}
-                    onPress={() => setDeleteConfirm({ id: cat.id, label: cat.name })}
-                  >
-                    <Icon name="trash-2" size={16} color="#c10015" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          ))}
-        </ScrollView>
-      )}
-      {/* ── modal de formulário ── */}
-      <Modal transparent visible={formModal} animationType="fade" onRequestClose={() => setFormModal(false)}>
+
+      <Modal
+        transparent
+        visible={formModal}
+        animationType="fade"
+        onRequestClose={() => setFormModal(false)}>
         <TouchableWithoutFeedback onPress={() => setFormModal(false)}>
           <View style={ic.backdrop}>
             <TouchableWithoutFeedback>
               <View style={ic.sheet}>
                 <View style={ic.sheetHeader}>
-                  <Text style={ic.sheetTitle}>{editing ? 'Editar categoria' : 'Nova categoria'}</Text>
+                  <Text style={ic.sheetTitle}>
+                    {editing ? 'Editar categoria' : 'Nova categoria'}
+                  </Text>
                   <TouchableOpacity onPress={() => setFormModal(false)} style={ic.closeBtn}>
                     <Icon name="x" size={18} color="#64748B" />
                   </TouchableOpacity>
                 </View>
-
                 <ScrollView keyboardShouldPersistTaps="handled" style={inlineStyle_277_64}>
                   <View style={inlineStyle_278_24}>
-
                     <View style={ic.formField}>
                       <Text style={ic.formLabel}>Nome *</Text>
                       <TextInput
@@ -325,7 +365,6 @@ export default function InvoiceCategoriesPage({ route }) {
                         autoFocus
                       />
                     </View>
-
                     {!isContextLocked ? (
                       <View style={ic.formField}>
                         <Text style={ic.formLabel}>Tipo *</Text>
@@ -340,44 +379,44 @@ export default function InvoiceCategoriesPage({ route }) {
                       <View style={ic.formField}>
                         <Text style={ic.formLabel}>Tipo *</Text>
                         <View style={ic.lockedField}>
-                          <Text style={ic.lockedFieldText}>
-                            {lockedContextLabel}
-                          </Text>
+                          <Text style={ic.lockedFieldText}>{lockedContextLabel}</Text>
                         </View>
                       </View>
                     )}
-
                     <View style={ic.formField}>
                       <Text style={ic.formLabel}>Cor</Text>
                       <ColorPicker value={color} onChange={setColor} />
                     </View>
-
                     <View style={ic.formField}>
-                      <Text style={ic.formLabel}>Ícone (nome)</Text>
+                      <Text style={ic.formLabel}>Ícone</Text>
                       <TextInput
                         style={ic.textInput}
                         value={icon}
                         onChangeText={setIcon}
                         placeholder="Ex: shopping-cart, home..."
                         placeholderTextColor="#94A3B8"
+                        autoCapitalize="none"
                       />
                     </View>
-
                   </View>
                 </ScrollView>
-
                 <View style={ic.formActions}>
                   <TouchableOpacity style={ic.btnCancel} onPress={() => setFormModal(false)}>
                     <Text style={ic.btnCancelText}>Cancelar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[ic.btnSave, { backgroundColor: palette.primary }, isSaving && { opacity: 0.6 }]}
+                    style={[
+                      ic.btnSave,
+                      { backgroundColor: palette.primary },
+                      isSaving && { opacity: 0.6 },
+                    ]}
                     onPress={save}
-                    disabled={isSaving}
-                  >
-                    {isSaving
-                      ? <ActivityIndicator color="#fff" size="small" />
-                      : <Text style={ic.btnSaveText}>Salvar</Text>}
+                    disabled={isSaving}>
+                    {isSaving ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <Text style={ic.btnSaveText}>Salvar</Text>
+                    )}
                   </TouchableOpacity>
                 </View>
               </View>
@@ -385,8 +424,12 @@ export default function InvoiceCategoriesPage({ route }) {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-      {/* ── confirmação de exclusão ── */}
-      <Modal transparent visible={!!deleteConfirm} animationType="fade" onRequestClose={() => setDeleteConfirm(null)}>
+
+      <Modal
+        transparent
+        visible={!!deleteConfirm}
+        animationType="fade"
+        onRequestClose={() => setDeleteConfirm(null)}>
         <TouchableWithoutFeedback onPress={() => setDeleteConfirm(null)}>
           <View style={ic.backdrop}>
             <TouchableWithoutFeedback>
@@ -401,8 +444,7 @@ export default function InvoiceCategoriesPage({ route }) {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[ic.btnSave, { backgroundColor: '#c10015' }]}
-                    onPress={() => remove(deleteConfirm?.id)}
-                  >
+                    onPress={() => remove(deleteConfirm?.id)}>
                     <Text style={ic.btnSaveText}>Excluir</Text>
                   </TouchableOpacity>
                 </View>
