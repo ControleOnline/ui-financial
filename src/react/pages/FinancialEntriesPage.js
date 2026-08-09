@@ -10,15 +10,28 @@
  * - Nao duplicar calculos financeiros fora do dono desta tela.
  * - Manter aqui apenas a coordenacao da apresentacao e dos filtros financeiros.
  */
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Modal,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Feather';
 import { useStore } from '@store';
 import DefaultTable from '@controleonline/ui-default/src/react/components/table/DefaultTable';
+import DefaultForm from '@controleonline/ui-default/src/react/components/form/DefaultForm';
 import { resolveThemePalette } from '@controleonline/../../src/styles/branding';
 import { colors } from '@controleonline/../../src/styles/colors';
 import { createStyles } from './FinancialEntriesPage.styles';
+import {
+  resolveCreateRowDefaults,
+  resolveCreateColumns,
+} from './financialEntriesCreateHelpers';
 
 const DEFAULT_FINANCIAL_DATE_FILTER = {
   shortcut: 'today',
@@ -59,6 +72,7 @@ const resolveInvoiceRequestParams = ({ companyId, mode }) => {
   return params;
 };
 
+
 function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
   const navigation = useNavigation();
   const defaultFiltersAppliedRef = useRef(false);
@@ -78,6 +92,18 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
   const { currentCompany } = peopleGetters || {};
   const { colors: themeColors } = themeGetters || {};
   const { sessionChecked } = authGetters || {};
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const createRowDefaults = useMemo(
+    () => resolveCreateRowDefaults({ company: currentCompany, mode }),
+    [currentCompany, mode],
+  );
+
+  const createColumns = useMemo(
+    () => resolveCreateColumns(invoiceGetters?.columns || [], mode),
+    [invoiceGetters?.columns, mode],
+  );
+
 
   const themeTokens = useMemo(
     () => ({ ...themeColors, ...(currentCompany?.theme?.colors || {}) }),
@@ -121,6 +147,35 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
       invoiceStore.actions.setFilters(initialFilters);
     }
   }, [initialFilters, invoiceStore.actions, isBootstrapReady, storeFilters]);
+
+  const handleAdd = useCallback(() => {
+    if (!currentCompany?.id) {
+      return;
+    }
+    setIsCreateModalOpen(true);
+  }, [currentCompany?.id]);
+
+  const handleCreateCancel = useCallback(() => {
+    setIsCreateModalOpen(false);
+  }, []);
+
+  const handleCreateSaved = useCallback(
+    async (_savedItem) => {
+      setIsCreateModalOpen(false);
+      // Refresh list with current request params / filters so the new entry appears
+      if (typeof invoiceStore?.actions?.getItems === 'function') {
+        try {
+          await invoiceStore.actions.getItems({
+            ...requestParams,
+            ...(invoiceGetters?.filters || {}),
+          });
+        } catch (_err) {
+          // List refresh is best-effort; save already succeeded
+        }
+      }
+    },
+    [invoiceGetters?.filters, invoiceStore?.actions, requestParams],
+  );
 
   const openInvoiceDetails = useCallback(
     invoice => {
@@ -224,8 +279,8 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
       <View style={{ flex: 1 }}>
         <DefaultTable
           accentColor={brandColors.primary}
-          add={false}
           filters={initialFilters}
+          onAdd={handleAdd}
           onRowPress={openInvoiceDetails}
           requestParams={requestParams}
           searchProps={{
@@ -244,6 +299,75 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
           storeName="invoice"
         />
       </View>
+
+      <Modal
+        transparent
+        visible={isCreateModalOpen}
+        animationType="fade"
+        onRequestClose={handleCreateCancel}
+      >
+        <TouchableWithoutFeedback onPress={handleCreateCancel}>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(15, 23, 42, 0.45)',
+              justifyContent: 'center',
+              padding: 16,
+            }}
+          >
+            <TouchableWithoutFeedback>
+              <View
+                style={{
+                  backgroundColor: brandColors.background || '#FFFFFF',
+                  borderRadius: 12,
+                  maxHeight: '90%',
+                  overflow: 'hidden',
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingHorizontal: 16,
+                    paddingVertical: 12,
+                    borderBottomWidth: 1,
+                    borderBottomColor: '#E2E8F0',
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: '600',
+                      color: brandColors.text || '#0F172A',
+                    }}
+                  >
+                    {mode === 'payables'
+                      ? translate('invoice', 'label', 'newPayable') || 'Novo contas a pagar'
+                      : mode === 'ownTransfers'
+                        ? translate('invoice', 'label', 'newTransfer') || 'Nova transferência'
+                        : translate('invoice', 'label', 'newReceivable') || 'Novo contas a receber'}
+                  </Text>
+                  <TouchableOpacity onPress={handleCreateCancel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Icon name="x" size={20} color={brandColors.textSecondary || '#64748B'} />
+                  </TouchableOpacity>
+                </View>
+                <DefaultForm
+                  mode="create"
+                  storeName="invoice"
+                  columns={createColumns}
+                  row={createRowDefaults}
+                  actions={{
+                    save: payload => invoiceStore.actions.save(payload),
+                  }}
+                  onCancel={handleCreateCancel}
+                  onSaved={handleCreateSaved}
+                />
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </SafeAreaView>
   );
 }
