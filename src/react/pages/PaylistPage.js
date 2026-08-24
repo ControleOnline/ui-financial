@@ -12,6 +12,7 @@ import {useRoute} from '@react-navigation/native';
 import DefaultInput from '@controleonline/ui-default/src/react/components/inputs/DefaultInput';
 import DefaultTable from '@controleonline/ui-default/src/react/components/table/DefaultTable';
 import {api} from '@controleonline/ui-common/src/api';
+import {useTheme} from '@controleonline/ui-common/src/react/components/DefaultProvider';
 import {
   isValidPaylistDocument,
   normalizePaylistDocument,
@@ -93,6 +94,12 @@ const DOCUMENT_COLUMN = {
 function PaylistPage() {
   const route = useRoute();
   const params = route?.params || {};
+  const theme = useTheme?.() || {};
+  const themeColors = theme?.colors || {};
+  const accentColor = themeColors.primary || themeColors.accent || '#2563EB';
+  const pageBackground = themeColors.background || '#F1F5F9';
+  const surfaceColor = themeColors.surface || themeColors.card || '#FFFFFF';
+  const primaryTextColor = themeColors.text || '#0F172A';
   const initialDocument = useMemo(() => {
     const fromUrl =
       params.document ||
@@ -195,16 +202,17 @@ function PaylistPage() {
 
   if (!document) {
     return (
-      <SafeAreaView style={styles.page} edges={['top', 'bottom']}>
-        <View style={styles.searchCard}>
-          <View style={styles.brandMark}>
-            <Text style={styles.brandMarkText}>$</Text>
+      <SafeAreaView style={[styles.page, {backgroundColor: pageBackground}]} edges={['top', 'bottom']}>
+        <View style={[styles.searchCard, {backgroundColor: surfaceColor}]}>
+          <View style={[styles.brandMark, {backgroundColor: accentColor + '22'}]}>
+            <Text style={[styles.brandMarkText, {color: accentColor}]}>$</Text>
           </View>
-          <Text style={styles.title}>Consulte suas cobranças</Text>
+          <Text style={[styles.title, {color: primaryTextColor}]}>Consulte suas cobranças</Text>
           <Text style={styles.description}>
             Informe seu CPF ou CNPJ para visualizar cobranças, vencimentos e opções de pagamento.
           </Text>
           <DefaultInput
+            accentColor={accentColor}
             autoFocus={false}
             autoSave={false}
             column={DOCUMENT_COLUMN}
@@ -223,7 +231,7 @@ function PaylistPage() {
           <Pressable
             accessibilityRole="button"
             onPress={submitDocument}
-            style={({pressed}) => [styles.button, pressed && styles.buttonPressed]}>
+            style={({pressed}) => [styles.button, {backgroundColor: accentColor}, pressed && styles.buttonPressed]}>
             <Text style={styles.buttonText}>Consultar cobranças</Text>
           </Pressable>
           <Text style={styles.privacy}>
@@ -236,9 +244,9 @@ function PaylistPage() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.page} edges={['top', 'bottom']}>
+      <SafeAreaView style={[styles.page, {backgroundColor: pageBackground}]} edges={['top', 'bottom']}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#2563EB" />
+          <ActivityIndicator size="large" color={accentColor} />
           <Text style={styles.hint}>Carregando cobranças…</Text>
         </View>
       </SafeAreaView>
@@ -246,11 +254,11 @@ function PaylistPage() {
   }
 
   return (
-    <SafeAreaView style={styles.page} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.page, {backgroundColor: pageBackground}]} edges={['top', 'bottom']}>
       <View style={styles.content}>
         <View style={styles.listHeader}>
           <View>
-            <Text style={styles.title}>Minhas cobranças</Text>
+            <Text style={[styles.title, {color: primaryTextColor}]}>Minhas cobranças</Text>
             <Text style={styles.subtitle}>Documento terminado em {document.slice(-4)}</Text>
           </View>
           <Pressable
@@ -261,13 +269,13 @@ function PaylistPage() {
               setError(null);
             }}
             style={styles.linkButton}>
-            <Text style={styles.linkText}>Consultar outro documento</Text>
+            <Text style={[styles.linkText, {color: accentColor}]}>Consultar outro documento</Text>
           </Pressable>
         </View>
         {error ? <Text style={styles.error}>{error}</Text> : (
-          <View style={styles.tableWrap}>
+          <View style={[styles.tableWrap, {backgroundColor: surfaceColor}]}>
             <DefaultTable
-              accentColor="#2563EB"
+              accentColor={accentColor}
               columns={COLUMNS}
               data={tableData}
               isLoading={false}
