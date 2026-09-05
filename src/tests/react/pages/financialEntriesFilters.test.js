@@ -4,6 +4,9 @@ const {
   resolveInvoiceCreateFieldVisibility,
   resolveInvoicePaymentTypeListParams,
   resolveInvoicePartyListParams,
+  resolveInvoiceWalletListParams,
+  formatInvoiceWalletOption,
+  formatInvoicePaymentTypeOption,
 } = require('../../../react/pages/financialEntriesFilters');
 
 const { describe, expect, it } = global;
@@ -133,6 +136,36 @@ describe('invoice master list scopes', () => {
       requestParams: {payer: 21},
       row: {},
     })).toEqual({});
+  });
+
+  it('scopes wallet lists to the current company people id', () => {
+    expect(resolveInvoiceWalletListParams({currentCompanyId: 21})).toEqual({people: '21'});
+    expect(resolveInvoiceWalletListParams({currentCompanyId: '/people/21'})).toEqual({people: '21'});
+    expect(resolveInvoiceWalletListParams({})).toEqual({people: 0});
+  });
+
+  it('disambiguates wallet options that share the same name across companies', () => {
+    expect(formatInvoiceWalletOption({
+      id: 8,
+      wallet: 'À Vista',
+      people: {alias: 'Matriz'},
+    })).toEqual({value: '8', label: 'À Vista (Matriz)'});
+    expect(formatInvoiceWalletOption({
+      id: 9,
+      wallet: 'PIX',
+      people: {name: 'PIX'},
+    })).toEqual({value: '9', label: 'PIX'});
+  });
+
+  it('disambiguates payment types that repeat across wallets', () => {
+    expect(formatInvoicePaymentTypeOption({
+      paymentType: {'@id': '/payment_types/3', paymentType: 'À Vista'},
+      wallet: {wallet: 'Caixa 1'},
+    })).toEqual({
+      value: '3',
+      label: 'À Vista (Caixa 1)',
+      object: {'@id': '/payment_types/3', paymentType: 'À Vista'},
+    });
   });
 });
 

@@ -8,6 +8,9 @@ import {
   resolveInvoiceCreateFieldVisibility,
   resolveInvoicePaymentTypeListParams,
   resolveInvoicePartyListParams,
+  resolveInvoiceWalletListParams,
+  formatInvoiceWalletOption,
+  formatInvoicePaymentTypeOption,
 } from "../../react/pages/financialEntriesFilters";
 
 export default {
@@ -204,6 +207,7 @@ export default {
         label: "source wallet",
         createPayload: true,
         list: "wallet/getItems",
+        listRequestParams: resolveInvoiceWalletListParams,
         searchParam: "sourceWallet",
         externalFilter: false,
         visibleForm: row => resolveInvoiceCreateFieldVisibility({fieldName: "sourceWallet", requestParams: row}),
@@ -211,10 +215,7 @@ export default {
           return value?.wallet;
         },
         formatList(data) {
-          return {
-            value: data?.id,
-            label: data?.wallet,
-          };
+          return formatInvoiceWalletOption(data);
         },
         saveFormat: function (value) {
           return value ? "/wallets/" + (value?.value || value) : null;
@@ -230,6 +231,7 @@ export default {
         label: "destination wallet",
         createPayload: true,
         list: "wallet/getItems",
+        listRequestParams: resolveInvoiceWalletListParams,
         searchParam: "destinationWallet",
         externalFilter: false,
         visibleForm: row => resolveInvoiceCreateFieldVisibility({fieldName: "destinationWallet", requestParams: row}),
@@ -237,10 +239,7 @@ export default {
           return value?.wallet;
         },
         formatList(data) {
-          return {
-            value: data?.id,
-            label: data?.wallet,
-          };
+          return formatInvoiceWalletOption(data);
         },
         saveFormat: function (value) {
           return value ? "/wallets/" + (value?.value || value) : null;
@@ -264,14 +263,7 @@ export default {
           return value?.paymentType;
         },
         formatList: function (value) {
-          const paymentType = value?.paymentType || value;
-          if (paymentType && paymentType["@id"])
-            return {
-              value: paymentType["@id"].split("/").pop(),
-              label: paymentType?.paymentType,
-              object: paymentType,
-            };
-          return value;
+          return formatInvoicePaymentTypeOption(value);
         },
         saveFormat: function (value) {
           return value ? "/payment_types/" + (value?.value || value) : null;

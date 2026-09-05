@@ -82,6 +82,55 @@ export const resolveInvoiceCreateFieldVisibility = ({fieldName, requestParams = 
   return true;
 };
 
+export const resolveInvoiceWalletListParams = ({currentCompanyId} = {}) => {
+  const peopleId = resolveEntityId(currentCompanyId);
+  if (!peopleId) return {people: 0};
+  return {people: peopleId};
+};
+
+export const formatInvoiceWalletOption = data => {
+  const id = resolveEntityId(data?.id ?? data?.value ?? data);
+  const name = normalizeText(data?.wallet || data?.label);
+  const owner = normalizeText(
+    data?.people?.alias || data?.people?.name || data?.people?.officialName,
+  );
+
+  return {
+    value: id || data?.id,
+    label: owner && owner !== name && name ? `${name} (${owner})` : name,
+  };
+};
+
+export const formatInvoicePaymentTypeOption = value => {
+  const paymentType = value?.paymentType || value;
+  const walletName = normalizeText(
+    value?.wallet?.wallet || value?.walletName || '',
+  );
+  const typeName = normalizeText(
+    paymentType?.paymentType || paymentType?.label || paymentType,
+  );
+  const typeId =
+    resolveEntityId(paymentType?.['@id'] || paymentType?.id || paymentType?.value);
+
+  if (paymentType && paymentType['@id']) {
+    return {
+      value: String(paymentType['@id']).split('/').pop(),
+      label: walletName && walletName !== typeName ? `${typeName} (${walletName})` : typeName,
+      object: paymentType,
+    };
+  }
+
+  if (typeId) {
+    return {
+      value: typeId,
+      label: walletName && walletName !== typeName ? `${typeName} (${walletName})` : typeName,
+      object: paymentType,
+    };
+  }
+
+  return value;
+};
+
 export const resolveInvoicePaymentTypeListParams = ({requestParams = {}, row = {}, variant = 'cell'} = {}) => {
   const {isPayables, isReceivables} = resolveRequestContext(requestParams);
   const walletId = isPayables
