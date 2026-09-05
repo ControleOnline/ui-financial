@@ -89,7 +89,8 @@ export default {
         formClass: "col-12",
         name: "receiver",
         align: "left",
-        label: "receiver",
+        label: "Recebedor",
+        formLabel: "Recebedor",
         createPayload: true,
         list: "people/getItems",
         listRequestParams: ({currentCompanyId, requestParams}) =>
