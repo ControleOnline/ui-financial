@@ -167,7 +167,7 @@ export default function InvoiceCategoriesPage({ route }) {
     }, [activeContext, currentCompany?.id, tab]),
   );
 
-  const switchTab = t => {
+  const switchTab = useCallback(t => {
     if (isContextLocked) return;
     setTab(t);
     if (currentCompany?.id) {
@@ -176,25 +176,25 @@ export default function InvoiceCategoriesPage({ route }) {
         company: currentCompany.id,
       });
     }
-  };
+  }, [categoriesStore.actions, currentCompany?.id, isContextLocked]);
 
-  const openNew = () => {
+  const openNew = useCallback(() => {
     setEditing(null);
     setName('');
     setColor('');
     setIcon('');
     setContext(activeContext || tab);
     setFormModal(true);
-  };
+  }, [activeContext, tab]);
 
-  const openEdit = cat => {
+  const openEdit = useCallback(cat => {
     setEditing(cat);
     setName(cat.name || '');
     setColor(cat.color || '');
     setIcon(cat.icon || '');
     setContext(activeContext || frontendContext(cat.context) || tab);
     setFormModal(true);
-  };
+  }, [activeContext, tab]);
 
   const save = async () => {
     if (!name.trim()) return;
