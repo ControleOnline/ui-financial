@@ -1,5 +1,36 @@
 const normalizeText = value => String(value || '').trim();
 
+export const formatInvoicePartyLabel = value => {
+  const name = normalizeText(value?.name || value?.label);
+  const alias = normalizeText(value?.alias);
+  if (!name && !alias) return "---------------";
+  if (!alias) return name;
+  if (!name) return alias;
+
+  const nameKey = name.toLowerCase();
+  const aliasKey = alias.toLowerCase();
+  if (nameKey === aliasKey) return name;
+  if (nameKey.includes(aliasKey) || aliasKey.includes(nameKey)) {
+    return name.length >= alias.length ? name : alias;
+  }
+  return `${name} - ${alias}`;
+};
+
+export const formatInvoicePartyOption = value => {
+  if (!value || typeof value !== "object") {
+    return {
+      value,
+      label: String(value || ""),
+    };
+  }
+
+  return {
+    value: value?.id || value?.value || String(value?.["@id"] || "").split("/").pop(),
+    label: formatInvoicePartyLabel(value),
+  };
+};
+
+
 const getColumnKey = column => column?.key || column?.name || '';
 
 const normalizeFilterValue = value => {
