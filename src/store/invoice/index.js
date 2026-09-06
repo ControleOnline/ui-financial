@@ -8,6 +8,8 @@ import {
   resolveInvoiceCreateFieldVisibility,
   resolveInvoicePaymentTypeListParams,
   resolveInvoicePartyListParams,
+  formatInvoicePartyLabel,
+  formatInvoicePartyOption,
 } from "../../react/pages/financialEntriesFilters";
 
 export default {
@@ -58,22 +60,10 @@ export default {
         externalFilter: false,
         visibleForm: row => resolveInvoiceCreateFieldVisibility({fieldName: "payer", requestParams: row}),
         format: function (value) {
-          return value?.name
-            ? value?.name + " - " + value?.alias
-            : "---------------";
+          return formatInvoicePartyLabel(value);
         },
         formatList: function (value, _row, _column) {
-          if (!value || typeof value !== "object") {
-            return {
-              value,
-              label: String(value || ""),
-            };
-          }
-
-          return {
-            value: value?.id || value?.value || String(value?.["@id"] || "").split("/").pop(),
-            label: value?.name || value?.label,
-          };
+          return formatInvoicePartyOption(value);
         },
         saveFormat: function (value) {
           return value ? "/people/" + (value.value || value) : null;
@@ -98,22 +88,10 @@ export default {
         externalFilter: false,
         visibleForm: row => resolveInvoiceCreateFieldVisibility({fieldName: "receiver", requestParams: row}),
         format: function (value) {
-          return value?.name
-            ? value?.name + " - " + value?.alias
-            : "---------------";
+          return formatInvoicePartyLabel(value);
         },
         formatList: function (value, _row, _column) {
-          if (!value || typeof value !== "object") {
-            return {
-              value,
-              label: String(value || ""),
-            };
-          }
-
-          return {
-            value: value?.id || value?.value || String(value?.["@id"] || "").split("/").pop(),
-            label: value?.name || value?.label,
-          };
+          return formatInvoicePartyOption(value);
         },
         saveFormat: function (value) {
           return value ? "/people/" + (value.value || value) : null;
