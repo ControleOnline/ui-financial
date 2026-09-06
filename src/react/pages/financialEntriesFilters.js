@@ -171,5 +171,10 @@ export const resolveInvoicePartyListParams = ({
     };
   }
 
-  return {'link.company': companyIri};
+  // Despesas / demais lados variáveis: somente franquias e filiais
+  // vinculadas à empresa do usuário logado (não clientes/funcionários).
+  return {
+    'link.company': companyIri,
+    'link.linkType': ['franchisee', 'filial'],
+  };
 };
