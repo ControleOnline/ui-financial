@@ -1,4 +1,4 @@
-﻿import * as actions from "@controleonline/ui-default/src/store/default/actions";
+import * as actions from "@controleonline/ui-default/src/store/default/actions";
 import * as getters from "@controleonline/ui-default/src/store/default/getters";
 import mutations from "@controleonline/ui-default/src/store/default/mutations";
 import Formatter from "@controleonline/ui-common/src/utils/formatter.js";
@@ -46,7 +46,8 @@ export default {
         formClass: "col-12",
         name: "payer",
         align: "left",
-        label: "payer",
+        label: "Pagador",
+        formLabel: "Pagador",
         createPayload: true,
         list: "people/getItems",
         listRequestParams: ({currentCompanyId, requestParams}) =>
