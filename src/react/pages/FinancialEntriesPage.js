@@ -34,7 +34,7 @@ import {
 } from './financialEntriesCreateHelpers';
 
 const DEFAULT_FINANCIAL_DATE_FILTER = {
-  shortcut: 'today',
+  shortcut: '30d',
   customRange: { from: '', to: '' },
 };
 
