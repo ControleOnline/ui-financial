@@ -78,12 +78,15 @@ describe('invoice master list scopes', () => {
     });
   });
 
-  it('uses every company link for payable receivers', () => {
+  it('uses franchisee and filial links for payable receivers', () => {
     expect(resolveInvoicePartyListParams({
       columnName: 'receiver',
       currentCompanyId: 21,
       requestParams: {payer: 21},
-    })).toEqual({'link.company': '/people/21'});
+    })).toEqual({
+      'link.company': '/people/21',
+      'link.linkType': ['franchisee', 'filial'],
+    });
   });
 
   it('keeps the selected company fixed on the non-variable side', () => {
