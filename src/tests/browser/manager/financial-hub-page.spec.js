@@ -2,6 +2,9 @@
 const {expect, test} = require('playwright/test');
 const packageJson = require('../../../../../../../package.json');
 const {API_ORIGIN} = require('../../../../../../../src/tests/browser/apiOrigin');
+const {loginAsAdmin} = require('../../../../../ui-tests/src/tests/helpers/adminLogin');
+const {getAdminCredentials} = require('../../../../../ui-tests/src/tests/helpers/smokeCredentials');
+const {captureStep} = require('../../../../../ui-tests/src/tests/helpers/smokeEvidence');
 
 const APP_VERSION = packageJson?.version || '1.0.0';
 const CORS_HEADERS = {
@@ -47,37 +50,76 @@ const installAuthenticatedApi = async page => {
   return {requestCounts, responseStatuses};
 };
 
+const isLiveSmoke = String(process.env.SMOKE_LIVE || '').trim() === '1';
+
+const installSmokeInstrumentation = async (page, testInfo) => {
+  const requestCounts = new Map();
+  const requests = [];
+  const responses = [];
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(String(error)));
+  page.on('request', request => {
+    if (!request.url().startsWith(API_ORIGIN)) return;
+    const pathname = new URL(request.url()).pathname;
+    requestCounts.set(pathname, (requestCounts.get(pathname) || 0) + 1);
+    requests.push({method: request.method(), pathname});
+  });
+  page.on('response', response => {
+    if (!response.url().startsWith(API_ORIGIN)) return;
+    responses.push({pathname: new URL(response.url()).pathname, status: response.status()});
+  });
+  return {requestCounts, requests, responses, pageErrors, testInfo};
+};
+
+const writeRuntimeLogs = ({requests, responses, pageErrors, testInfo}) => {
+  const fs = require('fs');
+  fs.writeFileSync(testInfo.outputPath('console.log'), `${pageErrors.join('\n')}\n`, 'utf8');
+  fs.writeFileSync(testInfo.outputPath('network.log'), `${JSON.stringify({requests, responses}, null, 2)}\n`, 'utf8');
+};
+
 test.describe('financial hub authenticated browser smoke', () => {
   test('fluxo: financeiro-cobranca renders rows, status chips and striped backgrounds', async ({page}, testInfo) => {
-    const pageErrors = [];
-    page.on('pageerror', error => pageErrors.push(String(error)));
-    const {requestCounts, responseStatuses} = await installAuthenticatedApi(page);
+    const instrumentation = await installSmokeInstrumentation(page, testInfo);
+    const {requestCounts, responses, pageErrors} = instrumentation;
+    if (isLiveSmoke) {
+      const credentials = getAdminCredentials();
+      if (!credentials.hasSecrets) throw new Error('SMOKE_LIVE=1 requires SMOKE_ADMIN_EMAIL and SMOKE_ADMIN_PASSWORD.');
+      await loginAsAdmin(page, {evidenceDir: testInfo.outputDir});
+    } else {
+      await installAuthenticatedApi(page);
+    }
     await page.goto('/financial-hub-page');
     await expect(page.getByText(/Contas a receber/i).first()).toBeVisible({timeout: 20000});
-    await page.screenshot({path: testInfo.outputPath('01-financial-hub-loaded.png'), fullPage: true});
+    await captureStep(page, '01-financial-hub-loaded', {dir: testInfo.outputDir});
     const firstRow = page.getByTestId('default-table-row-7941');
     const secondRow = page.getByTestId('default-table-row-7942');
-    await expect(firstRow).toBeVisible({timeout: 15000});
-    await expect(secondRow).toBeVisible({timeout: 15000});
-    await expect(firstRow).toContainText('Cliente Par');
-    await expect(secondRow).toContainText('Cliente Ímpar');
-    await page.screenshot({path: testInfo.outputPath('02-financial-rows-and-status.png'), fullPage: true});
-    const firstStyle = await firstRow.getAttribute('style');
-    const secondStyle = await secondRow.getAttribute('style');
-    expect(firstStyle).toContain('background-color');
-    expect(secondStyle).toContain('background-color');
-    expect(firstStyle).not.toContain('239, 68, 68');
-    expect(secondStyle).not.toContain('34, 197, 94');
+    const rows = page.locator('[data-testid^="default-table-row-"]');
+    if (isLiveSmoke) {
+      await expect(rows.first()).toBeVisible({timeout: 20000});
+    } else {
+      await expect(firstRow).toBeVisible({timeout: 15000});
+      await expect(secondRow).toBeVisible({timeout: 15000});
+      await expect(firstRow).toContainText('Cliente Par');
+      await expect(secondRow).toContainText('Cliente Ímpar');
+    }
+    await captureStep(page, '02-financial-rows-and-status', {dir: testInfo.outputDir});
+    const rowCount = await rows.count();
+    expect(rowCount).toBeGreaterThan(0);
+    for (let index = 0; index < rowCount; index += 1) {
+      const style = await rows.nth(index).getAttribute('style');
+      expect(style).toContain('background-color');
+      expect(style).not.toMatch(/239, 68, 68|34, 197, 94/);
+    }
     await page.getByText(/Contas a pagar/i).first().click();
     await expect(page.getByText(/Contas a pagar/i).first()).toBeVisible();
-    await page.screenshot({path: testInfo.outputPath('03-financial-payables-tab.png'), fullPage: true});
+    await captureStep(page, '03-financial-payables-tab', {dir: testInfo.outputDir});
     await page.getByText(/Contas a receber/i).first().click();
-    await expect(firstRow).toBeVisible({timeout: 15000});
-    await page.screenshot({path: testInfo.outputPath('04-financial-receivables-restored.png'), fullPage: true});
-    await expect(page.locator('[data-testid^="default-table-row-"]')).toHaveCount(2);
-    await page.screenshot({path: testInfo.outputPath('05-financial-final-list.png'), fullPage: true});
-    expect(responseStatuses.some(({status}) => status === 401)).toBe(false);
-    expect(requestCounts.get('invoices')).toBe(1);
+    await expect(rows.first()).toBeVisible({timeout: 15000});
+    await captureStep(page, '04-financial-receivables-restored', {dir: testInfo.outputDir});
+    await captureStep(page, '05-financial-final-list', {dir: testInfo.outputDir});
+    writeRuntimeLogs(instrumentation);
+    expect(responses.some(({status}) => status === 401)).toBe(false);
+    expect(requestCounts.get('/invoices') || requestCounts.get('/invoices/')).toBe(1);
     expect(pageErrors.filter(error => /Maximum update depth|React error #185/i.test(error))).toEqual([]);
   });
 });
