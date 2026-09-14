@@ -93,7 +93,12 @@ test.describe('financial hub authenticated browser smoke', () => {
     if (isLiveSmoke) {
       const credentials = getAdminCredentials();
       if (!credentials.hasSecrets) throw new Error('SMOKE_LIVE=1 requires SMOKE_ADMIN_EMAIL and SMOKE_ADMIN_PASSWORD.');
-      await loginAsAdmin(page, {evidenceDir: testInfo.outputDir});
+      try {
+        await loginAsAdmin(page, {evidenceDir: testInfo.outputDir});
+      } catch (error) {
+        writeRuntimeLogs(instrumentation);
+        throw error;
+      }
     } else {
       await installAuthenticatedApi(page);
     }
