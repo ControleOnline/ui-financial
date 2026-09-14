@@ -65,8 +65,17 @@ const installSmokeInstrumentation = async (page, testInfo) => {
     requests.push({method: request.method(), pathname});
   });
   page.on('response', response => {
-    if (!response.url().startsWith(API_ORIGIN)) return;
-    responses.push({pathname: new URL(response.url()).pathname, status: response.status()});
+    if (!response.url().includes('api.controleonline.com') && !response.url().includes('s.controleonline.com')) return;
+    const pathname = new URL(response.url()).pathname;
+    responses.push({pathname, status: response.status()});
+    if (process.env.SMOKE_DEBUG === '1' && pathname === '/token') {
+      console.log('[SMOKE_DEBUG] token event');
+    }
+  });
+  page.on('requestfailed', request => {
+    if (process.env.SMOKE_DEBUG === '1' && request.url().includes('token')) {
+      console.log('[SMOKE_DEBUG] token event');
+    }
   });
   return {requestCounts, requests, responses, pageErrors, testInfo};
 };
