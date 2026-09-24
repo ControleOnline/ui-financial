@@ -1,36 +1,5 @@
 const normalizeText = value => String(value || '').trim();
 
-export const formatInvoicePartyLabel = value => {
-  const name = normalizeText(value?.name || value?.label);
-  const alias = normalizeText(value?.alias);
-  if (!name && !alias) return "---------------";
-  if (!alias) return name;
-  if (!name) return alias;
-
-  const nameKey = name.toLowerCase();
-  const aliasKey = alias.toLowerCase();
-  if (nameKey === aliasKey) return name;
-  if (nameKey.includes(aliasKey) || aliasKey.includes(nameKey)) {
-    return name.length >= alias.length ? name : alias;
-  }
-  return `${name} - ${alias}`;
-};
-
-export const formatInvoicePartyOption = value => {
-  if (!value || typeof value !== "object") {
-    return {
-      value,
-      label: String(value || ""),
-    };
-  }
-
-  return {
-    value: value?.id || value?.value || String(value?.["@id"] || "").split("/").pop(),
-    label: formatInvoicePartyLabel(value),
-  };
-};
-
-
 const getColumnKey = column => column?.key || column?.name || '';
 
 const normalizeFilterValue = value => {
@@ -113,55 +82,6 @@ export const resolveInvoiceCreateFieldVisibility = ({fieldName, requestParams = 
   return true;
 };
 
-export const resolveInvoiceWalletListParams = ({currentCompanyId} = {}) => {
-  const peopleId = resolveEntityId(currentCompanyId);
-  if (!peopleId) return {people: 0};
-  return {people: peopleId};
-};
-
-export const formatInvoiceWalletOption = data => {
-  const id = resolveEntityId(data?.id ?? data?.value ?? data);
-  const name = normalizeText(data?.wallet || data?.label);
-  const owner = normalizeText(
-    data?.people?.alias || data?.people?.name || data?.people?.officialName,
-  );
-
-  return {
-    value: id || data?.id,
-    label: owner && owner !== name && name ? `${name} (${owner})` : name,
-  };
-};
-
-export const formatInvoicePaymentTypeOption = value => {
-  const paymentType = value?.paymentType || value;
-  const walletName = normalizeText(
-    value?.wallet?.wallet || value?.walletName || '',
-  );
-  const typeName = normalizeText(
-    paymentType?.paymentType || paymentType?.label || paymentType,
-  );
-  const typeId =
-    resolveEntityId(paymentType?.['@id'] || paymentType?.id || paymentType?.value);
-
-  if (paymentType && paymentType['@id']) {
-    return {
-      value: String(paymentType['@id']).split('/').pop(),
-      label: walletName && walletName !== typeName ? `${typeName} (${walletName})` : typeName,
-      object: paymentType,
-    };
-  }
-
-  if (typeId) {
-    return {
-      value: typeId,
-      label: walletName && walletName !== typeName ? `${typeName} (${walletName})` : typeName,
-      object: paymentType,
-    };
-  }
-
-  return value;
-};
-
 export const resolveInvoicePaymentTypeListParams = ({requestParams = {}, row = {}, variant = 'cell'} = {}) => {
   const {isPayables, isReceivables} = resolveRequestContext(requestParams);
   const walletId = isPayables
@@ -202,10 +122,5 @@ export const resolveInvoicePartyListParams = ({
     };
   }
 
-  // Despesas / demais lados variáveis: somente franquias e filiais
-  // vinculadas à empresa do usuário logado (não clientes/funcionários).
-  return {
-    'link.company': companyIri,
-    'link.linkType': ['franchisee', 'filial'],
-  };
+  return {'link.company': companyIri};
 };
