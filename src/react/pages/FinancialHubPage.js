@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useMemo, useState} from 'react';
+import React, {useMemo, useState} from 'react';
 import {Text, TouchableOpacity, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
@@ -8,20 +8,10 @@ import {createStyles} from './FinancialHubPage.styles';
 
 const translate = (store, type, key) => global.t?.t(store, type, key);
 
-const resolveReceivableMenuLabel = raw => {
-  const value = String(raw || '').trim();
-  if (!value || /receitas\s+financeiras/i.test(value)) {
-    return 'Contas a receber';
-  }
-  return value;
-};
-
 const getFinancialTabs = () => [
   {
     key: 'receivables',
-    label: resolveReceivableMenuLabel(
-      translate('invoice', 'label', 'accountsReceivable'),
-    ),
+    label: translate('invoice', 'label', 'accountsReceivable') || 'Contas a receber',
     icon: 'arrow-down-circle',
     categoryContext: 'receiver',
     categoryTitle: translate('invoice', 'label', 'revenueCategories'),
@@ -85,16 +75,6 @@ export default function FinancialHubPage({navigation}) {
 
   const activeSection =
     FINANCIAL_TABS.find(item => item.key === activeTab) || FINANCIAL_TABS[0];
-
-  useLayoutEffect(() => {
-    if (typeof navigation?.setOptions !== 'function') {
-      return;
-    }
-    navigation.setOptions({
-      headerTitle: activeSection?.label || 'Contas a receber',
-      title: activeSection?.label || 'Contas a receber',
-    });
-  }, [activeSection?.label, navigation]);
 
   const toolbarActions = useMemo(
     () => [
