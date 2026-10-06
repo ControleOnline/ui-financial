@@ -115,6 +115,8 @@ const mockCategoriesApi = async page => {
 
 test.describe('invoice categories browser smoke', () => {
   test('renders categories page with DefaultTable', async ({page}) => {
+    const pageErrors = [];
+    page.on('pageerror', error => pageErrors.push(String(error)));
     await mockCategoriesApi(page);
     await page.goto('/invoice-categories-page?store=categories');
 
@@ -122,6 +124,10 @@ test.describe('invoice categories browser smoke', () => {
     await expect(page.getByText('Vendas')).toBeVisible();
     await expect(page.getByText('Servicos')).toBeVisible();
     await expect(page.getByPlaceholder(/Buscar categoria/i)).toBeVisible();
-    await expect(page.getByRole('button', {name: /Nova categoria/i}).first()).toBeVisible();
+    const addButton = page.getByRole('button', {name: /Nova categoria/i}).first();
+    await expect(addButton).toBeVisible();
+    await addButton.click();
+    await expect(page.getByText('Nova categoria').last()).toBeVisible();
+    expect(pageErrors.filter(error => /React error #185|Maximum update depth/i.test(error))).toEqual([]);
   });
 });
