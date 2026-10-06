@@ -22,150 +22,17 @@ import useOrderDetailsVisuals from '@controleonline/ui-orders/src/react/pages/or
 
 import createStyles from './InvoiceDetailsPage.styles'
 
-const getEntityId = entity => {
-  if (!entity) return null
-
-  if (typeof entity === 'number' || typeof entity === 'string') {
-    const match = String(entity).match(/\d+/g)
-    return match ? Number(match[match.length - 1]) : null
-  }
-
-  if (typeof entity === 'object') {
-    if (entity.id) return Number(entity.id)
-    if (entity['@id']) {
-      const match = String(entity['@id']).match(/\d+/g)
-      return match ? Number(match[match.length - 1]) : null
-    }
-  }
-
-  return null
-}
-
-const normalizeMoney = value => {
-  const normalizedValue = Number(value)
-  return Number.isFinite(normalizedValue) ? normalizedValue : 0
-}
-
-const normalizeStatusValue = value =>
-  String(value || '')
-    .trim()
-    .toLowerCase()
-
-const isCancelledStatusValue = value =>
-  ['canceled', 'cancelled'].includes(normalizeStatusValue(value))
-
-const isOrderCancelled = order =>
-  isCancelledStatusValue(order?.status?.status) ||
-  isCancelledStatusValue(order?.status?.realStatus) ||
-  isCancelledStatusValue(order?.status?.real_status)
-
-const hasHydratedInvoiceDetails = invoice => {
-  if (!invoice || typeof invoice !== 'object') {
-    return false
-  }
-
-  return [
-    invoice?.status,
-    invoice?.dueDate,
-    invoice?.invoice_date,
-    invoice?.paymentType,
-    invoice?.payment_type,
-    invoice?.sourceWallet,
-    invoice?.destinationWallet,
-    invoice?.payer,
-    invoice?.receiver,
-    invoice?.description,
-  ].some(Boolean)
-}
-
-const getStatusLabel = status =>
-  global.t?.t('invoice', 'label', status) || status || '-'
-
-const resolveStatusColor = invoice => {
-  const normalizedRealStatus = String(
-    invoice?.status?.realStatus || invoice?.status?.real_status || '',
-  )
-    .trim()
-    .toLowerCase()
-  const normalizedStatus = String(invoice?.status?.status || '')
-    .trim()
-    .toLowerCase()
-
-  if (
-    normalizedRealStatus === 'closed' ||
-    normalizedStatus === 'closed' ||
-    normalizedStatus === 'paid'
-  ) {
-    return '#16A34A'
-  }
-
-  if (
-    normalizedRealStatus === 'pending' ||
-    ['pending', 'waiting payment', 'waiting_payment', 'open'].includes(
-      normalizedStatus,
-    )
-  ) {
-    return '#D97706'
-  }
-
-  if (['canceled', 'cancelled'].includes(normalizedStatus)) {
-    return '#c10015'
-  }
-
-  return '#0EA5E9'
-}
-
-const formatApiError = error => {
-  if (!error) return ''
-  if (typeof error === 'string') return error
-  if (Array.isArray(error?.message)) {
-    return error.message
-      .map(item => item?.message || item?.title || String(item))
-      .filter(Boolean)
-      .join('\n')
-  }
-
-  return error?.message || error?.description || error?.errmsg || ''
-}
-
-const normalizeLinkedOrderInvoice = orderInvoice => {
-  const rawOrder = orderInvoice?.order
-  const orderId = getEntityId(rawOrder)
-
-  if (!orderId && !rawOrder) {
-    return null
-  }
-
-  const embeddedOrder =
-    rawOrder && typeof rawOrder === 'object'
-      ? {
-          ...rawOrder,
-          id: rawOrder?.id || orderId,
-          '@id': rawOrder?.['@id'] || (orderId ? `/orders/${orderId}` : undefined),
-        }
-      : {
-          id: orderId,
-          '@id': orderId ? `/orders/${orderId}` : undefined,
-        }
-  const isCancelled = isOrderCancelled(embeddedOrder)
-  const normalizedOrder = isCancelled
-    ? {
-        ...embeddedOrder,
-        status: {
-          ...(embeddedOrder?.status || {}),
-          color: '#DC2626',
-        },
-      }
-    : embeddedOrder
-
-  return {
-    id: orderInvoice?.id || `invoice-link-${orderId || 'unknown'}`,
-    orderId: normalizedOrder?.id || orderId,
-    order: normalizedOrder,
-    realPrice: normalizeMoney(orderInvoice?.realPrice ?? orderInvoice?.real_price),
-    isCancelled,
-  }
-}
+import {
+  invoiceGetInFlight,
+  orderInvoicesGetInFlight,
+  getEntityId,
+  normalizeMoney,
+  hasHydratedInvoiceDetails,
+  getStatusLabel,
+  resolveStatusColor,
+  formatApiError,
+  normalizeLinkedOrderInvoice,
+} from './InvoiceDetailsPage.helpers'
 
 function InvoiceDetailsPage({navigation, route}) {
   const invoiceId = useMemo(
@@ -237,17 +104,32 @@ function InvoiceDetailsPage({navigation, route}) {
   }, [invoiceId, navigation])
 
   useEffect(() => {
-    if (
-      invoiceId &&
-      typeof invoiceStore.actions?.get === 'function' &&
-      (
-        getEntityId(storeInvoice) !== invoiceId ||
-        !hasHydratedInvoiceDetails(storeInvoice)
-      )
-    ) {
-      invoiceStore.actions.get(invoiceId).catch(() => null)
+    if (!invoiceId || typeof invoiceStore.actions?.get !== 'function') {
+      return
     }
-  }, [invoiceId, invoiceStore.actions, storeInvoice])
+
+    const alreadyHydrated =
+      getEntityId(storeInvoice) === invoiceId &&
+      hasHydratedInvoiceDetails(storeInvoice)
+
+    if (alreadyHydrated) {
+      return
+    }
+
+    if (invoiceGetInFlight.has(invoiceId)) {
+      return
+    }
+
+    const request = invoiceStore.actions
+      .get(invoiceId)
+      .catch(() => null)
+      .finally(() => {
+        invoiceGetInFlight.delete(invoiceId)
+      })
+    invoiceGetInFlight.set(invoiceId, request)
+    // storeInvoice is only used for the hydration guard; do not re-trigger GET.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoiceId, invoiceStore.actions])
 
   useEffect(() => {
     if (!invoiceId) {
@@ -256,11 +138,23 @@ function InvoiceDetailsPage({navigation, route}) {
       return
     }
 
-    if (typeof orderInvoicesStore.actions?.getItems === 'function') {
-      orderInvoicesStore.actions.getItems({
-        invoice: `/invoices/${invoiceId}`,
-      }).catch(() => null)
+    if (typeof orderInvoicesStore.actions?.getItems !== 'function') {
+      return
     }
+
+    if (orderInvoicesGetInFlight.has(invoiceId)) {
+      return
+    }
+
+    const request = orderInvoicesStore.actions
+      .getItems({
+        invoice: `/invoices/${invoiceId}`,
+      })
+      .catch(() => null)
+      .finally(() => {
+        orderInvoicesGetInFlight.delete(invoiceId)
+      })
+    orderInvoicesGetInFlight.set(invoiceId, request)
   }, [invoiceId, orderInvoicesStore.actions])
 
   const linkedOrdersCount = activeLinkedOrderInvoices.length

@@ -1,20 +1,22 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
   Linking,
+  Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRoute } from '@react-navigation/native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {useRoute} from '@react-navigation/native';
+import DefaultInput from '@controleonline/ui-default/src/react/components/inputs/DefaultInput';
 import DefaultTable from '@controleonline/ui-default/src/react/components/table/DefaultTable';
-import { api } from '@controleonline/ui-common/src/api';
-
-const normalizeDocument = value =>
-  String(value || '')
-    .replace(/\D/g, '')
-    .trim();
+import {api} from '@controleonline/ui-common/src/api';
+import {useTheme} from '@controleonline/ui-common/src/react/components/DefaultProvider';
+import {
+  isValidPaylistDocument,
+  normalizePaylistDocument,
+} from './paylistDocument';
 
 const formatCurrency = value => {
   const number = Number(value);
@@ -25,7 +27,7 @@ const formatCurrency = value => {
       currency: 'BRL',
     }).format(number);
   } catch (_e) {
-    return `R$ ${number.toFixed(2)}`;
+    return 'R$ ' + number.toFixed(2);
   }
 };
 
@@ -33,8 +35,7 @@ const formatDate = value => {
   if (!value) return '—';
   const raw = String(value).slice(0, 10);
   const [y, m, d] = raw.split('-');
-  if (!y || !m || !d) return String(value);
-  return `${d}/${m}/${y}`;
+  return y && m && d ? d + '/' + m + '/' + y : String(value);
 };
 
 const resolveStatusLabel = invoice => {
@@ -61,11 +62,7 @@ const resolveCreditor = invoice =>
   '—';
 
 const resolveAmount = invoice =>
-  invoice?.price ??
-  invoice?.amount ??
-  invoice?.total ??
-  invoice?.value ??
-  null;
+  invoice?.price ?? invoice?.amount ?? invoice?.total ?? invoice?.value ?? null;
 
 const resolvePaymentUrl = invoice =>
   invoice?.paymentLink ||
@@ -76,82 +73,70 @@ const resolvePaymentUrl = invoice =>
   null;
 
 const COLUMNS = [
-  {
-    name: 'creditor',
-    label: 'Fornecedor / credor',
-    sortable: false,
-    filterable: false,
-  },
-  {
-    name: 'amount',
-    label: 'Valor',
-    sortable: false,
-    filterable: false,
-  },
-  {
-    name: 'dueDate',
-    label: 'Vencimento',
-    sortable: false,
-    filterable: false,
-  },
-  {
-    name: 'situation',
-    label: 'Situação',
-    sortable: false,
-    filterable: false,
-  },
-  {
-    name: 'actions',
-    label: 'Ações',
-    sortable: false,
-    filterable: false,
-  },
+  {name: 'creditor', label: 'Fornecedor / credor', sortable: false, filterable: false},
+  {name: 'amount', label: 'Valor', sortable: false, filterable: false},
+  {name: 'dueDate', label: 'Vencimento', sortable: false, filterable: false},
+  {name: 'situation', label: 'Situação', sortable: false, filterable: false},
+  {name: 'actions', label: 'Ações', sortable: false, filterable: false},
 ];
 
+const DOCUMENT_COLUMN = {
+  name: 'document',
+  label: 'CPF ou CNPJ',
+  editable: true,
+  inputType: 'number',
+};
+
 /**
- * Public (anonymous) paylist for debts by document (CPF/CNPJ).
- * Query: /paylist?document={doc}&company={receiverId}
- * Backend: GET /paylist (PaylistController, PUBLIC_ACCESS).
+ * Public customer page. A document supplied by the URL is loaded immediately;
+ * otherwise the customer must explicitly submit a valid CPF/CNPJ.
  */
 function PaylistPage() {
   const route = useRoute();
   const params = route?.params || {};
-
-  const document = useMemo(() => {
-    const fromParams =
+  const theme = useTheme?.() || {};
+  const themeColors = theme?.colors || {};
+  const accentColor = themeColors.primary || themeColors.accent || '#2563EB';
+  const pageBackground = themeColors.background || '#F1F5F9';
+  const surfaceColor = themeColors.surface || themeColors.card || '#FFFFFF';
+  const primaryTextColor = themeColors.text || '#0F172A';
+  const initialDocument = useMemo(() => {
+    const fromUrl =
       params.document ||
       params.doc ||
       (typeof window !== 'undefined'
         ? new URLSearchParams(window.location?.search || '').get('document')
         : null);
-    return normalizeDocument(fromParams);
+    return normalizePaylistDocument(fromUrl);
   }, [params.document, params.doc]);
 
   const company = useMemo(() => {
-    const fromParams =
+    const value =
       params.company ||
       params.receiver ||
       (typeof window !== 'undefined'
         ? new URLSearchParams(window.location?.search || '').get('company')
         : null);
-    return fromParams ? String(fromParams).trim() : '';
+    return value ? String(value).trim() : '';
   }, [params.company, params.receiver]);
 
+  const [document, setDocument] = useState(initialDocument);
+  const [documentDraft, setDocumentDraft] = useState(initialDocument);
+  const [validationError, setValidationError] = useState('');
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(initialDocument));
   const [error, setError] = useState(null);
 
   const load = useCallback(async () => {
     if (!document) {
-      setError('Documento (CPF/CNPJ) não informado na URL.');
-      setItems([]);
       setLoading(false);
       return;
     }
+
     setLoading(true);
     setError(null);
     try {
-      const query = { document };
+      const query = {document};
       if (company) query.company = company;
       const response = await api.fetch('paylist', {
         method: 'GET',
@@ -162,8 +147,8 @@ function PaylistPage() {
         response?.['hydra:member'] ||
         (Array.isArray(response) ? response : []);
       setItems(Array.isArray(list) ? list : []);
-    } catch (e) {
-      setError(e?.message || 'Não foi possível carregar as dívidas.');
+    } catch (requestError) {
+      setError(requestError?.message || 'Não foi possível carregar as dívidas.');
       setItems([]);
     } finally {
       setLoading(false);
@@ -174,135 +159,205 @@ function PaylistPage() {
     load();
   }, [load]);
 
+  const submitDocument = useCallback(() => {
+    const normalized = normalizePaylistDocument(documentDraft);
+    if (!isValidPaylistDocument(normalized)) {
+      setValidationError('Informe um CPF com 11 dígitos ou CNPJ com 14 dígitos.');
+      return;
+    }
+
+    setValidationError('');
+    setDocumentDraft(normalized);
+    setDocument(normalized);
+
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('document', normalized);
+      window.history?.replaceState?.({}, '', url.toString());
+    }
+  }, [documentDraft]);
+
   const tableData = useMemo(
     () =>
-      (items || []).map((invoice, index) => {
+      items.map((invoice, index) => {
         const paymentUrl = resolvePaymentUrl(invoice);
         return {
-          id: invoice?.id || `row-${index}`,
+          id: invoice?.id || 'row-' + index,
           creditor: resolveCreditor(invoice),
           amount: formatCurrency(resolveAmount(invoice)),
           dueDate: formatDate(invoice?.dueDate || invoice?.due_date),
           situation: resolveStatusLabel(invoice),
           actions: paymentUrl ? '2ª via / PIX' : '—',
           _paymentUrl: paymentUrl,
-          _raw: invoice,
         };
       }),
     [items],
   );
 
   const handleRowPress = useCallback(row => {
-    const url = row?._paymentUrl;
-    if (url && typeof Linking?.openURL === 'function') {
-      Linking.openURL(url).catch(() => {});
+    if (row?._paymentUrl && typeof Linking?.openURL === 'function') {
+      Linking.openURL(row._paymentUrl).catch(() => {});
     }
   }, []);
 
-  if (loading) {
+  if (!document) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#2563EB" />
-          <Text style={styles.hint}>Carregando dívidas…</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (error) {
-    return (
-      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <View style={styles.centered}>
-          <Text style={styles.title}>Lista de dívidas</Text>
-          <Text style={styles.error}>{error}</Text>
-          <Text style={styles.hint}>
-            Use o link enviado por e-mail/WhatsApp com o documento na URL.
+      <SafeAreaView style={[styles.page, {backgroundColor: pageBackground}]} edges={['top', 'bottom']}>
+        <View style={[styles.searchCard, {backgroundColor: surfaceColor}]}>
+          <View style={[styles.brandMark, {backgroundColor: accentColor + '22'}]}>
+            <Text style={[styles.brandMarkText, {color: accentColor}]}>$</Text>
+          </View>
+          <Text style={[styles.title, {color: primaryTextColor}]}>Consulte suas cobranças</Text>
+          <Text style={styles.description}>
+            Informe seu CPF ou CNPJ para visualizar cobranças, vencimentos e opções de pagamento.
+          </Text>
+          <DefaultInput
+            accentColor={accentColor}
+            autoFocus={false}
+            autoSave={false}
+            column={DOCUMENT_COLUMN}
+            inputStyle={styles.input}
+            label="CPF ou CNPJ"
+            onChangeValue={value => {
+              setDocumentDraft(value);
+              setValidationError('');
+            }}
+            row={{document: documentDraft}}
+            showLabel
+            value={documentDraft}
+            variant="form"
+          />
+          {validationError ? <Text style={styles.validation}>{validationError}</Text> : null}
+          <Pressable
+            accessibilityRole="button"
+            onPress={submitDocument}
+            style={({pressed}) => [styles.button, {backgroundColor: accentColor}, pressed && styles.buttonPressed]}>
+            <Text style={styles.buttonText}>Consultar cobranças</Text>
+          </Pressable>
+          <Text style={styles.privacy}>
+            Seus dados são usados somente para localizar as cobranças vinculadas ao documento.
           </Text>
         </View>
       </SafeAreaView>
     );
   }
 
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.page, {backgroundColor: pageBackground}]} edges={['top', 'bottom']}>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={accentColor} />
+          <Text style={styles.hint}>Carregando cobranças…</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Minhas dívidas</Text>
-        <Text style={styles.subtitle}>
-          Documento {document}
-          {company ? ` · credor #${company}` : ''}
-        </Text>
+    <SafeAreaView style={[styles.page, {backgroundColor: pageBackground}]} edges={['top', 'bottom']}>
+      <View style={styles.content}>
+        <View style={styles.listHeader}>
+          <View>
+            <Text style={[styles.title, {color: primaryTextColor}]}>Minhas cobranças</Text>
+            <Text style={styles.subtitle}>Documento terminado em {document.slice(-4)}</Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              setDocument('');
+              setItems([]);
+              setError(null);
+            }}
+            style={styles.linkButton}>
+            <Text style={[styles.linkText, {color: accentColor}]}>Consultar outro documento</Text>
+          </Pressable>
+        </View>
+        {error ? <Text style={styles.error}>{error}</Text> : (
+          <View style={[styles.tableWrap, {backgroundColor: surfaceColor}]}>
+            <DefaultTable
+              accentColor={accentColor}
+              columns={COLUMNS}
+              data={tableData}
+              isLoading={false}
+              onRefresh={load}
+              onRowPress={handleRowPress}
+              showColumnFiltersButton={false}
+              showRowActions={false}
+              showSearch={false}
+              showToolbar={false}
+              storeName=""
+            />
+          </View>
+        )}
       </View>
-      <View style={styles.tableWrap}>
-        <DefaultTable
-          accentColor="#2563EB"
-          columns={COLUMNS}
-          data={tableData}
-          isLoading={false}
-          onRefresh={load}
-          onRowPress={handleRowPress}
-          showColumnFiltersButton={false}
-          showRowActions={false}
-          showSearch={false}
-          showToolbar={false}
-          storeName=""
-        />
-      </View>
-      <Text style={styles.footerNote}>
-        Acesso anônimo controlado pelo documento na URL. Não compartilhe o link.
-      </Text>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  page: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  centered: {
-    flex: 1,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  content: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 1180,
     padding: 24,
   },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
+  searchCard: {
+    width: '92%',
+    maxWidth: 480,
+    padding: 32,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
+    shadowOffset: {width: 0, height: 10},
+    elevation: 6,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#0F172A',
+  brandMark: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
   },
-  subtitle: {
-    marginTop: 4,
-    fontSize: 14,
-    color: '#64748B',
+  brandMarkText: {fontSize: 24, fontWeight: '800', color: '#2563EB'},
+  title: {fontSize: 26, fontWeight: '800', color: '#0F172A'},
+  description: {marginTop: 10, marginBottom: 24, fontSize: 15, lineHeight: 22, color: '#475569'},
+  input: {minHeight: 50, fontSize: 16},
+  validation: {marginTop: 8, fontSize: 13, color: '#B91C1C'},
+  button: {
+    minHeight: 50,
+    marginTop: 20,
+    borderRadius: 12,
+    backgroundColor: '#2563EB',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  tableWrap: {
-    flex: 1,
-    paddingHorizontal: 8,
+  buttonPressed: {opacity: 0.88},
+  buttonText: {fontSize: 16, fontWeight: '700', color: '#FFFFFF'},
+  privacy: {marginTop: 18, fontSize: 12, lineHeight: 18, textAlign: 'center', color: '#64748B'},
+  centered: {alignItems: 'center', justifyContent: 'center', padding: 32},
+  hint: {marginTop: 10, fontSize: 14, color: '#64748B'},
+  listHeader: {
+    marginBottom: 18,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 16,
   },
-  error: {
-    marginTop: 12,
-    fontSize: 15,
-    color: '#B91C1C',
-    textAlign: 'center',
-  },
-  hint: {
-    marginTop: 8,
-    fontSize: 13,
-    color: '#64748B',
-    textAlign: 'center',
-  },
-  footerNote: {
-    padding: 12,
-    fontSize: 11,
-    color: '#94A3B8',
-    textAlign: 'center',
-  },
+  subtitle: {marginTop: 5, fontSize: 14, color: '#64748B'},
+  linkButton: {paddingVertical: 10, paddingHorizontal: 12},
+  linkText: {fontSize: 14, fontWeight: '700', color: '#2563EB'},
+  tableWrap: {flex: 1, borderRadius: 16, overflow: 'hidden', backgroundColor: '#FFFFFF'},
+  error: {padding: 20, borderRadius: 12, backgroundColor: '#FEE2E2', color: '#991B1B'},
 });
 
 export default PaylistPage;
