@@ -34,13 +34,19 @@ import {
 } from './financialEntriesCreateHelpers';
 
 const DEFAULT_FINANCIAL_DATE_FILTER = {
-  shortcut: 'today',
+  shortcut: '30d',
   customRange: { from: '', to: '' },
 };
 
 const normalizeText = value => String(value || '').trim();
 
 const translate = (store, type, key) => global.t?.t(store, type, key);
+
+const resolveAddLabel = mode => {
+  if (mode === 'payables') return 'Nova conta a pagar';
+  if (mode === 'ownTransfers') return 'Nova transferência';
+  return 'Nova conta a receber';
+};
 
 const resolveVisibleColumnsPreferenceKey = mode =>
   `financialEntries:${normalizeText(mode) || 'receivables'}`;
@@ -279,6 +285,9 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
       <View style={{ flex: 1 }}>
         <DefaultTable
           accentColor={brandColors.primary}
+          addLabel={resolveAddLabel(mode)}
+          paginationMode="pages"
+          pageSize={20}
           filters={initialFilters}
           onAdd={handleAdd}
           onRowPress={openInvoiceDetails}
