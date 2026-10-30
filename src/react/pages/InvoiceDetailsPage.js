@@ -9,8 +9,8 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context'
 import {useStore} from '@store'
 import Formatter from '@controleonline/ui-common/src/utils/formatter.js'
-import {colors} from '@controleonline/../../src/styles/colors'
-import {resolveThemePalette, withOpacity} from '@controleonline/../../src/styles/branding'
+import {colors} from '@controleonline/ui-layout/src/styles/colors'
+import {resolveThemePalette, withOpacity} from '@controleonline/ui-layout/src/styles/branding'
 import {
   formatInvoiceTypeLabel,
   getInvoicePartyLabel,
