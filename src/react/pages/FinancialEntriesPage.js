@@ -38,6 +38,11 @@ const DEFAULT_FINANCIAL_DATE_FILTER = {
   customRange: { from: '', to: '' },
 };
 
+const UNBOUNDED_FINANCIAL_DATE_FILTER = {
+  shortcut: 'all',
+  customRange: { from: '', to: '' },
+};
+
 const normalizeText = value => String(value || '').trim();
 
 const translate = (store, type, key) => global.t?.t(store, type, key);
@@ -79,7 +84,7 @@ const resolveInvoiceRequestParams = ({ companyId, mode }) => {
 };
 
 
-function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
+function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [], extraRequestParams = null }) {
   const navigation = useNavigation();
   const defaultFiltersAppliedRef = useRef(false);
   const invoiceStore = useStore('invoice');
@@ -125,16 +130,25 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
     [mode],
   );
   const storeFilters = invoiceGetters?.filters || {};
-  const initialFilters = useMemo(
-    () =>
-      storeFilters?.dueDate
-        ? storeFilters
-        : { ...(storeFilters || {}), dueDate: DEFAULT_FINANCIAL_DATE_FILTER },
-    [storeFilters],
+  // Drill-down from the Caixa screen: the period is already in extraRequestParams
+  // (invoiceDate), so the default due-date window must not narrow it further.
+  const hasExtraRequestParams = Boolean(
+    extraRequestParams && Object.keys(extraRequestParams).length,
   );
+  const initialFilters = useMemo(() => {
+    if (hasExtraRequestParams) {
+      return { ...(storeFilters || {}), dueDate: UNBOUNDED_FINANCIAL_DATE_FILTER };
+    }
+    return storeFilters?.dueDate
+      ? storeFilters
+      : { ...(storeFilters || {}), dueDate: DEFAULT_FINANCIAL_DATE_FILTER };
+  }, [storeFilters, hasExtraRequestParams]);
   const requestParams = useMemo(
-    () => resolveInvoiceRequestParams({ companyId: currentCompany?.id, mode }),
-    [currentCompany?.id, mode],
+    () => ({
+      ...resolveInvoiceRequestParams({ companyId: currentCompany?.id, mode }),
+      ...(hasExtraRequestParams ? extraRequestParams : {}),
+    }),
+    [currentCompany?.id, mode, extraRequestParams, hasExtraRequestParams],
   );
   const isBootstrapReady = Boolean(sessionChecked) && Boolean(currentCompany?.id) && Boolean(themeColors);
   const shouldApplyDefaultFilters =
@@ -153,6 +167,29 @@ function FinancialEntriesPage({ mode = 'receivables', toolbarActions = [] }) {
       invoiceStore.actions.setFilters(initialFilters);
     }
   }, [initialFilters, invoiceStore.actions, isBootstrapReady, storeFilters]);
+
+  // Persisted store filters would still apply the previous due-date window:
+  // lift it while drilling down and restore the default when leaving.
+  const storeFiltersRef = useRef(storeFilters);
+  storeFiltersRef.current = storeFilters;
+  useEffect(() => {
+    if (!hasExtraRequestParams || !isBootstrapReady) {
+      return undefined;
+    }
+
+    invoiceStore.actions.setFilters({
+      ...(storeFiltersRef.current || {}),
+      dueDate: UNBOUNDED_FINANCIAL_DATE_FILTER,
+    });
+
+    return () => {
+      invoiceStore.actions.setFilters({
+        ...(storeFiltersRef.current || {}),
+        dueDate: DEFAULT_FINANCIAL_DATE_FILTER,
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasExtraRequestParams, isBootstrapReady]);
 
   const handleAdd = useCallback(() => {
     if (!currentCompany?.id) {

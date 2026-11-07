@@ -1,11 +1,12 @@
 {
   "name": "@controleonline/ui-financial",
-  "version": "1.1.43",
+  "version": "1.1.44",
   "author": "ControleOnline",
   "description": "ControleOnline financial Quasar UI Component",
   "license": "MIT",
   "main": "src/react/index.js",
-  "scripts": {},
+  "scripts": {
+    "test:cash-register-drilldown": "node --test src/tests/react/cashRegisterDrilldown.test.mjs"},
   "repository": {
     "type": "git",
     "url": "https://github.com/ControleOnline/ui-financial"

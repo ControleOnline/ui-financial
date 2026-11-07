@@ -5,6 +5,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import {useStore} from '@store';
 import FinancialEntriesPage from '@controleonline/ui-financial/src/react/pages/FinancialEntriesPage';
 import {createStyles} from './FinancialHubPage.styles';
+import {buildCashDrilldownRequestParams} from './cashRegisterDrilldown';
 
 const translate = (store, type, key) => global.t?.t(store, type, key);
 
@@ -45,7 +46,7 @@ const getFinancialTabs = () => [
   },
 ];
 
-export default function FinancialHubPage({navigation}) {
+export default function FinancialHubPage({navigation, route}) {
   const peopleStore = useStore('people');
   const themeStore = useStore('theme');
   const translateStore = useStore('translate');
@@ -80,6 +81,11 @@ export default function FinancialHubPage({navigation}) {
   const tabSecondarySurfaceColor = palette.buttonBackgroundSecondary || palette.cardBackground;
   const tabHighlightColor = palette.buttonText;
   const tabBorderColor = palette.buttonBorderSecondary || palette.cardBorder;
+
+  const cashDrilldownParams = useMemo(
+    () => buildCashDrilldownRequestParams(route?.params?.cashFilter),
+    [route?.params?.cashFilter],
+  );
 
   const [activeTab, setActiveTab] = useState('receivables');
 
@@ -204,7 +210,13 @@ export default function FinancialHubPage({navigation}) {
       </View>
 
       <View style={styles.entriesContainer}>
-        <FinancialEntriesPage mode={activeSection.key} toolbarActions={toolbarActions} />
+        <FinancialEntriesPage
+          mode={activeSection.key}
+          toolbarActions={toolbarActions}
+          extraRequestParams={
+            activeSection.key === 'receivables' ? cashDrilldownParams : null
+          }
+        />
       </View>
     </SafeAreaView>
   );
