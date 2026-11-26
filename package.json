@@ -6,7 +6,8 @@
   "license": "MIT",
   "main": "src/react/index.js",
   "scripts": {
-    "test:cash-register-drilldown": "node --test src/tests/react/cashRegisterDrilldown.test.mjs"},
+    "test:cash-register-drilldown": "node --test src/tests/react/cashRegisterDrilldown.test.mjs"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/ControleOnline/ui-financial"

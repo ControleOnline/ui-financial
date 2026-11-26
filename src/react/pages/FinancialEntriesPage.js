@@ -25,8 +25,8 @@ import Icon from 'react-native-vector-icons/Feather';
 import { useStore } from '@store';
 import DefaultTable from '@controleonline/ui-default/src/react/components/table/DefaultTable';
 import DefaultForm from '@controleonline/ui-default/src/react/components/form/DefaultForm';
-import { resolveThemePalette } from '@controleonline/../../src/styles/branding';
-import { colors } from '@controleonline/../../src/styles/colors';
+import { resolveThemePalette } from '@controleonline/ui-layout/src/styles/branding';
+import { colors } from '@controleonline/ui-layout/src/styles/colors';
 import { createStyles } from './FinancialEntriesPage.styles';
 import {
   resolveCreateRowDefaults,
