@@ -184,3 +184,7 @@ export function getPix({ commit }, data) {
       throw e;
     });
 }
+// Scoped reads retain pagination metadata without replacing the shared invoice list.
+export function fetchPage({getters}, params = {}) {
+  return api.fetch(getters.resourceEndpoint, {method: "GET", params});
+}

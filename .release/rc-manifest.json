@@ -1,0 +1,20 @@
+{
+  "version": "1.1.45",
+  "rc": 1,
+  "branch": "rc/1.1.45-rc.1",
+  "baseMaster": "e774f982aefd115f0caa88ca760fa6bb00bd8a4f",
+  "baseTag": "v1.1.44",
+  "tasks": [
+    1761
+  ],
+  "taskRepository": "ControleOnline/app-community",
+  "frozen": true,
+  "repositories": {
+    "ControleOnline/ui-financial": "a7f86f066749bae449c69d411c800972bd81458b"
+  },
+  "sources": {
+    "versão de produção v1.1.44": "5cc06a663be8b35d2d2c950acc689dea5d2bbe90",
+    "staging": "c3d99c1c1d43886f03bcb8a28a63d02fd0435a66",
+    "dev": "13ee1b7e079530fc4993f2d2d4377648e9350e9d"
+  }
+}

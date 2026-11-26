@@ -13,7 +13,7 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useStore} from '@store';
-import styles from './IncomeStatement.styles';
+import legacyStyles from './IncomeStatement.styles';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -91,7 +91,9 @@ const getMonthData = (incomeStatements, monthId) => {
 const getParentCategories = categories =>
   normalizeCollection(categories);
 
-const IncomeStatement = () => {
+const IncomeStatement = ({presentation = null} = {}) => {
+  const styles = presentation?.styles || legacyStyles;
+  const DetailsModal = presentation?.ModalComponent || Modal;
   const {width} = useWindowDimensions();
   const invoiceStore = useStore('invoice');
   const peopleStore = useStore('people');
@@ -139,7 +141,7 @@ const IncomeStatement = () => {
         setIncomeStatements(normalizeObject(response));
       } catch (e) {
         console.error('Erro ao carregar income statements:', e);
-        setError('Não foi possível carregar os dados de comissões.');
+        setError(presentation?.errorText || 'Não foi possível carregar os dados de comissões.');
         setIncomeStatements({});
       } finally {
         setIsLoading(false);
@@ -185,11 +187,11 @@ const IncomeStatement = () => {
     setSelectedCategories([]);
   };
 
-  const renderCategorySection = (label, onPress) => (
+  const renderCategorySection = (label, onPress, monthLabel) => (
     <View style={styles.metricBox}>
       <Text style={styles.metricLabel}>{label}</Text>
-      <TouchableOpacity activeOpacity={0.9} style={styles.metricAction} onPress={onPress}>
-        <Icon name="info" size={16} color="#FFFFFF" />
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Ver ${label.toLowerCase()} de ${monthLabel}`} activeOpacity={0.9} style={styles.metricAction} onPress={onPress}>
+        <Icon name="info" size={16} color={presentation ? presentation.colors.buttonText : "#FFFFFF"} />
       </TouchableOpacity>
     </View>
   );
@@ -207,11 +209,11 @@ const IncomeStatement = () => {
           <Text style={styles.monthTitle}>{month.label}</Text>
 
           {renderCategorySection('Receitas', () =>
-            openDetails('Receitas', monthData.receive.parent_categories),
+            openDetails('Receitas', monthData.receive.parent_categories), month.label,
           )}
 
           {renderCategorySection('Despesas', () =>
-            openDetails('Despesas', monthData.pay.parent_categories),
+            openDetails('Despesas', monthData.pay.parent_categories), month.label,
           )}
 
           <View style={styles.totalsBlock}>
@@ -243,10 +245,10 @@ const IncomeStatement = () => {
     return (
       <SafeAreaView style={styles.container} edges={['bottom']}>
         <View style={styles.emptyState}>
-          <Icon name="business" size={36} color="#9CA3AF" />
+          <Icon name="business" size={36} color={presentation ? presentation.colors.textMuted : "#9CA3AF"} />
           <Text style={styles.emptyStateTitle}>Selecione uma empresa</Text>
           <Text style={styles.emptyStateText}>
-            O relatório de comissões precisa de uma empresa ativa para carregar os dados.
+            {presentation?.emptyText || 'O relatório de comissões precisa de uma empresa ativa para carregar os dados.'}
           </Text>
         </View>
       </SafeAreaView>
@@ -258,35 +260,37 @@ const IncomeStatement = () => {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        <Text style={styles.pageTitle}>Comissões</Text>
+        <Text accessibilityRole="header" style={styles.pageTitle}>{presentation?.title || 'Comissões'}</Text>
 
         <View style={styles.filterCard}>
           <View style={styles.filterRow}>
             <View style={styles.yearField}>
               <Text style={styles.yearLabel}>Ano</Text>
-              <TextInput
+              {presentation?.renderYearInput ? presentation.renderYearInput({value: year, onChangeText: handleYearChange, onSubmitEditing: handleFilter}) : <TextInput
                 value={year}
                 onChangeText={handleYearChange}
                 onSubmitEditing={handleFilter}
                 keyboardType="numeric"
                 maxLength={4}
                 style={styles.yearInput}
-              />
+              />}
             </View>
 
             <TouchableOpacity
+              accessibilityRole="button" accessibilityLabel="Filtrar resultados"
               style={styles.filterButton}
               activeOpacity={0.9}
               onPress={handleFilter}>
               <Text style={styles.filterButtonText}>FILTRAR</Text>
-              <Icon name="search" size={18} color="#F4C400" />
+              <Icon name="search" size={18} color={presentation ? presentation.colors.buttonText : "#F4C400"} />
             </TouchableOpacity>
 
             <TouchableOpacity
+              accessibilityRole="button" accessibilityLabel="Limpar filtro de ano"
               style={styles.clearButton}
               activeOpacity={0.9}
               onPress={handleClear}>
-              <Icon name="filter-alt-off" size={18} color="#F4C400" />
+              <Icon name="filter-alt-off" size={18} color={presentation ? presentation.colors.buttonText : "#F4C400"} />
             </TouchableOpacity>
           </View>
         </View>
@@ -298,7 +302,7 @@ const IncomeStatement = () => {
         </View>
       </ScrollView>
 
-      <Modal
+      <DetailsModal
         visible={modalVisible}
         transparent
         animationType="fade"
@@ -351,11 +355,11 @@ const IncomeStatement = () => {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </DetailsModal>
 
       {isLoading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#F4C400" />
+          <ActivityIndicator size="large" color={presentation ? presentation.colors.loadingSpinner : "#F4C400"} />
           <Text style={styles.loadingText}>Carregando...</Text>
         </View>
       )}

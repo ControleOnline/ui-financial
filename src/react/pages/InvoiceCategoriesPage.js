@@ -15,8 +15,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useStore } from '@store';
 import DefaultTable from '@controleonline/ui-default/src/react/components/table/DefaultTable';
-import { resolveThemePalette, withOpacity } from '@controleonline/../../src/styles/branding';
-import { colors } from '@controleonline/../../src/styles/colors';
+import { resolveThemePalette, withOpacity } from '@controleonline/ui-layout/src/styles/branding';
+import { colors } from '@controleonline/ui-layout/src/styles/colors';
 import ic, {
   inlineStyle_33_8,
   inlineStyle_62_8,
