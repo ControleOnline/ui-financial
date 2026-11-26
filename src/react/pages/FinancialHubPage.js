@@ -1,17 +1,28 @@
-import React, {useMemo, useState} from 'react';
+import React, {useLayoutEffect, useMemo, useState} from 'react';
 import {Text, TouchableOpacity, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import {useStore} from '@store';
 import FinancialEntriesPage from '@controleonline/ui-financial/src/react/pages/FinancialEntriesPage';
 import {createStyles} from './FinancialHubPage.styles';
+import {buildCashDrilldownRequestParams} from './cashRegisterDrilldown';
 
 const translate = (store, type, key) => global.t?.t(store, type, key);
+
+const resolveReceivableMenuLabel = raw => {
+  const value = String(raw || '').trim();
+  if (!value || /receitas\s+financeiras/i.test(value)) {
+    return 'Contas a receber';
+  }
+  return value;
+};
 
 const getFinancialTabs = () => [
   {
     key: 'receivables',
-    label: translate('invoice', 'label', 'accountsReceivable') || 'Contas a receber',
+    label: resolveReceivableMenuLabel(
+      translate('invoice', 'label', 'accountsReceivable'),
+    ),
     icon: 'arrow-down-circle',
     categoryContext: 'receiver',
     categoryTitle: translate('invoice', 'label', 'revenueCategories'),
@@ -35,7 +46,7 @@ const getFinancialTabs = () => [
   },
 ];
 
-export default function FinancialHubPage({navigation}) {
+export default function FinancialHubPage({navigation, route}) {
   const peopleStore = useStore('people');
   const themeStore = useStore('theme');
   const translateStore = useStore('translate');
@@ -71,10 +82,25 @@ export default function FinancialHubPage({navigation}) {
   const tabHighlightColor = palette.buttonText;
   const tabBorderColor = palette.buttonBorderSecondary || palette.cardBorder;
 
+  const cashDrilldownParams = useMemo(
+    () => buildCashDrilldownRequestParams(route?.params?.cashFilter),
+    [route?.params?.cashFilter],
+  );
+
   const [activeTab, setActiveTab] = useState('receivables');
 
   const activeSection =
     FINANCIAL_TABS.find(item => item.key === activeTab) || FINANCIAL_TABS[0];
+
+  useLayoutEffect(() => {
+    if (typeof navigation?.setOptions !== 'function') {
+      return;
+    }
+    navigation.setOptions({
+      headerTitle: activeSection?.label || 'Contas a receber',
+      title: activeSection?.label || 'Contas a receber',
+    });
+  }, [activeSection?.label, navigation]);
 
   const toolbarActions = useMemo(
     () => [
@@ -184,7 +210,13 @@ export default function FinancialHubPage({navigation}) {
       </View>
 
       <View style={styles.entriesContainer}>
-        <FinancialEntriesPage mode={activeSection.key} toolbarActions={toolbarActions} />
+        <FinancialEntriesPage
+          mode={activeSection.key}
+          toolbarActions={toolbarActions}
+          extraRequestParams={
+            activeSection.key === 'receivables' ? cashDrilldownParams : null
+          }
+        />
       </View>
     </SafeAreaView>
   );
